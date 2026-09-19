@@ -3,18 +3,18 @@ import { Link } from "react-router-dom";
 
 function Navbar() {
   return (
-    <nav>
-      <Link to="/">Home</Link>
-      <Link to="/register">Register</Link>
-      <Link to="/login">Login</Link>
-      <Link to="/profile">Profile</Link>
-      <Link to="/search">Search</Link>
-      <Link to="/matches">Matches</Link>
-      <Link to="/recommendations">Recommendations</Link>
-      <Link to="/subscription">Subscription</Link>
-      <Link to="/subscription-dashboard">My Subscription</Link>
-      <Link to="/admin">Admin</Link>
-      <Link to="/admin-analytics">Analytics</Link>
+    <nav style={{ padding: "20px", background: "#1e3a8a", color: "white" }}>
+      <h2>Vivaha Matrimony</h2>
+      <div>
+        <Link to="/" style={{ margin: "10px", color: "white" }}>Home</Link> | 
+        <Link to="/register" style={{ margin: "10px", color: "white" }}>Register</Link> | 
+        <Link to="/login" style={{ margin: "10px", color: "white" }}>Login</Link> | 
+        <Link to="/profile" style={{ margin: "10px", color: "white" }}>Profile</Link> | 
+        <Link to="/search" style={{ margin: "10px", color: "white" }}>Search</Link> | 
+        <Link to="/matches" style={{ margin: "10px", color: "white" }}>Matches</Link> | 
+        <Link to="/recommendations" style={{ margin: "10px", color: "white" }}>Recommendations</Link> | 
+        <Link to="/subscription" style={{ margin: "10px", color: "white" }}>Subscription</Link>
+      </div>
     </nav>
   );
 }
