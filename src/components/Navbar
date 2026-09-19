@@ -11,7 +11,7 @@ function Navbar() {
         <Link to="/login" style={{ margin: "10px", color: "white" }}>Login</Link> | 
         <Link to="/profile" style={{ margin: "10px", color: "white" }}>Profile</Link> | 
         <Link to="/search" style={{ margin: "10px", color: "white" }}>Search</Link> | 
-        <Link to="/matches" style={{ margin: "10px", color: "white" }}>Matches</Link> | 
+        <Link to="/matches"  style={{ margin: "10px", color: "white" }}>Matches</Link> | 
         <Link to="/recommendations" style={{ margin: "10px", color: "white" }}>Recommendations</Link> | 
         <Link to="/subscription" style={{ margin: "10px", color: "white" }}>Subscription</Link>
       </div>
