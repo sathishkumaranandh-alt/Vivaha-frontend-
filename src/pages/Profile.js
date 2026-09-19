@@ -18,4 +18,8 @@ function Profile() {
       <input placeholder="Religion" onChange={(e) => setProfile({ ...profile, religion: e.target.value })} />
       <input placeholder="Location" onChange={(e) => setProfile({ ...profile, location: e.target.value })} />
       <button type="submit">Save Profile</button>
-    </
+    </form>
+  );
+}
+
+export default Profile;
