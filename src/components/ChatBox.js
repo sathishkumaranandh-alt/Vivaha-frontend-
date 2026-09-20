@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import supabase from "../supabaseClient";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
