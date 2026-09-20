@@ -15,6 +15,7 @@ import Subscription from "./pages/Subscription";
 import SubscriptionDashboard from "./pages/SubscriptionDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import Messages from "./pages/Messages";
 
 function App() {
   return (
@@ -64,6 +65,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Recommendations />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <Messages />
             </ProtectedRoute>
           }
         />
