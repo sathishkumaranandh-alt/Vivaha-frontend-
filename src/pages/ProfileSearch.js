@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import supabase from "../supabaseClient";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function ProfileSearch() {
-  // Filter state
   const [filters, setFilters] = useState({
     age_min: "",
     age_max: "",
@@ -18,11 +18,21 @@ function ProfileSearch() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   // ============================================================
-  // LOAD ALL PROFILES ON FIRST LOAD
+  // GET CURRENT USER + INITIAL SEARCH
   // ============================================================
   useEffect(() => {
+    async function getCurrentUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    }
+    getCurrentUser();
     runSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -30,14 +40,13 @@ function ProfileSearch() {
   // ============================================================
   // RUN SEARCH
   // ============================================================
-  const runSearch = async (customFilters = null) => {
+  const runSearch = async (customFilters = null, excludeId = null) => {
     try {
       setLoading(true);
       setError(null);
 
       const f = customFilters || filters;
 
-      // Build query string
       const params = new URLSearchParams();
       if (f.age_min) params.append("age_min", f.age_min);
       if (f.age_max) params.append("age_max", f.age_max);
@@ -53,11 +62,20 @@ function ProfileSearch() {
       if (!res.ok) throw new Error("Search failed");
 
       const data = await res.json();
-      setResults(data.results || []);
+
+      // Exclude the current user from results
+      const userIdToExclude = excludeId || currentUserId;
+      const filtered = userIdToExclude
+        ? (data.results || []).filter((p) => p.id !== userIdToExclude)
+        : data.results || [];
+
+      setResults(filtered);
       setSearched(true);
     } catch (err) {
       console.error("Search error:", err);
-      setError("Could not load results. Backend may be waking up — try again in 30 seconds.");
+      setError(
+        "Could not load results. Backend may be waking up — try again in 30 seconds."
+      );
     } finally {
       setLoading(false);
     }
@@ -92,7 +110,6 @@ function ProfileSearch() {
   // ============================================================
   return (
     <div style={pageStyle}>
-      {/* ===== HEADER ===== */}
       <div style={headerStyle}>
         <h1 style={titleStyle}>🔍 Find Your Match</h1>
         <p style={subtitleStyle}>
@@ -100,10 +117,8 @@ function ProfileSearch() {
         </p>
       </div>
 
-      {/* ===== FILTERS ===== */}
       <form onSubmit={handleSubmit} style={filterCardStyle}>
         <div style={filterGridStyle}>
-          {/* Age min */}
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>Min Age</label>
             <input
@@ -118,7 +133,6 @@ function ProfileSearch() {
             />
           </div>
 
-          {/* Age max */}
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>Max Age</label>
             <input
@@ -133,7 +147,6 @@ function ProfileSearch() {
             />
           </div>
 
-          {/* Gender */}
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>Gender</label>
             <select
@@ -149,7 +162,6 @@ function ProfileSearch() {
             </select>
           </div>
 
-          {/* Religion */}
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>Religion</label>
             <input
@@ -162,7 +174,6 @@ function ProfileSearch() {
             />
           </div>
 
-          {/* Location */}
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>Location</label>
             <input
@@ -176,7 +187,6 @@ function ProfileSearch() {
           </div>
         </div>
 
-        {/* Buttons */}
         <div style={buttonRowStyle}>
           <button type="submit" disabled={loading} style={searchButtonStyle}>
             {loading ? "Searching... ⏳" : "🔍 Search"}
@@ -192,7 +202,6 @@ function ProfileSearch() {
         </div>
       </form>
 
-      {/* ===== RESULTS ===== */}
       <div style={resultsSectionStyle}>
         {loading && !searched && (
           <p style={{ textAlign: "center", color: "#666", marginTop: "40px" }}>
@@ -288,7 +297,11 @@ function ProfileCard({ profile }) {
 
       {profile.bio && (
         <p style={bioStyle}>
-          "{profile.bio.length > 100 ? profile.bio.slice(0, 100) + "..." : profile.bio}"
+          "
+          {profile.bio.length > 100
+            ? profile.bio.slice(0, 100) + "..."
+            : profile.bio}
+          "
         </p>
       )}
 
@@ -425,7 +438,6 @@ const cardStyle = {
   display: "flex",
   flexDirection: "column",
   gap: "10px",
-  transition: "transform 0.2s, box-shadow 0.2s",
 };
 
 const cardPhotoWrapperStyle = {
