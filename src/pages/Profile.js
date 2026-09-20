@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import supabase from "../supabaseClient";
+import ImageUpload from "../components/ImageUpload";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function Profile() {
-  // Get :id from URL (undefined if just /profile)
   const { id } = useParams();
   const isOwnProfile = !id;
 
@@ -23,6 +23,7 @@ function Profile() {
     bio: "",
     photo_url: "",
   });
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -50,6 +51,9 @@ function Profile() {
           return;
         }
 
+        // Save current user's ID for ImageUpload
+        setCurrentUserId(user.id);
+
         const targetId = id || user.id;
 
         const res = await fetch(`${BACKEND_URL}/profile/${targetId}`);
@@ -71,7 +75,6 @@ function Profile() {
             setProfileExists(true);
           }
         } else if (res.status === 404 && isOwnProfile) {
-          // Profile doesn't exist yet — auto-open editing
           setProfileExists(false);
           setIsEditing(true);
         } else {
@@ -126,7 +129,7 @@ function Profile() {
         body: JSON.stringify(profileData),
       });
 
-      // Fallback to direct Supabase if backend fails
+      // Fallback to Supabase if backend fails
       if (!res.ok) {
         const { error: supaError } = await supabase
           .from("users")
@@ -147,7 +150,7 @@ function Profile() {
   };
 
   // ============================================================
-  // RENDERING
+  // RENDER
   // ============================================================
 
   if (loading) {
@@ -172,7 +175,7 @@ function Profile() {
   }
 
   // ============================================================
-  // EDIT MODE (only for own profile)
+  // EDIT MODE
   // ============================================================
   if (isOwnProfile && isEditing) {
     return (
@@ -187,6 +190,20 @@ function Profile() {
               : "Fill in your details to create your profile."}
           </p>
 
+          {/* ===== PHOTO UPLOAD ===== */}
+          {currentUserId && (
+            <div style={{ marginBottom: "24px" }}>
+              <ImageUpload
+                userId={currentUserId}
+                currentPhotoUrl={profile.photo_url}
+                onUploadSuccess={(url) =>
+                  setProfile({ ...profile, photo_url: url })
+                }
+              />
+            </div>
+          )}
+
+          {/* ===== FORM ===== */}
           <form
             onSubmit={handleSave}
             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -254,14 +271,6 @@ function Profile() {
               }
               style={inputStyle}
             />
-            <input
-              placeholder="Photo URL (optional)"
-              value={profile.photo_url}
-              onChange={(e) =>
-                setProfile({ ...profile, photo_url: e.target.value })
-              }
-              style={inputStyle}
-            />
             <textarea
               placeholder="About yourself (bio)"
               value={profile.bio}
@@ -300,18 +309,16 @@ function Profile() {
   }
 
   // ============================================================
-  // CARD VIEW (both own and others)
+  // CARD VIEW
   // ============================================================
   return (
     <div style={containerStyle}>
       {success && (
-        <div style={successBannerStyle}>
-          ✅ Profile saved successfully!
-        </div>
+        <div style={successBannerStyle}>✅ Profile saved successfully!</div>
       )}
 
       <div style={cardStyle}>
-        {/* HEADER — Photo + Name + Basic Info */}
+        {/* HEADER */}
         <div style={headerRowStyle}>
           <div style={avatarStyle}>
             {profile.photo_url ? (
@@ -341,7 +348,7 @@ function Profile() {
           </div>
         </div>
 
-        {/* DETAILS GRID */}
+        {/* DETAILS */}
         <div style={detailsGridStyle}>
           {profile.religion && (
             <DetailItem label="🕉️ Religion" value={profile.religion} />
@@ -390,7 +397,7 @@ function Profile() {
           </div>
         )}
 
-        {/* ACTION BUTTONS */}
+        {/* ACTIONS */}
         <div style={actionRowStyle}>
           {isOwnProfile ? (
             <>
@@ -429,7 +436,6 @@ function Profile() {
         </div>
       </div>
 
-      {/* SAFETY: Show a message if user hasn't set profile yet (only own) */}
       {isOwnProfile && !profileExists && (
         <div style={emptyStateStyle}>
           <p style={{ margin: 0, color: "#666" }}>
@@ -499,16 +505,17 @@ const headerRowStyle = {
 };
 
 const avatarStyle = {
-  width: "90px",
-  height: "90px",
+  width: "100px",
+  height: "100px",
   borderRadius: "50%",
   background: "#f3f4f6",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "42px",
+  fontSize: "48px",
   overflow: "hidden",
   flexShrink: 0,
+  border: "3px solid #1e3a8a",
 };
 
 const detailsGridStyle = {
