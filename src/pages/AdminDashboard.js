@@ -8,13 +8,16 @@ const BACKEND_URL =
 function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState("all"); // all | verified | suspended | admins
-  const [selectedUser, setSelectedUser] = useState(null); // for details modal
-  const [actionLoading, setActionLoading] = useState(null); // userId being processed
+  const [userFilter, setUserFilter] = useState("all");
+  const [reportFilter, setReportFilter] = useState("pending");
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [mainTab, setMainTab] = useState("users"); // "users" | "reports"
 
   // ============================================================
   // LOAD DATA
@@ -59,9 +62,10 @@ function AdminDashboard() {
   }, []);
 
   const reloadData = async () => {
-    const [statsRes, usersRes] = await Promise.all([
+    const [statsRes, usersRes, reportsRes] = await Promise.all([
       fetch(`${BACKEND_URL}/profile/admin/stats`),
       fetch(`${BACKEND_URL}/profile/admin/users?limit=100`),
+      fetch(`${BACKEND_URL}/reports/all`),
     ]);
 
     if (statsRes.ok) setStats(await statsRes.json());
@@ -70,10 +74,15 @@ function AdminDashboard() {
       const data = await usersRes.json();
       setUsers(data.users || []);
     }
+
+    if (reportsRes.ok) {
+      const data = await reportsRes.json();
+      setReports(data.reports || []);
+    }
   };
 
   // ============================================================
-  // ACTIONS
+  // USER ACTIONS
   // ============================================================
   const handleVerify = async (userId, currentStatus) => {
     setActionLoading(userId);
@@ -119,13 +128,6 @@ function AdminDashboard() {
         }
       );
       if (res.ok) {
-        setUsers((prev) =>
-          prev.map((u) =>
-            u.id === userId
-              ? { ...u, is_suspended: true, suspend_reason: reason }
-              : u
-          )
-        );
         await reloadData();
       }
     } catch (err) {
@@ -142,16 +144,7 @@ function AdminDashboard() {
         `${BACKEND_URL}/profile/admin/users/${userId}/unsuspend`,
         { method: "PATCH" }
       );
-      if (res.ok) {
-        setUsers((prev) =>
-          prev.map((u) =>
-            u.id === userId
-              ? { ...u, is_suspended: false, suspend_reason: null }
-              : u
-          )
-        );
-        await reloadData();
-      }
+      if (res.ok) await reloadData();
     } catch (err) {
       console.error("Unsuspend error:", err);
     } finally {
@@ -160,12 +153,7 @@ function AdminDashboard() {
   };
 
   const handleRoleChange = async (userId, newRole) => {
-    if (
-      !window.confirm(
-        `Change this user's role to "${newRole}"?`
-      )
-    )
-      return;
+    if (!window.confirm(`Change this user's role to "${newRole}"?`)) return;
 
     setActionLoading(userId);
     try {
@@ -228,18 +216,104 @@ function AdminDashboard() {
   };
 
   // ============================================================
+  // REPORT ACTIONS
+  // ============================================================
+  const handleResolveReport = async (reportId, action) => {
+    setActionLoading(reportId);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const res = await fetch(
+        `${BACKEND_URL}/reports/${reportId}/resolve`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            resolved_by: user?.id,
+            action: action || "resolved",
+          }),
+        }
+      );
+
+      if (res.ok) {
+        setReports((prev) =>
+          prev.map((r) =>
+            r.id === reportId ? { ...r, status: "resolved" } : r
+          )
+        );
+        await reloadData();
+      }
+    } catch (err) {
+      console.error("Resolve error:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDismissReport = async (reportId) => {
+    if (!window.confirm("Dismiss this report? No action will be taken.")) return;
+
+    setActionLoading(reportId);
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/reports/${reportId}/dismiss`,
+        { method: "PATCH" }
+      );
+      if (res.ok) {
+        setReports((prev) =>
+          prev.map((r) =>
+            r.id === reportId ? { ...r, status: "dismissed" } : r
+          )
+        );
+        await reloadData();
+      }
+    } catch (err) {
+      console.error("Dismiss error:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSuspendReportedUser = async (report, reportId) => {
+    const reason = window.prompt(
+      `Reason for suspending ${report.reportedUser?.name || "this user"}:`,
+      `Reported: ${report.reason}`
+    );
+    if (reason === null) return;
+
+    setActionLoading(reportId);
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/profile/admin/users/${report.reported_user_id}/suspend`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason }),
+        }
+      );
+      if (res.ok) {
+        await handleResolveReport(reportId, "user_suspended");
+      }
+    } catch (err) {
+      console.error("Suspend reported user error:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // ============================================================
   // FILTERING
   // ============================================================
   const filteredUsers = users
     .filter((u) => {
-      // Apply tab filter
-      if (filter === "verified") return u.is_verified;
-      if (filter === "suspended") return u.is_suspended;
-      if (filter === "admins") return u.role === "admin";
+      if (userFilter === "verified") return u.is_verified;
+      if (userFilter === "suspended") return u.is_suspended;
+      if (userFilter === "admins") return u.role === "admin";
       return true;
     })
     .filter((u) => {
-      // Apply search
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
       return (
@@ -249,6 +323,16 @@ function AdminDashboard() {
         (u.religion || "").toLowerCase().includes(q)
       );
     });
+
+  const filteredReports = reports.filter((r) => {
+    if (reportFilter === "pending") return r.status === "pending";
+    if (reportFilter === "resolved") return r.status === "resolved";
+    if (reportFilter === "dismissed") return r.status === "dismissed";
+    return true;
+  });
+
+  const pendingReportsCount = reports.filter((r) => r.status === "pending")
+    .length;
 
   // ============================================================
   // RENDERING
@@ -309,218 +393,296 @@ function AdminDashboard() {
           <StatCard icon="👨" label="Male" value={stats.maleUsers} color="#2563eb" />
           <StatCard icon="👩" label="Female" value={stats.femaleUsers} color="#db2777" />
           <StatCard icon="💬" label="Messages" value={stats.totalMessages} color="#16a34a" />
-          <StatCard icon="🆕" label="New (7d)" value={stats.recentSignups} color="#ea580c" />
           <StatCard icon="✔️" label="Verified" value={stats.verifiedUsers} color="#059669" />
           <StatCard icon="🚫" label="Suspended" value={stats.suspendedUsers} color="#dc2626" />
         </div>
       )}
 
-      {/* USERS SECTION */}
-      <div style={sectionStyle}>
-        <div style={sectionHeaderStyle}>
-          <h2 style={sectionTitleStyle}>All Users ({filteredUsers.length})</h2>
-          <input
-            type="text"
-            placeholder="🔍 Search by name, email, location..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={searchInputStyle}
-          />
-        </div>
+      {/* MAIN TABS */}
+      <div style={mainTabsStyle}>
+        <button
+          onClick={() => setMainTab("users")}
+          style={{
+            ...mainTabButtonStyle,
+            background: mainTab === "users" ? "#1e3a8a" : "#f3f4f6",
+            color: mainTab === "users" ? "white" : "#374151",
+          }}
+        >
+          👥 Users ({users.length})
+        </button>
+        <button
+          onClick={() => setMainTab("reports")}
+          style={{
+            ...mainTabButtonStyle,
+            background: mainTab === "reports" ? "#dc2626" : "#f3f4f6",
+            color: mainTab === "reports" ? "white" : "#374151",
+          }}
+        >
+          🚨 Reports ({pendingReportsCount} pending)
+        </button>
+      </div>
 
-        {/* FILTER TABS */}
-        <div style={tabsStyle}>
-          {[
-            { key: "all", label: `All (${users.length})` },
-            { key: "verified", label: `✔️ Verified (${users.filter((u) => u.is_verified).length})` },
-            { key: "suspended", label: `🚫 Suspended (${users.filter((u) => u.is_suspended).length})` },
-            { key: "admins", label: `👑 Admins (${users.filter((u) => u.role === "admin").length})` },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setFilter(tab.key)}
-              style={{
-                ...tabButtonStyle,
-                background: filter === tab.key ? "#1e3a8a" : "#f3f4f6",
-                color: filter === tab.key ? "white" : "#374151",
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      {/* ============================================================
+          USERS TAB
+      ============================================================ */}
+      {mainTab === "users" && (
+        <div style={sectionStyle}>
+          <div style={sectionHeaderStyle}>
+            <h2 style={sectionTitleStyle}>All Users ({filteredUsers.length})</h2>
+            <input
+              type="text"
+              placeholder="🔍 Search by name, email, location..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={searchInputStyle}
+            />
+          </div>
 
-        {/* USERS TABLE */}
-        {filteredUsers.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#888", padding: "40px" }}>
-            No users found.
-          </p>
-        ) : (
-          <div style={tableWrapperStyle}>
-            <table style={tableStyle}>
-              <thead>
-                <tr style={tableHeaderRowStyle}>
-                  <th style={thStyle}>Photo</th>
-                  <th style={thStyle}>Name</th>
-                  <th style={thStyle}>Email</th>
-                  <th style={thStyle}>Age</th>
-                  <th style={thStyle}>Gender</th>
-                  <th style={thStyle}>Location</th>
-                  <th style={thStyle}>Status</th>
-                  <th style={thStyle}>Role</th>
-                  <th style={thStyle}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((u) => (
-                  <tr
-                    key={u.id}
-                    style={{
-                      ...tableRowStyle,
-                      background: u.is_suspended ? "#fef2f2" : "transparent",
-                      opacity: actionLoading === u.id ? 0.5 : 1,
-                    }}
-                  >
-                    <td style={tdStyle}>
-                      <div style={avatarSmallStyle}>
-                        {u.photo_url ? (
-                          <img
-                            src={u.photo_url}
-                            alt={u.name}
+          <div style={tabsStyle}>
+            {[
+              { key: "all", label: `All (${users.length})` },
+              { key: "verified", label: `✔️ Verified (${users.filter((u) => u.is_verified).length})` },
+              { key: "suspended", label: `🚫 Suspended (${users.filter((u) => u.is_suspended).length})` },
+              { key: "admins", label: `👑 Admins (${users.filter((u) => u.role === "admin").length})` },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setUserFilter(tab.key)}
+                style={{
+                  ...tabButtonStyle,
+                  background: userFilter === tab.key ? "#1e3a8a" : "#f3f4f6",
+                  color: userFilter === tab.key ? "white" : "#374151",
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {filteredUsers.length === 0 ? (
+            <p style={{ textAlign: "center", color: "#888", padding: "40px" }}>
+              No users found.
+            </p>
+          ) : (
+            <div style={tableWrapperStyle}>
+              <table style={tableStyle}>
+                <thead>
+                  <tr style={tableHeaderRowStyle}>
+                    <th style={thStyle}>Photo</th>
+                    <th style={thStyle}>Name</th>
+                    <th style={thStyle}>Email</th>
+                    <th style={thStyle}>Age</th>
+                    <th style={thStyle}>Gender</th>
+                    <th style={thStyle}>Location</th>
+                    <th style={thStyle}>Status</th>
+                    <th style={thStyle}>Role</th>
+                    <th style={thStyle}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((u) => (
+                    <tr
+                      key={u.id}
+                      style={{
+                        ...tableRowStyle,
+                        background: u.is_suspended ? "#fef2f2" : "transparent",
+                        opacity: actionLoading === u.id ? 0.5 : 1,
+                      }}
+                    >
+                      <td style={tdStyle}>
+                        <div style={avatarSmallStyle}>
+                          {u.photo_url ? (
+                            <img
+                              src={u.photo_url}
+                              alt={u.name}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            "👤"
+                          )}
+                        </div>
+                      </td>
+                      <td style={tdStyle}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                          {u.name || "—"}
+                          {u.is_verified && (
+                            <span style={verifiedBadgeStyle} title="Verified">
+                              ✔️
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ ...tdStyle, fontSize: "12px", color: "#666" }}>
+                        {u.email || "—"}
+                      </td>
+                      <td style={tdStyle}>{u.age || "—"}</td>
+                      <td style={tdStyle}>
+                        {u.gender ? (
+                          <span
                             style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
+                              padding: "3px 8px",
+                              borderRadius: "12px",
+                              fontSize: "12px",
+                              background:
+                                u.gender === "male" ? "#dbeafe" : "#fce7f3",
+                              color: u.gender === "male" ? "#1e40af" : "#9f1239",
                             }}
-                          />
+                          >
+                            {u.gender}
+                          </span>
                         ) : (
-                          "👤"
+                          "—"
                         )}
-                      </div>
-                    </td>
-                    <td style={tdStyle}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                        {u.name || "—"}
-                        {u.is_verified && (
-                          <span style={verifiedBadgeStyle} title="Verified">✔️</span>
+                      </td>
+                      <td style={tdStyle}>{u.location || "—"}</td>
+                      <td style={tdStyle}>
+                        {u.is_suspended ? (
+                          <span style={suspendedBadgeStyle}>🚫 Suspended</span>
+                        ) : (
+                          <span style={activeBadgeStyle}>● Active</span>
                         )}
-                      </div>
-                    </td>
-                    <td style={{ ...tdStyle, fontSize: "12px", color: "#666" }}>
-                      {u.email || "—"}
-                    </td>
-                    <td style={tdStyle}>{u.age || "—"}</td>
-                    <td style={tdStyle}>
-                      {u.gender ? (
-                        <span
-                          style={{
-                            padding: "3px 8px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            background: u.gender === "male" ? "#dbeafe" : "#fce7f3",
-                            color: u.gender === "male" ? "#1e40af" : "#9f1239",
-                          }}
-                        >
-                          {u.gender}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td style={tdStyle}>{u.location || "—"}</td>
-                    <td style={tdStyle}>
-                      {u.is_suspended ? (
-                        <span style={suspendedBadgeStyle}>🚫 Suspended</span>
-                      ) : (
-                        <span style={activeBadgeStyle}>● Active</span>
-                      )}
-                    </td>
-                    <td style={tdStyle}>
-                      <select
-                        value={u.role || "user"}
-                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                        style={roleSelectStyle}
-                        disabled={actionLoading === u.id}
-                      >
-                        <option value="user">👤 User</option>
-                        <option value="admin">👑 Admin</option>
-                      </select>
-                    </td>
-                    <td style={tdStyle}>
-                      <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                        {/* View */}
-                        <button
-                          onClick={() => handleViewDetails(u.id)}
-                          style={viewBtnStyle}
-                          title="View Details"
-                        >
-                          👁️
-                        </button>
-
-                        {/* Verify */}
-                        <button
-                          onClick={() => handleVerify(u.id, u.is_verified)}
-                          style={
-                            u.is_verified
-                              ? unverifyBtnStyle
-                              : verifyBtnStyle
-                          }
-                          title={u.is_verified ? "Remove verification" : "Verify user"}
+                      </td>
+                      <td style={tdStyle}>
+                        <select
+                          value={u.role || "user"}
+                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                          style={roleSelectStyle}
                           disabled={actionLoading === u.id}
                         >
-                          {u.is_verified ? "✖️" : "✔️"}
-                        </button>
+                          <option value="user">👤 User</option>
+                          <option value="admin">👑 Admin</option>
+                        </select>
+                      </td>
+                      <td style={tdStyle}>
+                        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                          <button
+                            onClick={() => handleViewDetails(u.id)}
+                            style={viewBtnStyle}
+                            title="View Details"
+                          >
+                            👁️
+                          </button>
+                          <button
+                            onClick={() => handleVerify(u.id, u.is_verified)}
+                            style={
+                              u.is_verified ? unverifyBtnStyle : verifyBtnStyle
+                            }
+                            title={u.is_verified ? "Remove verification" : "Verify user"}
+                            disabled={actionLoading === u.id}
+                          >
+                            {u.is_verified ? "✖️" : "✔️"}
+                          </button>
+                          {u.is_suspended ? (
+                            <button
+                              onClick={() => handleUnsuspend(u.id)}
+                              style={unsuspendBtnStyle}
+                              title="Unsuspend user"
+                              disabled={actionLoading === u.id}
+                            >
+                              ✅
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleSuspend(u.id, u.name)}
+                              style={suspendBtnStyle}
+                              title="Suspend user"
+                              disabled={actionLoading === u.id}
+                            >
+                              🚫
+                            </button>
+                          )}
+                          {u.role !== "admin" && (
+                            <button
+                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              style={deleteBtnStyle}
+                              title="Delete user"
+                              disabled={actionLoading === u.id}
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
-                        {/* Suspend / Unsuspend */}
-                        {u.is_suspended ? (
-                          <button
-                            onClick={() => handleUnsuspend(u.id)}
-                            style={unsuspendBtnStyle}
-                            title="Unsuspend user"
-                            disabled={actionLoading === u.id}
-                          >
-                            ✅
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleSuspend(u.id, u.name)}
-                            style={suspendBtnStyle}
-                            title="Suspend user"
-                            disabled={actionLoading === u.id}
-                          >
-                            🚫
-                          </button>
-                        )}
-
-                        {/* Delete */}
-                        {u.role !== "admin" && (
-                          <button
-                            onClick={() => handleDeleteUser(u.id, u.name)}
-                            style={deleteBtnStyle}
-                            title="Delete user"
-                            disabled={actionLoading === u.id}
-                          >
-                            🗑️
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* ============================================================
+          REPORTS TAB
+      ============================================================ */}
+      {mainTab === "reports" && (
+        <div style={sectionStyle}>
+          <div style={sectionHeaderStyle}>
+            <h2 style={sectionTitleStyle}>
+              Reports ({filteredReports.length})
+            </h2>
           </div>
-        )}
-      </div>
+
+          <div style={tabsStyle}>
+            {[
+              { key: "pending", label: `🚨 Pending (${reports.filter((r) => r.status === "pending").length})` },
+              { key: "resolved", label: `✅ Resolved (${reports.filter((r) => r.status === "resolved").length})` },
+              { key: "dismissed", label: `✖️ Dismissed (${reports.filter((r) => r.status === "dismissed").length})` },
+              { key: "all", label: `📋 All (${reports.length})` },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setReportFilter(tab.key)}
+                style={{
+                  ...tabButtonStyle,
+                  background: reportFilter === tab.key ? "#dc2626" : "#f3f4f6",
+                  color: reportFilter === tab.key ? "white" : "#374151",
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {filteredReports.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <div style={{ fontSize: "60px", marginBottom: "12px" }}>🎉</div>
+              <p style={{ color: "#666", fontSize: "17px" }}>
+                No {reportFilter} reports.
+              </p>
+              <p style={{ color: "#999", fontSize: "14px" }}>
+                {reportFilter === "pending"
+                  ? "You're all caught up!"
+                  : "Nothing to show here."}
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {filteredReports.map((r) => (
+                <ReportCard
+                  key={r.id}
+                  report={r}
+                  loading={actionLoading === r.id}
+                  onResolve={() => handleResolveReport(r.id, "resolved")}
+                  onDismiss={() => handleDismissReport(r.id)}
+                  onSuspend={() => handleSuspendReportedUser(r, r.id)}
+                  onViewReportedUser={() => handleViewDetails(r.reported_user_id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* DETAILS MODAL */}
       {selectedUser && (
         <div style={modalOverlayStyle} onClick={() => setSelectedUser(null)}>
           <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => setSelectedUser(null)}
-              style={modalCloseStyle}
-            >
+            <button onClick={() => setSelectedUser(null)} style={modalCloseStyle}>
               ✕
             </button>
             <h2 style={{ marginTop: 0, color: "#1e3a8a" }}>
@@ -591,6 +753,91 @@ function StatCard({ icon, label, value, color }) {
   );
 }
 
+function ReportCard({ report, loading, onResolve, onDismiss, onSuspend, onViewReportedUser }) {
+  const statusColors = {
+    pending: { bg: "#fef3c7", color: "#92400e", text: "🚨 Pending" },
+    resolved: { bg: "#dcfce7", color: "#166534", text: "✅ Resolved" },
+    dismissed: { bg: "#e5e7eb", color: "#4b5563", text: "✖️ Dismissed" },
+  };
+  const statusStyle = statusColors[report.status] || statusColors.pending;
+
+  return (
+    <div style={{ ...reportCardStyle, opacity: loading ? 0.6 : 1 }}>
+      <div style={reportHeaderStyle}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span
+            style={{
+              background: statusStyle.bg,
+              color: statusStyle.color,
+              padding: "4px 10px",
+              borderRadius: "12px",
+              fontSize: "12px",
+              fontWeight: "600",
+            }}
+          >
+            {statusStyle.text}
+          </span>
+          <span style={{ fontSize: "12px", color: "#666" }}>
+            {new Date(report.created_at).toLocaleString("en-IN")}
+          </span>
+        </div>
+      </div>
+
+      <div style={reportBodyStyle}>
+        <div style={reportUserBlockStyle}>
+          <p style={reportLabelStyle}>👤 Reported User:</p>
+          <p style={reportUserStyle}>
+            {report.reportedUser?.name || "Unknown"}
+            {report.reportedUser?.is_suspended && (
+              <span style={{ ...suspendedBadgeStyle, marginLeft: "8px" }}>
+                🚫 Suspended
+              </span>
+            )}
+          </p>
+        </div>
+
+        <div style={reportUserBlockStyle}>
+          <p style={reportLabelStyle}>📢 Reported By:</p>
+          <p style={reportUserStyle}>{report.reporter?.name || "Unknown"}</p>
+        </div>
+
+        <div style={reportUserBlockStyle}>
+          <p style={reportLabelStyle}>⚠️ Reason:</p>
+          <p style={{ ...reportUserStyle, textTransform: "capitalize" }}>
+            {report.reason?.replace(/_/g, " ") || "—"}
+          </p>
+        </div>
+
+        {report.details && (
+          <div style={{ ...reportUserBlockStyle, gridColumn: "1 / -1" }}>
+            <p style={reportLabelStyle}>📝 Details:</p>
+            <p style={{ ...reportUserStyle, fontStyle: "italic" }}>
+              "{report.details}"
+            </p>
+          </div>
+        )}
+      </div>
+
+      {report.status === "pending" && (
+        <div style={reportActionsStyle}>
+          <button onClick={onViewReportedUser} style={reportViewBtnStyle}>
+            👁️ View User
+          </button>
+          <button onClick={onSuspend} style={reportSuspendBtnStyle}>
+            🚫 Suspend User
+          </button>
+          <button onClick={onResolve} style={reportResolveBtnStyle}>
+            ✅ Mark Resolved
+          </button>
+          <button onClick={onDismiss} style={reportDismissBtnStyle}>
+            ✖️ Dismiss
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DetailRow({ label, value }) {
   return (
     <div
@@ -645,6 +892,25 @@ const statCardStyle = {
   textAlign: "center",
   boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
 };
+
+const mainTabsStyle = {
+  display: "flex",
+  gap: "12px",
+  marginBottom: "20px",
+  borderBottom: "2px solid #e5e7eb",
+  paddingBottom: "0",
+};
+
+const mainTabButtonStyle = {
+  border: "none",
+  padding: "12px 24px",
+  fontSize: "15px",
+  fontWeight: "700",
+  cursor: "pointer",
+  borderRadius: "8px 8px 0 0",
+  transition: "all 0.2s",
+};
+
 const sectionStyle = {
   background: "white",
   borderRadius: "12px",
@@ -790,6 +1056,95 @@ const deleteBtnStyle = {
   cursor: "pointer",
   fontSize: "13px",
 };
+
+const reportCardStyle = {
+  background: "#fafafa",
+  border: "1px solid #e5e7eb",
+  borderRadius: "12px",
+  padding: "16px",
+  transition: "all 0.2s",
+};
+const reportHeaderStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "12px",
+  paddingBottom: "10px",
+  borderBottom: "1px solid #e5e7eb",
+};
+const reportBodyStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+  gap: "12px",
+  marginBottom: "12px",
+};
+const reportUserBlockStyle = {
+  background: "white",
+  padding: "10px",
+  borderRadius: "8px",
+};
+const reportLabelStyle = {
+  margin: 0,
+  fontSize: "11px",
+  color: "#888",
+  textTransform: "uppercase",
+  fontWeight: "600",
+  marginBottom: "4px",
+};
+const reportUserStyle = {
+  margin: 0,
+  fontSize: "14px",
+  color: "#1e3a8a",
+  fontWeight: "600",
+};
+const reportActionsStyle = {
+  display: "flex",
+  gap: "8px",
+  flexWrap: "wrap",
+  paddingTop: "12px",
+  borderTop: "1px solid #e5e7eb",
+};
+const reportViewBtnStyle = {
+  background: "#eff6ff",
+  color: "#1e40af",
+  border: "none",
+  padding: "8px 14px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "13px",
+  fontWeight: "600",
+};
+const reportSuspendBtnStyle = {
+  background: "#fee2e2",
+  color: "#991b1b",
+  border: "none",
+  padding: "8px 14px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "13px",
+  fontWeight: "600",
+};
+const reportResolveBtnStyle = {
+  background: "#dcfce7",
+  color: "#166534",
+  border: "none",
+  padding: "8px 14px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "13px",
+  fontWeight: "600",
+};
+const reportDismissBtnStyle = {
+  background: "#e5e7eb",
+  color: "#4b5563",
+  border: "none",
+  padding: "8px 14px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "13px",
+  fontWeight: "600",
+};
+
 const modalOverlayStyle = {
   position: "fixed",
   top: 0,
