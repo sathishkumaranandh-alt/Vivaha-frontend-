@@ -5,13 +5,11 @@ import supabase from "../supabaseClient";
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
-function Subscription() {
+function SubscriptionDashboard() {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState([]);
-  const [currentSub, setCurrentSub] = useState(null);
-  const [userId, setUserId] = useState(null);
+  const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [subscribing, setSubscribing] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -25,22 +23,13 @@ function Subscription() {
           navigate("/login");
           return;
         }
-        setUserId(user.id);
 
-        // Fetch plans
-        const plansRes = await fetch(`${BACKEND_URL}/subscriptions/plans`);
-        if (plansRes.ok) {
-          const data = await plansRes.json();
-          setPlans(data.plans || []);
-        }
-
-        // Fetch current subscription
-        const subRes = await fetch(
+        const res = await fetch(
           `${BACKEND_URL}/subscriptions/user/${user.id}`
         );
-        if (subRes.ok) {
-          const data = await subRes.json();
-          setCurrentSub(data.subscription);
+        if (res.ok) {
+          const data = await res.json();
+          setSubscription(data.subscription);
         }
       } catch (err) {
         console.error("Load error:", err);
@@ -51,187 +40,252 @@ function Subscription() {
     load();
   }, [navigate]);
 
-  const handleSubscribe = async (planId) => {
-    if (planId === "free") {
-      alert("You're already on the free plan.");
-      return;
-    }
-
+  const handleCancel = async () => {
     if (
       !window.confirm(
-        `Subscribe to ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan?\n\n(Simulated payment for testing)`
+        "Are you sure you want to cancel your subscription?\nYou'll lose premium features at the end of the current period."
       )
     ) {
       return;
     }
 
     try {
-      setSubscribing(planId);
+      setCancelling(true);
 
-      const res = await fetch(`${BACKEND_URL}/subscriptions/create`, {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const res = await fetch(`${BACKEND_URL}/subscriptions/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, plan: planId }),
+        body: JSON.stringify({ user_id: user.id }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        alert("🎉 " + data.message);
-        setCurrentSub(data.subscription);
+        alert("Subscription cancelled");
+        setSubscription({
+          ...subscription,
+          status: "cancelled",
+        });
       } else {
-        const err = await res.json();
-        alert("Failed: " + (err.error || "Unknown error"));
+        alert("Failed to cancel");
       }
     } catch (err) {
-      console.error("Subscribe error:", err);
-      alert("Network error. Please try again.");
+      console.error("Cancel error:", err);
+      alert("Network error");
     } finally {
-      setSubscribing(null);
+      setCancelling(false);
     }
   };
 
   if (loading) {
     return (
       <div style={{ padding: "60px 20px", textAlign: "center" }}>
-        <p style={{ fontSize: "18px", color: "#666" }}>
-          Loading plans... ⏳
-        </p>
+        <p style={{ fontSize: "18px", color: "#666" }}>Loading... ⏳</p>
       </div>
     );
   }
 
-  const currentPlan = currentSub?.plan || "free";
+  if (!subscription) {
+    return (
+      <div style={{ padding: "60px 20px", textAlign: "center" }}>
+        <p style={{ fontSize: "18px", color: "#666" }}>
+          No subscription found.
+        </p>
+        <Link to="/subscription" style={primaryBtnStyle}>
+          View Plans
+        </Link>
+      </div>
+    );
+  }
+
+  const planName =
+    subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1);
+
+  const isActive = subscription.status === "active";
+  const isFree = subscription.plan === "free";
+  const isExpired = subscription.status === "expired";
+  const isCancelled = subscription.status === "cancelled";
+
+  // Calculate days remaining
+  let daysRemaining = null;
+  if (subscription.expires_at) {
+    const exp = new Date(subscription.expires_at);
+    const now = new Date();
+    daysRemaining = Math.max(
+      0,
+      Math.ceil((exp - now) / (1000 * 60 * 60 * 24))
+    );
+  }
 
   return (
     <div style={pageStyle}>
-      {/* HEADER */}
       <div style={headerStyle}>
-        <h1 style={titleStyle}>⭐ Choose Your Plan</h1>
-        <p style={subtitleStyle}>
-          Unlock premium features and find your perfect match faster
-        </p>
+        <h1 style={titleStyle}>⭐ My Subscription</h1>
+        <p style={subtitleStyle}>Manage your Vivaha premium plan</p>
       </div>
 
-      {/* CURRENT SUBSCRIPTION BANNER */}
-      {currentSub && currentPlan !== "free" && (
-        <div style={currentPlanBannerStyle}>
+      {/* MAIN CARD */}
+      <div style={cardStyle}>
+        {/* STATUS HEADER */}
+        <div
+          style={{
+            ...statusHeaderStyle,
+            background: isFree
+              ? "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)"
+              : isExpired || isCancelled
+              ? "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)"
+              : "linear-gradient(135deg, #16a34a 0%, #059669 100%)",
+          }}
+        >
           <div>
-            <p style={{ margin: 0, fontSize: "14px", opacity: 0.9 }}>
-              You're on the
+            <p style={{ margin: 0, fontSize: "13px", opacity: 0.9 }}>
+              Current Plan
             </p>
-            <p style={{ margin: "4px 0 0 0", fontSize: "20px", fontWeight: "bold" }}>
-              {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} Plan
-            </p>
-            {currentSub.expires_at && (
-              <p style={{ margin: "4px 0 0 0", fontSize: "13px", opacity: 0.9 }}>
-                Expires on{" "}
-                {new Date(currentSub.expires_at).toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
-            )}
+            <h2
+              style={{
+                margin: "4px 0 0 0",
+                fontSize: "32px",
+                fontWeight: "bold",
+              }}
+            >
+              {planName}
+            </h2>
           </div>
-          <Link to="/subscription-dashboard" style={managePlanBtnStyle}>
-            Manage Plan →
-          </Link>
+          <div style={statusBadgeStyle}>
+            {isFree && "FREE"}
+            {isActive && !isFree && "✓ ACTIVE"}
+            {isExpired && "⏰ EXPIRED"}
+            {isCancelled && "✖ CANCELLED"}
+          </div>
         </div>
-      )}
 
-      {/* PLANS GRID */}
-      <div style={plansGridStyle}>
-        {plans.map((plan) => (
-          <PlanCard
-            key={plan.id}
-            plan={plan}
-            isCurrent={plan.id === currentPlan}
-            onSubscribe={() => handleSubscribe(plan.id)}
-            loading={subscribing === plan.id}
+        {/* DETAILS */}
+        <div style={detailsSectionStyle}>
+          <DetailRow label="Plan" value={planName} />
+          <DetailRow
+            label="Status"
+            value={
+              <span
+                style={{
+                  color: isActive && !isFree ? "#16a34a" : "#666",
+                  fontWeight: "bold",
+                }}
+              >
+                {subscription.status}
+              </span>
+            }
           />
-        ))}
-      </div>
+          {subscription.amount > 0 && (
+            <DetailRow
+              label="Amount Paid"
+              value={`₹${subscription.amount}`}
+            />
+          )}
+          {subscription.started_at && (
+            <DetailRow
+              label="Started On"
+              value={new Date(subscription.started_at).toLocaleDateString(
+                "en-IN",
+                { day: "numeric", month: "long", year: "numeric" }
+              )}
+            />
+          )}
+          {subscription.expires_at && (
+            <DetailRow
+              label="Expires On"
+              value={new Date(subscription.expires_at).toLocaleDateString(
+                "en-IN",
+                { day: "numeric", month: "long", year: "numeric" }
+              )}
+            />
+          )}
+          {daysRemaining !== null && daysRemaining > 0 && !isFree && (
+            <DetailRow
+              label="Days Remaining"
+              value={
+                <span style={{ color: "#16a34a", fontWeight: "bold" }}>
+                  {daysRemaining} days
+                </span>
+              }
+            />
+          )}
+        </div>
 
-      {/* COMPARISON NOTE */}
-      <div style={noteStyle}>
-        <p style={{ margin: 0, fontSize: "14px", color: "#666" }}>
-          💡 <strong>Note:</strong> This is a simulated payment system for
-          testing. Real payment integration (Razorpay) will be added in Phase 5.
-        </p>
+        {/* FEATURES */}
+        {!isFree && (
+          <div style={featuresSectionStyle}>
+            <h3 style={featuresTitleStyle}>✨ Your Premium Features</h3>
+            <ul style={featuresListStyle}>
+              {subscription.plan === "gold" && (
+                <>
+                  <FeatureItem>Unlimited profile views</FeatureItem>
+                  <FeatureItem>Unlimited messages</FeatureItem>
+                  <FeatureItem>See who viewed your profile</FeatureItem>
+                  <FeatureItem>Advanced search filters</FeatureItem>
+                  <FeatureItem>Priority customer support</FeatureItem>
+                </>
+              )}
+              {subscription.plan === "platinum" && (
+                <>
+                  <FeatureItem>Everything in Gold</FeatureItem>
+                  <FeatureItem>Featured profile (top of search)</FeatureItem>
+                  <FeatureItem>Verified badge</FeatureItem>
+                  <FeatureItem>Profile boost weekly</FeatureItem>
+                  <FeatureItem>Direct contact details access</FeatureItem>
+                  <FeatureItem>Dedicated relationship manager</FeatureItem>
+                </>
+              )}
+            </ul>
+          </div>
+        )}
+
+        {/* ACTIONS */}
+        <div style={actionsStyle}>
+          <Link to="/subscription" style={primaryBtnStyle}>
+            {isFree ? "⭐ Upgrade Plan" : "🔄 Change Plan"}
+          </Link>
+          {!isFree && isActive && (
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              style={{
+                ...dangerBtnStyle,
+                opacity: cancelling ? 0.6 : 1,
+                cursor: cancelling ? "not-allowed" : "pointer",
+              }}
+            >
+              {cancelling ? "Cancelling..." : "✖ Cancel Subscription"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 // ============================================================
-// PLAN CARD COMPONENT
+// SUB-COMPONENTS
 // ============================================================
-function PlanCard({ plan, isCurrent, onSubscribe, loading }) {
-  const isPopular = plan.popular;
-
+function DetailRow({ label, value }) {
   return (
-    <div
-      style={{
-        ...planCardStyle,
-        border: isPopular ? "3px solid #fbbf24" : "1px solid #e5e7eb",
-        position: "relative",
-        transform: isPopular ? "scale(1.03)" : "scale(1)",
-      }}
-    >
-      {isPopular && <div style={popularBadgeStyle}>⭐ MOST POPULAR</div>}
-
-      <h2 style={planNameStyle}>{plan.name}</h2>
-      <p style={planDurationStyle}>{plan.duration}</p>
-
-      <div style={priceRowStyle}>
-        <span style={priceStyle}>₹{plan.price}</span>
-        {plan.price > 0 && (
-          <span style={priceSubStyle}>
-            /{plan.duration.replace(" days", "d")}
-          </span>
-        )}
-      </div>
-
-      <ul style={featuresListStyle}>
-        {plan.features.map((f, i) => (
-          <li key={i} style={featureItemStyle}>
-            <span style={checkIconStyle}>✓</span>
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-
-      <button
-        onClick={onSubscribe}
-        disabled={isCurrent || loading || plan.id === "free"}
-        style={{
-          ...subscribeBtnStyle,
-          background: isCurrent
-            ? "#94a3b8"
-            : plan.id === "free"
-            ? "#e5e7eb"
-            : isPopular
-            ? "#fbbf24"
-            : "#1e3a8a",
-          color:
-            plan.id === "free" && !isCurrent
-              ? "#666"
-              : isPopular && !isCurrent
-              ? "#1e3a8a"
-              : "white",
-          cursor:
-            isCurrent || plan.id === "free" ? "not-allowed" : "pointer",
-        }}
-      >
-        {isCurrent
-          ? "✓ Current Plan"
-          : plan.id === "free"
-          ? "Free Plan"
-          : loading
-          ? "Processing..."
-          : `Subscribe to ${plan.name}`}
-      </button>
+    <div style={detailRowStyle}>
+      <span style={{ color: "#666", fontSize: "14px" }}>{label}</span>
+      <span style={{ color: "#1e3a8a", fontWeight: "600", fontSize: "14px" }}>
+        {value}
+      </span>
     </div>
+  );
+}
+
+function FeatureItem({ children }) {
+  return (
+    <li style={featureItemStyle}>
+      <span style={checkIconStyle}>✓</span>
+      <span>{children}</span>
+    </li>
   );
 }
 
@@ -239,34 +293,38 @@ function PlanCard({ plan, isCurrent, onSubscribe, loading }) {
 // STYLES
 // ============================================================
 const pageStyle = {
-  maxWidth: "1100px",
+  maxWidth: "700px",
   margin: "0 auto",
   padding: "24px 16px",
 };
 
 const headerStyle = {
   textAlign: "center",
-  marginBottom: "30px",
+  marginBottom: "24px",
 };
 
 const titleStyle = {
   color: "#1e3a8a",
-  fontSize: "32px",
-  margin: "0 0 8px 0",
+  fontSize: "28px",
+  margin: "0 0 4px 0",
 };
 
 const subtitleStyle = {
   color: "#666",
-  fontSize: "15px",
+  fontSize: "14px",
   margin: 0,
 };
 
-const currentPlanBannerStyle = {
-  background: "linear-gradient(135deg, #16a34a 0%, #059669 100%)",
+const cardStyle = {
+  background: "white",
+  borderRadius: "16px",
+  overflow: "hidden",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+};
+
+const statusHeaderStyle = {
+  padding: "24px",
   color: "white",
-  borderRadius: "12px",
-  padding: "20px",
-  marginBottom: "30px",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
@@ -274,92 +332,48 @@ const currentPlanBannerStyle = {
   gap: "12px",
 };
 
-const managePlanBtnStyle = {
-  background: "white",
-  color: "#16a34a",
-  padding: "10px 20px",
-  borderRadius: "8px",
-  textDecoration: "none",
+const statusBadgeStyle = {
+  background: "rgba(255,255,255,0.2)",
+  padding: "6px 14px",
+  borderRadius: "20px",
+  fontSize: "12px",
   fontWeight: "bold",
-  fontSize: "14px",
+  letterSpacing: "0.5px",
 };
 
-const plansGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-  gap: "20px",
-  marginBottom: "30px",
-  alignItems: "start",
+const detailsSectionStyle = {
+  padding: "20px 24px",
 };
 
-const planCardStyle = {
-  background: "white",
-  borderRadius: "16px",
-  padding: "28px 20px",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-  textAlign: "center",
+const detailRowStyle = {
   display: "flex",
-  flexDirection: "column",
-  height: "100%",
+  justifyContent: "space-between",
+  padding: "10px 0",
+  borderBottom: "1px solid #f3f4f6",
 };
 
-const popularBadgeStyle = {
-  position: "absolute",
-  top: "-12px",
-  left: "50%",
-  transform: "translateX(-50%)",
-  background: "#fbbf24",
+const featuresSectionStyle = {
+  padding: "20px 24px",
+  background: "#f9fafb",
+  borderTop: "1px solid #e5e7eb",
+};
+
+const featuresTitleStyle = {
+  margin: "0 0 12px 0",
   color: "#1e3a8a",
-  padding: "4px 14px",
-  borderRadius: "12px",
-  fontSize: "11px",
-  fontWeight: "bold",
-  whiteSpace: "nowrap",
-};
-
-const planNameStyle = {
-  color: "#1e3a8a",
-  fontSize: "24px",
-  margin: "0 0 4px 0",
-};
-
-const planDurationStyle = {
-  color: "#888",
-  fontSize: "13px",
-  margin: "0 0 16px 0",
-};
-
-const priceRowStyle = {
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "baseline",
-  gap: "4px",
-  marginBottom: "20px",
-};
-
-const priceStyle = {
-  fontSize: "40px",
-  fontWeight: "bold",
-  color: "#1e3a8a",
-};
-
-const priceSubStyle = {
-  fontSize: "14px",
-  color: "#888",
+  fontSize: "16px",
 };
 
 const featuresListStyle = {
   listStyle: "none",
   padding: 0,
-  margin: "0 0 24px 0",
-  textAlign: "left",
-  flex: 1,
+  margin: 0,
 };
 
 const featureItemStyle = {
   display: "flex",
-  alignItems: "flex-start",
-  gap: "8px",
+  alignItems: "center",
+  gap: "10px",
   padding: "6px 0",
   fontSize: "14px",
   color: "#444",
@@ -368,25 +382,41 @@ const featureItemStyle = {
 const checkIconStyle = {
   color: "#16a34a",
   fontWeight: "bold",
-  flexShrink: 0,
 };
 
-const subscribeBtnStyle = {
-  width: "100%",
-  padding: "14px",
-  border: "none",
-  borderRadius: "10px",
-  fontSize: "15px",
+const actionsStyle = {
+  padding: "20px 24px",
+  borderTop: "1px solid #e5e7eb",
+  display: "flex",
+  gap: "12px",
+  flexWrap: "wrap",
+};
+
+const primaryBtnStyle = {
+  flex: 1,
+  minWidth: "150px",
+  background: "#1e3a8a",
+  color: "white",
+  padding: "12px 20px",
+  borderRadius: "8px",
   fontWeight: "bold",
+  fontSize: "15px",
+  border: "none",
   cursor: "pointer",
-  transition: "all 0.2s",
-};
-
-const noteStyle = {
-  background: "#fef3c7",
-  padding: "16px",
-  borderRadius: "10px",
+  textDecoration: "none",
   textAlign: "center",
 };
 
-export default Subscription;
+const dangerBtnStyle = {
+  flex: 1,
+  minWidth: "150px",
+  background: "white",
+  color: "#dc2626",
+  padding: "12px 20px",
+  borderRadius: "8px",
+  fontWeight: "bold",
+  fontSize: "15px",
+  border: "1px solid #dc2626",
+};
+
+export default SubscriptionDashboard;
