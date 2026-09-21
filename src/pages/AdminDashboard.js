@@ -295,6 +295,7 @@ function AdminDashboard() {
         </div>
         <Link to="/admin-analytics" style={analyticsButtonStyle}>📊 View Analytics</Link>
       </div>
+<Link to="/admin-settings" style={{background:"#7c3aed",color:"white",padding:"10px 14px",borderRadius:"8px",textDecoration:"none",fontWeight:"bold",fontSize:"13px"}}>⚙️</Link>
 
       {/* STAT CARDS */}
       {stats && (
