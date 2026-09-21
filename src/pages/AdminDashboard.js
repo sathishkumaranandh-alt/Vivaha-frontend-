@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 import supabase from "../supabaseClient";
 
 const BACKEND_URL =
@@ -13,9 +13,6 @@ function AdminDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // ============================================================
-  // CHECK ADMIN ACCESS + LOAD DATA
-  // ============================================================
   useEffect(() => {
     async function checkAdminAndLoad() {
       try {
@@ -31,7 +28,6 @@ function AdminDashboard() {
           return;
         }
 
-        // Check if user is admin
         const { data: profile } = await supabase
           .from("users")
           .select("role")
@@ -46,7 +42,6 @@ function AdminDashboard() {
 
         setIsAdmin(true);
 
-        // Load stats and users
         const [statsRes, usersRes] = await Promise.all([
           fetch(`${BACKEND_URL}/profile/admin/stats`),
           fetch(`${BACKEND_URL}/profile/admin/users?limit=100`),
@@ -70,9 +65,6 @@ function AdminDashboard() {
     checkAdminAndLoad();
   }, []);
 
-  // ============================================================
-  // DELETE USER
-  // ============================================================
   const handleDeleteUser = async (userId, userName) => {
     if (
       !window.confirm(
@@ -99,9 +91,6 @@ function AdminDashboard() {
     }
   };
 
-  // ============================================================
-  // FILTER USERS BY SEARCH
-  // ============================================================
   const filteredUsers = users.filter((u) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -112,10 +101,6 @@ function AdminDashboard() {
       (u.religion || "").toLowerCase().includes(q)
     );
   });
-
-  // ============================================================
-  // RENDERING
-  // ============================================================
 
   if (loading) {
     return (
@@ -155,7 +140,6 @@ function AdminDashboard() {
 
   return (
     <div style={pageStyle}>
-      {/* ===== HEADER ===== */}
       <div style={headerRowStyle}>
         <div>
           <h1 style={titleStyle}>👑 Admin Dashboard</h1>
@@ -166,7 +150,6 @@ function AdminDashboard() {
         </Link>
       </div>
 
-      {/* ===== STATS CARDS ===== */}
       {stats && (
         <div style={statsGridStyle}>
           <StatCard
@@ -202,7 +185,6 @@ function AdminDashboard() {
         </div>
       )}
 
-      {/* ===== USERS TABLE ===== */}
       <div style={sectionStyle}>
         <div style={sectionHeaderStyle}>
           <h2 style={sectionTitleStyle}>
@@ -320,9 +302,6 @@ function AdminDashboard() {
   );
 }
 
-// ============================================================
-// SUB-COMPONENTS
-// ============================================================
 function StatCard({ icon, label, value, color }) {
   return (
     <div style={{ ...statCardStyle, borderTop: `4px solid ${color}` }}>
@@ -342,9 +321,6 @@ function StatCard({ icon, label, value, color }) {
   );
 }
 
-// ============================================================
-// STYLES
-// ============================================================
 const pageStyle = {
   maxWidth: "1300px",
   margin: "0 auto",
