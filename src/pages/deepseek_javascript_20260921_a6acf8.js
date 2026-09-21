@@ -699,4 +699,4 @@ const modalOverlayStyle = { position: "fixed", top: 0, left: 0, right: 0, bottom
 const modalStyle = { background: "white", borderRadius: "16px", padding: "28px", maxWidth: "500px", width: "100%", maxHeight: "85vh", overflowY: "auto", position: "relative" };
 const modalCloseStyle = { position: "absolute", top: "12px", right: "12px", background: "#f3f4f6", border: "none", width: "32px", height: "32px", borderRadius: "50%", cursor: "pointer", fontSize: "16px", fontWeight: "bold", color: "#666" };
 
-export default AdminDashboard;
+exportdefault AdminDashboard;
