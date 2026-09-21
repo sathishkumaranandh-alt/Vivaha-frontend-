@@ -102,6 +102,14 @@ function Navigation() {
         <Link to="/subscription" style={navLinkStyle}>
           Subscription
         </Link>
+{user?.email === "sathishkumaranandh@gmail.com" && (
+  <>
+    <span style={dividerStyle}>|</span>
+    <Link to="/admin" style={{...navLinkStyle, color: "#fbbf24"}}>
+      👑 Admin
+    </Link>
+  </>
+)}
       </div>
     </nav>
   );
