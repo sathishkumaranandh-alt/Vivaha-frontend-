@@ -15,6 +15,7 @@ import Subscription from "./pages/Subscription";
 import SubscriptionDashboard from "./pages/SubscriptionDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminSettings from "./pages/AdminSettings";
 import Messages from "./pages/Messages";
 
 function App() {
@@ -93,7 +94,7 @@ function App() {
           }
         />
 
-        {/* Admin routes — only accessible to users with role = "admin" */}
+        {/* Admin routes */}
         <Route
           path="/admin"
           element={
@@ -107,6 +108,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminAnalytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin-settings"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminSettings />
             </ProtectedRoute>
           }
         />
