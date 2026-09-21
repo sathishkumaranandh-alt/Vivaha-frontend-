@@ -13,8 +13,8 @@ import Matches from "./pages/Matches";
 import Recommendations from "./pages/Recommendations";
 import Subscription from "./pages/Subscription";
 import SubscriptionDashboard from "./pages/SubscriptionDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminAnalytics from "./pages/AdminAnalytics";
+// import AdminDashboard from "./pages/AdminDashboard";
+// import AdminAnalytics from "./pages/AdminAnalytics";
 import Messages from "./pages/Messages";
 
 function App() {
@@ -35,9 +35,9 @@ function App() {
         <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
         <Route path="/subscription-dashboard" element={<ProtectedRoute><SubscriptionDashboard /></ProtectedRoute>} />
 
-        {/* Admin */}
-        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin-analytics" element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
+        {/* Admin routes temporarily disabled until AdminDashboard.js is fixed */}
+        {/* <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} /> */}
+        {/* <Route path="/admin-analytics" element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} /> */}
       </Routes>
     </Router>
   );
