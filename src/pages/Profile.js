@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import supabase from "../supabaseClient";
 import ImageUpload from "../components/ImageUpload";
+import ReportModal from "../components/ReportModal";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -10,7 +11,6 @@ function Profile() {
   const { id } = useParams();
   const isOwnProfile = !id;
 
-  // State
   const [profile, setProfile] = useState({
     name: "",
     age: "",
@@ -30,10 +30,8 @@ function Profile() {
   const [success, setSuccess] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [profileExists, setProfileExists] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
-  // ============================================================
-  // LOAD PROFILE
-  // ============================================================
   useEffect(() => {
     async function loadProfile() {
       try {
@@ -51,9 +49,7 @@ function Profile() {
           return;
         }
 
-        // Save current user's ID for ImageUpload
         setCurrentUserId(user.id);
-
         const targetId = id || user.id;
 
         const res = await fetch(`${BACKEND_URL}/profile/${targetId}`);
@@ -94,9 +90,6 @@ function Profile() {
     loadProfile();
   }, [id, isOwnProfile]);
 
-  // ============================================================
-  // SAVE PROFILE
-  // ============================================================
   const handleSave = async (e) => {
     e.preventDefault();
     if (!isOwnProfile) return;
@@ -122,14 +115,12 @@ function Profile() {
         updated_at: new Date().toISOString(),
       };
 
-      // Try backend first
       const res = await fetch(`${BACKEND_URL}/profile/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profileData),
       });
 
-      // Fallback to Supabase if backend fails
       if (!res.ok) {
         const { error: supaError } = await supabase
           .from("users")
@@ -148,10 +139,6 @@ function Profile() {
       setSaving(false);
     }
   };
-
-  // ============================================================
-  // RENDER
-  // ============================================================
 
   if (loading) {
     return (
@@ -174,9 +161,7 @@ function Profile() {
     );
   }
 
-  // ============================================================
   // EDIT MODE
-  // ============================================================
   if (isOwnProfile && isEditing) {
     return (
       <div style={containerStyle}>
@@ -190,7 +175,6 @@ function Profile() {
               : "Fill in your details to create your profile."}
           </p>
 
-          {/* ===== PHOTO UPLOAD ===== */}
           {currentUserId && (
             <div style={{ marginBottom: "24px" }}>
               <ImageUpload
@@ -203,7 +187,6 @@ function Profile() {
             </div>
           )}
 
-          {/* ===== FORM ===== */}
           <form
             onSubmit={handleSave}
             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -308,9 +291,7 @@ function Profile() {
     );
   }
 
-  // ============================================================
   // CARD VIEW
-  // ============================================================
   return (
     <div style={containerStyle}>
       {success && (
@@ -318,7 +299,6 @@ function Profile() {
       )}
 
       <div style={cardStyle}>
-        {/* HEADER */}
         <div style={headerRowStyle}>
           <div style={avatarStyle}>
             {profile.photo_url ? (
@@ -348,7 +328,6 @@ function Profile() {
           </div>
         </div>
 
-        {/* DETAILS */}
         <div style={detailsGridStyle}>
           {profile.religion && (
             <DetailItem label="🕉️ Religion" value={profile.religion} />
@@ -368,7 +347,6 @@ function Profile() {
           )}
         </div>
 
-        {/* BIO */}
         {profile.bio && (
           <div style={{ marginTop: "20px" }}>
             <p
@@ -397,7 +375,6 @@ function Profile() {
           </div>
         )}
 
-        {/* ACTIONS */}
         <div style={actionRowStyle}>
           {isOwnProfile ? (
             <>
@@ -425,6 +402,18 @@ function Profile() {
               >
                 💬 Send Message
               </Link>
+              <button
+                onClick={() => setShowReportModal(true)}
+                style={{
+                  ...secondaryButtonStyle,
+                  textAlign: "center",
+                  border: "1px solid #dc2626",
+                  color: "#dc2626",
+                  background: "white",
+                }}
+              >
+                🚨 Report User
+              </button>
               <Link
                 to="/matches"
                 style={{ ...secondaryButtonStyle, textAlign: "center" }}
@@ -444,13 +433,19 @@ function Profile() {
           </p>
         </div>
       )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <ReportModal
+          reportedUserId={id}
+          reportedUserName={profile.name}
+          onClose={() => setShowReportModal(false)}
+        />
+      )}
     </div>
   );
 }
 
-// ============================================================
-// SUB-COMPONENTS
-// ============================================================
 function DetailItem({ label, value }) {
   return (
     <div style={detailItemStyle}>
@@ -464,16 +459,11 @@ function DetailItem({ label, value }) {
   );
 }
 
-// ============================================================
-// HELPERS
-// ============================================================
 function capitalize(str) {
+  if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// ============================================================
-// STYLES
-// ============================================================
 const containerStyle = {
   maxWidth: "700px",
   margin: "30px auto",
