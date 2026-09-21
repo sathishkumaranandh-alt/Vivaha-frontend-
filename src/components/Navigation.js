@@ -10,7 +10,21 @@ function Navigation() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const navigate = useNavigate();
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Close menu when route changes
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [navigate]);
 
   // ============================================================
   // AUTH STATE
@@ -34,7 +48,7 @@ function Navigation() {
   }, []);
 
   // ============================================================
-  // UNREAD MESSAGE COUNT — fetch + auto-refresh every 30s
+  // UNREAD MESSAGE COUNT — auto-refresh every 30s
   // ============================================================
   useEffect(() => {
     if (!user) {
@@ -52,13 +66,12 @@ function Navigation() {
           setUnreadCount(data.unreadCount || 0);
         }
       } catch (err) {
-        // silent fail — network may be slow
+        // silent
       }
     }
 
     fetchUnread();
-    const interval = setInterval(fetchUnread, 30000); // every 30 seconds
-
+    const interval = setInterval(fetchUnread, 30000);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -69,79 +82,171 @@ function Navigation() {
     await supabase.auth.signOut();
     setUser(null);
     setUnreadCount(0);
+    setMenuOpen(false);
     toast.info("Logged out successfully");
     navigate("/login");
   };
 
+  const closeMenu = () => setMenuOpen(false);
+
   if (loading) {
     return (
       <nav style={navStyle}>
-        <h2 style={{ margin: 0 }}>Vivaha Matrimony</h2>
+        <h2 style={{ margin: 0, fontSize: "20px" }}>Vivaha Matrimony</h2>
       </nav>
     );
   }
 
+  // Links list — shared between desktop and mobile
+  const links = [
+    { to: "/", label: "Home" },
+    { to: "/profile", label: "Profile" },
+    { to: "/search", label: "Search" },
+    { to: "/matches", label: "Matches" },
+    { to: "/recommendations", label: "Recommendations" },
+    { to: "/messages", label: "Messages", badge: unreadCount },
+    { to: "/subscription", label: "Subscription" },
+    ...(user?.email === "sathishkumaranandh@gmail.com"
+      ? [{ to: "/admin", label: "👑 Admin", color: "#fbbf24" }]
+      : []),
+  ];
+
   return (
     <nav style={navStyle}>
+      {/* ==================== TOP ROW ==================== */}
       <div style={topRowStyle}>
-        <h2 style={{ margin: 0 }}>Vivaha Matrimony</h2>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <h2 style={{ margin: 0, fontSize: "20px", whiteSpace: "nowrap" }}>
+          Vivaha Matrimony
+        </h2>
+
+        {/* Desktop: user info + auth buttons */}
+        {!isMobile && (
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {user ? (
+              <>
+                <span style={{ fontSize: "14px", opacity: 0.9 }}>
+                  👤 {user.email?.split("@")[0]}
+                </span>
+                <button onClick={handleLogout} style={logoutButtonStyle}>
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" style={authLinkStyle}>
+                  Login
+                </Link>
+                <Link to="/register" style={registerButtonStyle}>
+                  Register
+                </Link>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Mobile: hamburger button */}
+        {isMobile && (
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            style={hamburgerStyle}
+            aria-label="Menu"
+          >
+            {menuOpen ? "✕" : "☰"}
+            {unreadCount > 0 && !menuOpen && (
+              <span style={hamburgerBadgeStyle}>
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* ==================== DESKTOP LINKS ROW ==================== */}
+      {!isMobile && (
+        <div style={linksRowStyle}>
+          {links.map((link, i) => (
+            <React.Fragment key={link.to}>
+              {i > 0 && <span style={dividerStyle}>|</span>}
+              <Link
+                to={link.to}
+                style={{
+                  ...navLinkStyle,
+                  position: "relative",
+                  color: link.color || "white",
+                }}
+              >
+                {link.label}
+                {link.badge > 0 && (
+                  <span style={badgeStyle}>
+                    {link.badge > 99 ? "99+" : link.badge}
+                  </span>
+                )}
+              </Link>
+            </React.Fragment>
+          ))}
+        </div>
+      )}
+
+      {/* ==================== MOBILE DROPDOWN ==================== */}
+      {isMobile && menuOpen && (
+        <div style={mobileMenuStyle}>
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={closeMenu}
+              style={{
+                ...mobileLinkStyle,
+                color: link.color || "white",
+              }}
+            >
+              {link.label}
+              {link.badge > 0 && (
+                <span style={{ ...badgeStyle, marginLeft: "auto" }}>
+                  {link.badge > 99 ? "99+" : link.badge}
+                </span>
+              )}
+            </Link>
+          ))}
+
+          <div style={mobileDividerStyle} />
+
           {user ? (
             <>
-              <span style={{ fontSize: "14px", opacity: 0.9 }}>
+              <div style={mobileUserStyle}>
                 👤 {user.email?.split("@")[0]}
-              </span>
-              <button onClick={handleLogout} style={logoutButtonStyle}>
+              </div>
+              <button
+                onClick={handleLogout}
+                style={mobileLogoutButtonStyle}
+              >
                 Logout
               </button>
             </>
           ) : (
-            <>
-              <Link to="/login" style={authLinkStyle}>
+            <div style={{ display: "flex", gap: "10px", padding: "8px 0" }}>
+              <Link
+                to="/login"
+                onClick={closeMenu}
+                style={mobileAuthButtonStyle}
+              >
                 Login
               </Link>
-              <Link to="/register" style={registerButtonStyle}>
+              <Link
+                to="/register"
+                onClick={closeMenu}
+                style={{
+                  ...mobileAuthButtonStyle,
+                  background: "white",
+                  color: "#1e3a8a",
+                }}
+              >
                 Register
               </Link>
-            </>
+            </div>
           )}
         </div>
-      </div>
-
-      <div style={linksRowStyle}>
-        <Link to="/" style={navLinkStyle}>Home</Link>
-        <span style={dividerStyle}>|</span>
-        <Link to="/profile" style={navLinkStyle}>Profile</Link>
-        <span style={dividerStyle}>|</span>
-        <Link to="/search" style={navLinkStyle}>Search</Link>
-        <span style={dividerStyle}>|</span>
-        <Link to="/matches" style={navLinkStyle}>Matches</Link>
-        <span style={dividerStyle}>|</span>
-        <Link to="/recommendations" style={navLinkStyle}>Recommendations</Link>
-        <span style={dividerStyle}>|</span>
-
-        {/* Messages with badge */}
-        <Link to="/messages" style={{ ...navLinkStyle, position: "relative" }}>
-          Messages
-          {unreadCount > 0 && (
-            <span style={badgeStyle}>
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
-          )}
-        </Link>
-
-        <span style={dividerStyle}>|</span>
-        <Link to="/subscription" style={navLinkStyle}>Subscription</Link>
-
-        {user?.email === "sathishkumaranandh@gmail.com" && (
-          <>
-            <span style={dividerStyle}>|</span>
-            <Link to="/admin" style={{ ...navLinkStyle, color: "#fbbf24" }}>
-              👑 Admin
-            </Link>
-          </>
-        )}
-      </div>
+      )}
     </nav>
   );
 }
@@ -150,17 +255,19 @@ function Navigation() {
 // STYLES
 // ============================================================
 const navStyle = {
-  padding: "16px 20px",
+  padding: "14px 16px",
   background: "#1e3a8a",
   color: "white",
+  position: "sticky",
+  top: 0,
+  zIndex: 100,
+  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
 };
 
 const topRowStyle = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  marginBottom: "12px",
-  flexWrap: "wrap",
   gap: "10px",
 };
 
@@ -170,10 +277,10 @@ const linksRowStyle = {
   gap: "4px",
   alignItems: "center",
   fontSize: "15px",
+  marginTop: "12px",
 };
 
 const navLinkStyle = {
-  color: "white",
   textDecoration: "none",
   padding: "4px 8px",
   fontWeight: "600",
@@ -229,6 +336,91 @@ const badgeStyle = {
   textAlign: "center",
   lineHeight: "14px",
   verticalAlign: "middle",
+};
+
+const hamburgerStyle = {
+  background: "rgba(255,255,255,0.15)",
+  color: "white",
+  border: "1px solid rgba(255,255,255,0.3)",
+  width: "44px",
+  height: "44px",
+  borderRadius: "8px",
+  fontSize: "20px",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  position: "relative",
+  flexShrink: 0,
+};
+
+const hamburgerBadgeStyle = {
+  position: "absolute",
+  top: "-6px",
+  right: "-6px",
+  background: "#dc2626",
+  color: "white",
+  fontSize: "10px",
+  fontWeight: "bold",
+  borderRadius: "10px",
+  padding: "2px 5px",
+  minWidth: "16px",
+};
+
+const mobileMenuStyle = {
+  marginTop: "12px",
+  paddingTop: "12px",
+  borderTop: "1px solid rgba(255,255,255,0.2)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+};
+
+const mobileLinkStyle = {
+  textDecoration: "none",
+  padding: "14px 12px",
+  borderRadius: "8px",
+  fontWeight: "600",
+  fontSize: "16px",
+  display: "flex",
+  alignItems: "center",
+  background: "rgba(255,255,255,0.05)",
+};
+
+const mobileDividerStyle = {
+  height: "1px",
+  background: "rgba(255,255,255,0.2)",
+  margin: "10px 0",
+};
+
+const mobileUserStyle = {
+  padding: "10px 12px",
+  fontSize: "14px",
+  opacity: 0.9,
+};
+
+const mobileLogoutButtonStyle = {
+  background: "rgba(255,255,255,0.15)",
+  color: "white",
+  border: "1px solid rgba(255,255,255,0.4)",
+  padding: "12px",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "600",
+  fontSize: "15px",
+  width: "100%",
+};
+
+const mobileAuthButtonStyle = {
+  flex: 1,
+  padding: "12px",
+  textAlign: "center",
+  borderRadius: "8px",
+  border: "1px solid white",
+  color: "white",
+  textDecoration: "none",
+  fontWeight: "600",
+  fontSize: "15px",
 };
 
 export default Navigation;
