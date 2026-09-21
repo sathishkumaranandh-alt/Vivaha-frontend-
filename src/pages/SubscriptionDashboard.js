@@ -63,7 +63,6 @@ function SubscriptionDashboard() {
       });
 
       if (res.ok) {
-        const data = await res.json();
         alert("Subscription cancelled");
         setSubscription({
           ...subscription,
