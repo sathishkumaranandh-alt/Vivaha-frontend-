@@ -377,4 +377,4 @@ const secondaryBtnStyle = {
   display: "inline-block",
 };
 
-export default Matches;
+export default Matches
