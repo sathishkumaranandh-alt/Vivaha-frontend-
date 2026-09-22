@@ -18,6 +18,7 @@ function Navigation() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [interestCount, setInterestCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [community, setCommunity] = useState(
@@ -25,16 +26,19 @@ function Navigation() {
   );
   const navigate = useNavigate();
 
+  // Detect mobile
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Close menu on route change
   useEffect(() => {
     setMenuOpen(false);
   }, [navigate]);
 
+  // AUTH STATE
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data?.user || null);
@@ -44,7 +48,10 @@ function Navigation() {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user || null);
-        if (!session?.user) setUnreadCount(0);
+        if (!session?.user) {
+          setUnreadCount(0);
+          setInterestCount(0);
+        }
       }
     );
 
@@ -53,6 +60,7 @@ function Navigation() {
     };
   }, []);
 
+  // UNREAD MESSAGE COUNT — auto-refresh every 30s
   useEffect(() => {
     if (!user) {
       setUnreadCount(0);
@@ -66,10 +74,38 @@ function Navigation() {
           const data = await res.json();
           setUnreadCount(data.unreadCount || 0);
         }
-      } catch (err) {}
+      } catch (err) {
+        // silent
+      }
     }
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [user]);
+
+  // PENDING INTEREST COUNT — auto-refresh every 30s
+  useEffect(() => {
+    if (!user) {
+      setInterestCount(0);
+      return;
+    }
+    let cancelled = false;
+    async function fetchInterests() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/interests/count/${user.id}`);
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setInterestCount(data.pendingCount || 0);
+        }
+      } catch (err) {
+        // silent
+      }
+    }
+    fetchInterests();
+    const interval = setInterval(fetchInterests, 30000);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -80,6 +116,7 @@ function Navigation() {
     await supabase.auth.signOut();
     setUser(null);
     setUnreadCount(0);
+    setInterestCount(0);
     setMenuOpen(false);
     toast.info("Logged out successfully");
     navigate("/login");
@@ -89,7 +126,6 @@ function Navigation() {
     setCommunity(value);
     localStorage.setItem("community", value);
     toast.info(value ? `Switched to ${value} community` : "Showing all communities");
-    // Force reload to refetch all filtered data
     setTimeout(() => window.location.reload(), 500);
   };
 
@@ -109,6 +145,7 @@ function Navigation() {
     { to: "/search", label: "Search" },
     { to: "/matches", label: "Matches" },
     { to: "/recommendations", label: "Recommendations" },
+    { to: "/interests", label: "Interests", badge: interestCount, badgeColor: "#f59e0b" },
     { to: "/messages", label: "Messages", badge: unreadCount },
     { to: "/subscription", label: "Subscription" },
     ...(user?.email === "sathishkumaranandh@gmail.com"
@@ -118,6 +155,7 @@ function Navigation() {
 
   return (
     <nav style={navStyle}>
+      {/* TOP ROW */}
       <div style={topRowStyle}>
         <h2 style={{ margin: 0, fontSize: "20px", whiteSpace: "nowrap" }}>
           Vivaha Matrimony
@@ -167,15 +205,16 @@ function Navigation() {
             aria-label="Menu"
           >
             {menuOpen ? "✕" : "☰"}
-            {unreadCount > 0 && !menuOpen && (
+            {(unreadCount > 0 || interestCount > 0) && !menuOpen && (
               <span style={hamburgerBadgeStyle}>
-                {unreadCount > 99 ? "99+" : unreadCount}
+                {unreadCount + interestCount > 99 ? "99+" : unreadCount + interestCount}
               </span>
             )}
           </button>
         )}
       </div>
 
+      {/* DESKTOP LINKS */}
       {!isMobile && (
         <div style={linksRowStyle}>
           {links.map((link, i) => (
@@ -191,7 +230,12 @@ function Navigation() {
               >
                 {link.label}
                 {link.badge > 0 && (
-                  <span style={badgeStyle}>
+                  <span
+                    style={{
+                      ...badgeStyle,
+                      background: link.badgeColor || "#dc2626",
+                    }}
+                  >
                     {link.badge > 99 ? "99+" : link.badge}
                   </span>
                 )}
@@ -201,6 +245,7 @@ function Navigation() {
         </div>
       )}
 
+      {/* MOBILE DROPDOWN */}
       {isMobile && menuOpen && (
         <div style={mobileMenuStyle}>
           {links.map((link) => (
@@ -215,7 +260,13 @@ function Navigation() {
             >
               {link.label}
               {link.badge > 0 && (
-                <span style={{ ...badgeStyle, marginLeft: "auto" }}>
+                <span
+                  style={{
+                    ...badgeStyle,
+                    background: link.badgeColor || "#dc2626",
+                    marginLeft: "auto",
+                  }}
+                >
                   {link.badge > 99 ? "99+" : link.badge}
                 </span>
               )}
@@ -257,6 +308,9 @@ function Navigation() {
   );
 }
 
+// ============================================================
+// STYLES
+// ============================================================
 const navStyle = {
   padding: "14px 16px",
   background: "#1e3a8a",
