@@ -17,6 +17,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
 import Messages from "./pages/Messages";
+import Interests from "./pages/Interests";
 
 function App() {
   return (
@@ -74,6 +75,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Messages />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/interests"
+          element={
+            <ProtectedRoute>
+              <Interests />
             </ProtectedRoute>
           }
         />
