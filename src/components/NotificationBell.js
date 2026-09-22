@@ -24,7 +24,7 @@ function NotificationBell() {
     return () => listener?.subscription?.unsubscribe();
   }, []);
 
-  // Load notifications + poll every 30s
+    // Load notifications + poll every 30s + listen for refresh events
   useEffect(() => {
     if (!userId) {
       setNotifs([]);
@@ -49,11 +49,19 @@ function NotificationBell() {
         }
       } catch (e) {}
     }
+
+    function handleRefresh() {
+      load();
+    }
+
     load();
     const interval = setInterval(load, 30000);
+    window.addEventListener("notification-refresh", handleRefresh);
+
     return () => {
       cancelled = true;
       clearInterval(interval);
+      window.removeEventListener("notification-refresh", handleRefresh);
     };
   }, [userId]);
 
