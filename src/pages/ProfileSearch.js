@@ -9,7 +9,7 @@ function ProfileSearch() {
   const [filters, setFilters] = useState({
     age_min: "",
     age_max: "",
-    gender: "", // Will be auto-set based on logged-in user
+    gender: "",
     religion: "",
     location: "",
   });
@@ -22,18 +22,12 @@ function ProfileSearch() {
   const [myGender, setMyGender] = useState(null);
   const [community, setCommunity] = useState("");
 
-  // ============================================================
-  // GET CURRENT USER + AUTO-FILTER OPPOSITE GENDER
-  // ============================================================
   useEffect(() => {
     async function init() {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-          // Not logged in — show everyone
           setSearched(true);
           runSearch({}, null, "");
           return;
@@ -41,7 +35,6 @@ function ProfileSearch() {
 
         setCurrentUserId(user.id);
 
-        // Fetch my profile to get my gender + community
         const res = await fetch(`${BACKEND_URL}/profile/${user.id}`);
         let myProfile = null;
         if (res.ok) {
@@ -50,12 +43,12 @@ function ProfileSearch() {
         }
 
         const gender = myProfile?.gender || null;
-        const myCommunity = myProfile?.community || localStorage.getItem("community") || "";
+        const myCommunity =
+          myProfile?.community || localStorage.getItem("community") || "";
 
         setMyGender(gender);
         setCommunity(myCommunity);
 
-        // Auto-set gender filter to OPPOSITE
         const oppositeGender =
           gender === "male" ? "female" : gender === "female" ? "male" : "";
 
@@ -67,8 +60,6 @@ function ProfileSearch() {
           location: "",
         };
         setFilters(initialFilters);
-
-        // Run search with the initial filters
         await runSearch(initialFilters, user.id, myCommunity);
       } catch (err) {
         console.error("Init error:", err);
@@ -79,9 +70,6 @@ function ProfileSearch() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ============================================================
-  // RUN SEARCH
-  // ============================================================
   const runSearch = async (customFilters = null, excludeId = null, customCommunity = null) => {
     try {
       setLoading(true);
@@ -107,11 +95,8 @@ function ProfileSearch() {
       if (!res.ok) throw new Error("Search failed");
 
       const data = await res.json();
-
-      // Exclude myself and filter to only opposite gender as a safety net
       const filtered = (data.results || []).filter((p) => {
         if (userIdToExclude && p.id === userIdToExclude) return false;
-        // Extra safety: hide same-gender profiles
         if (myGender && p.gender && p.gender === myGender) return false;
         return true;
       });
@@ -120,15 +105,12 @@ function ProfileSearch() {
       setSearched(true);
     } catch (err) {
       console.error("Search error:", err);
-      setError("Could not load results. Backend may be waking up — try again in 30 seconds.");
+      setError("Could not load results. Try again in 30 seconds.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ============================================================
-  // FORM HANDLERS
-  // ============================================================
   const handleChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
@@ -139,10 +121,8 @@ function ProfileSearch() {
   };
 
   const handleClear = () => {
-    // Clear only the user-adjustable fields, keep gender opposite-locked
     const oppositeGender =
       myGender === "male" ? "female" : myGender === "female" ? "male" : "";
-
     const cleared = {
       age_min: "",
       age_max: "",
@@ -154,9 +134,6 @@ function ProfileSearch() {
     runSearch(cleared);
   };
 
-  // ============================================================
-  // RENDER
-  // ============================================================
   return (
     <div style={pageStyle}>
       <div style={headerStyle}>
@@ -172,77 +149,29 @@ function ProfileSearch() {
         <div style={filterGridStyle}>
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>Min Age</label>
-            <input
-              type="number"
-              name="age_min"
-              placeholder="18"
-              value={filters.age_min}
-              onChange={handleChange}
-              style={inputStyle}
-              min="18"
-              max="80"
-            />
+            <input type="number" name="age_min" placeholder="18" value={filters.age_min} onChange={handleChange} style={inputStyle} min="18" max="80" />
           </div>
-
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>Max Age</label>
-            <input
-              type="number"
-              name="age_max"
-              placeholder="60"
-              value={filters.age_max}
-              onChange={handleChange}
-              style={inputStyle}
-              min="18"
-              max="80"
-            />
+            <input type="number" name="age_max" placeholder="60" value={filters.age_max} onChange={handleChange} style={inputStyle} min="18" max="80" />
           </div>
-
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>
-              Gender{" "}
-              {myGender && (
-                <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: "500" }}>
-                  (auto-selected)
-                </span>
-              )}
+              Gender {myGender && <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: "500" }}>(auto)</span>}
             </label>
-            <select
-              name="gender"
-              value={filters.gender}
-              onChange={handleChange}
-              style={inputStyle}
-              disabled={!!myGender} // Lock it so users can't change opposite-gender rule
-            >
+            <select name="gender" value={filters.gender} onChange={handleChange} style={inputStyle} disabled={!!myGender}>
               <option value="">Any</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
-              <option value="other">Other</option>
             </select>
           </div>
-
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>Religion</label>
-            <input
-              type="text"
-              name="religion"
-              placeholder="e.g. Hindu"
-              value={filters.religion}
-              onChange={handleChange}
-              style={inputStyle}
-            />
+            <input type="text" name="religion" placeholder="e.g. Hindu" value={filters.religion} onChange={handleChange} style={inputStyle} />
           </div>
-
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>Location</label>
-            <input
-              type="text"
-              name="location"
-              placeholder="e.g. Chennai"
-              value={filters.location}
-              onChange={handleChange}
-              style={inputStyle}
-            />
+            <input type="text" name="location" placeholder="e.g. Chennai" value={filters.location} onChange={handleChange} style={inputStyle} />
           </div>
         </div>
 
@@ -250,12 +179,7 @@ function ProfileSearch() {
           <button type="submit" disabled={loading} style={searchButtonStyle}>
             {loading ? "Searching... ⏳" : "🔍 Search"}
           </button>
-          <button
-            type="button"
-            onClick={handleClear}
-            disabled={loading}
-            style={clearButtonStyle}
-          >
+          <button type="button" onClick={handleClear} disabled={loading} style={clearButtonStyle}>
             Clear Filters
           </button>
         </div>
@@ -263,24 +187,16 @@ function ProfileSearch() {
 
       <div style={resultsSectionStyle}>
         {loading && !searched && (
-          <p style={{ textAlign: "center", color: "#666", marginTop: "40px" }}>
-            Loading profiles... ⏳
-          </p>
+          <p style={{ textAlign: "center", color: "#666", marginTop: "40px" }}>Loading profiles... ⏳</p>
         )}
-
         {error && (
-          <p style={{ textAlign: "center", color: "#b91c1c", marginTop: "40px" }}>
-            {error}
-          </p>
+          <p style={{ textAlign: "center", color: "#b91c1c", marginTop: "40px" }}>{error}</p>
         )}
-
         {!loading && searched && results.length === 0 && !error && (
           <div style={{ textAlign: "center", marginTop: "60px" }}>
             <div style={{ fontSize: "60px", marginBottom: "16px" }}>🔎</div>
             <p style={{ color: "#666", fontSize: "17px" }}>No profiles found</p>
-            <p style={{ color: "#999", fontSize: "14px" }}>
-              Try adjusting your filters
-            </p>
+            <p style={{ color: "#999", fontSize: "14px" }}>Try adjusting your filters</p>
           </div>
         )}
 
@@ -304,12 +220,19 @@ function ProfileSearch() {
 }
 
 // ============================================================
-// PROFILE CARD
+// 🎨 NEW BEAUTIFUL PROFILE CARD
 // ============================================================
 function ProfileCard({ profile }) {
+  const [liked, setLiked] = useState(false);
+
+  const communityLabel = profile.community
+    ? profile.community.charAt(0).toUpperCase() + profile.community.slice(1)
+    : null;
+
   return (
     <div style={cardStyle}>
-      <div style={cardPhotoWrapperStyle}>
+      {/* ---------- HEADER: Photo + Badges ---------- */}
+      <div style={photoWrapperStyle}>
         {profile.photo_url ? (
           <img
             src={profile.photo_url}
@@ -317,63 +240,92 @@ function ProfileCard({ profile }) {
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
-          <div
-            style={{
-              fontSize: "48px",
-              width: "100%",
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            👤
+          <div style={photoPlaceholderStyle}>👤</div>
+        )}
+
+        {/* Verified Badge */}
+        {profile.is_verified && (
+          <div style={verifiedBadgeStyle} title="Verified Profile">
+            ✓
           </div>
         )}
+
+        {/* Online dot (simulated) */}
+        <div style={onlineDotStyle} title="Recently active" />
       </div>
 
-      <h3 style={cardNameStyle}>{profile.name || "Anonymous"}</h3>
+      {/* ---------- NAME + BADGES ---------- */}
+      <div style={{ textAlign: "center", marginTop: "12px" }}>
+        <h3 style={cardNameStyle}>
+          {profile.name || "Anonymous"}
+          {profile.is_verified && (
+            <span style={{ color: "#2563eb", marginLeft: "4px" }} title="Verified">
+              ✔️
+            </span>
+          )}
+        </h3>
 
-      <p style={cardMetaStyle}>
-        {profile.age ? `${profile.age} yrs` : "Age not set"}
-        {profile.location ? ` • ${profile.location}` : ""}
-      </p>
+        {/* Community + Age + Location */}
+        <div style={metaRowStyle}>
+          {communityLabel && (
+            <span style={communityTagStyle}>🏷️ {communityLabel}</span>
+          )}
+          {profile.age && (
+            <span style={metaTextStyle}>{profile.age} yrs</span>
+          )}
+        </div>
 
-      <div style={cardDetailsStyle}>
-        {profile.gender && (
-          <span style={tagStyle}>👤 {capitalize(profile.gender)}</span>
+        {profile.location && (
+          <p style={locationTextStyle}>📍 {profile.location}</p>
         )}
+      </div>
+
+      {/* ---------- DETAIL PILLS ---------- */}
+      <div style={pillsRowStyle}>
         {profile.religion && (
-          <span style={tagStyle}>🕉️ {profile.religion}</span>
+          <span style={pillStyle}>🕉️ {profile.religion}</span>
         )}
         {profile.education && (
-          <span style={tagStyle}>🎓 {profile.education}</span>
+          <span style={pillStyle}>🎓 {profile.education}</span>
         )}
         {profile.occupation && (
-          <span style={tagStyle}>💼 {profile.occupation}</span>
+          <span style={pillStyle}>💼 {profile.occupation}</span>
         )}
       </div>
 
+      {/* ---------- BIO PREVIEW ---------- */}
       {profile.bio && (
         <p style={bioStyle}>
-          "
-          {profile.bio.length > 100
-            ? profile.bio.slice(0, 100) + "..."
-            : profile.bio}
-          "
+          "{profile.bio.length > 70 ? profile.bio.slice(0, 70) + "..." : profile.bio}"
         </p>
       )}
 
-      <Link to={`/profile/${profile.id}`} style={viewButtonStyle}>
-        View Profile
-      </Link>
+      {/* ---------- ACTION BUTTONS ---------- */}
+      <div style={actionsRowStyle}>
+        <Link to={`/profile/${profile.id}`} style={viewBtnStyle}>
+          View Profile
+        </Link>
+        <button
+          onClick={() => setLiked(!liked)}
+          style={{
+            ...iconBtnStyle,
+            background: liked ? "#fee2e2" : "#f3f4f6",
+            color: liked ? "#dc2626" : "#666",
+          }}
+          title={liked ? "Remove from shortlist" : "Add to shortlist"}
+        >
+          {liked ? "❤️" : "🤍"}
+        </button>
+        <Link
+          to={`/messages?to=${profile.id}`}
+          style={iconBtnStyle}
+          title="Send Message"
+        >
+          💬
+        </Link>
+      </div>
     </div>
   );
-}
-
-function capitalize(str) {
-  if (!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 // ============================================================
@@ -434,62 +386,184 @@ const clearButtonStyle = {
 };
 const resultsSectionStyle = { marginTop: "16px" };
 const resultsHeaderStyle = { color: "#333", fontSize: "18px", marginBottom: "16px" };
+
+// ============================================================
+// GRID
+// ============================================================
 const resultsGridStyle = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
   gap: "20px",
 };
+
+// ============================================================
+// NEW BEAUTIFUL CARD STYLES
+// ============================================================
 const cardStyle = {
   background: "white",
-  borderRadius: "12px",
-  padding: "18px",
-  boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+  borderRadius: "16px",
+  padding: "16px",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
   display: "flex",
   flexDirection: "column",
   gap: "10px",
+  transition: "transform 0.2s, box-shadow 0.2s",
+  border: "1px solid #f0f0f0",
+  position: "relative",
 };
-const cardPhotoWrapperStyle = {
-  width: "80px",
-  height: "80px",
+
+const photoWrapperStyle = {
+  width: "110px",
+  height: "110px",
   borderRadius: "50%",
-  background: "#f3f4f6",
+  background: "linear-gradient(135deg, #dbeafe, #bfdbfe)",
   margin: "0 auto",
+  position: "relative",
+  border: "3px solid #1e3a8a",
   overflow: "hidden",
-  border: "2px solid #e5e7eb",
+  boxShadow: "0 4px 12px rgba(30, 58, 138, 0.2)",
 };
-const cardNameStyle = { margin: 0, textAlign: "center", color: "#1e3a8a", fontSize: "18px" };
-const cardMetaStyle = { margin: 0, textAlign: "center", color: "#666", fontSize: "14px" };
-const cardDetailsStyle = {
+
+const photoPlaceholderStyle = {
+  fontSize: "52px",
+  width: "100%",
+  height: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const verifiedBadgeStyle = {
+  position: "absolute",
+  bottom: "4px",
+  right: "4px",
+  background: "#2563eb",
+  color: "white",
+  width: "24px",
+  height: "24px",
+  borderRadius: "50%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "14px",
+  fontWeight: "bold",
+  border: "2px solid white",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+};
+
+const onlineDotStyle = {
+  position: "absolute",
+  top: "6px",
+  right: "6px",
+  background: "#22c55e",
+  width: "12px",
+  height: "12px",
+  borderRadius: "50%",
+  border: "2px solid white",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+};
+
+const cardNameStyle = {
+  margin: 0,
+  color: "#1e3a8a",
+  fontSize: "19px",
+  fontWeight: "700",
+  textAlign: "center",
+};
+
+const metaRowStyle = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "8px",
+  marginTop: "4px",
+  flexWrap: "wrap",
+};
+
+const communityTagStyle = {
+  background: "#eff6ff",
+  color: "#1e40af",
+  padding: "3px 10px",
+  borderRadius: "12px",
+  fontSize: "11px",
+  fontWeight: "600",
+};
+
+const metaTextStyle = {
+  color: "#666",
+  fontSize: "13px",
+  fontWeight: "500",
+};
+
+const locationTextStyle = {
+  margin: "4px 0 0 0",
+  color: "#888",
+  fontSize: "13px",
+};
+
+const pillsRowStyle = {
   display: "flex",
   flexWrap: "wrap",
   gap: "6px",
   justifyContent: "center",
+  marginTop: "4px",
 };
-const tagStyle = {
-  background: "#eff6ff",
-  color: "#1e40af",
-  padding: "4px 8px",
-  borderRadius: "6px",
-  fontSize: "12px",
+
+const pillStyle = {
+  background: "#f3f4f6",
+  color: "#4b5563",
+  padding: "4px 10px",
+  borderRadius: "8px",
+  fontSize: "11px",
+  fontWeight: "500",
 };
+
 const bioStyle = {
-  fontSize: "13px",
-  color: "#555",
+  fontSize: "12px",
+  color: "#666",
   fontStyle: "italic",
-  margin: "4px 0 0 0",
+  margin: "6px 0 0 0",
   lineHeight: "1.5",
   textAlign: "center",
+  padding: "8px 6px",
+  background: "#fafafa",
+  borderRadius: "8px",
 };
-const viewButtonStyle = {
-  display: "block",
+
+const actionsRowStyle = {
+  display: "flex",
+  gap: "6px",
+  marginTop: "auto",
+  paddingTop: "8px",
+};
+
+const viewBtnStyle = {
+  flex: 1,
   textAlign: "center",
   padding: "10px",
-  background: "#1e3a8a",
+  background: "linear-gradient(135deg, #1e3a8a, #3b82f6)",
   color: "white",
   textDecoration: "none",
   borderRadius: "8px",
   fontWeight: "bold",
-  marginTop: "auto",
+  fontSize: "14px",
+  boxShadow: "0 2px 8px rgba(30, 58, 138, 0.3)",
+};
+
+const iconBtnStyle = {
+  background: "#f3f4f6",
+  color: "#666",
+  border: "none",
+  width: "42px",
+  height: "42px",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontSize: "18px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  textDecoration: "none",
+  flexShrink: 0,
 };
 
 export default ProfileSearch;
