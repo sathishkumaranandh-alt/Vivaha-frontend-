@@ -74,8 +74,10 @@ function Interests() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status, reason }),
       });
-      if (res.ok) {
+            if (res.ok) {
         toast.success(status === "accepted" ? "Interest accepted! 💕" : "Interest declined");
+        // Notify navbar to refresh badges
+        window.dispatchEvent(new Event("badge-refresh"));
         await loadAll(userId);
       } else {
         toast.error("Failed to respond");
