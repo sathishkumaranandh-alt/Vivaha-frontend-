@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -9,15 +10,46 @@ function ChatBox({
   partnerName,
   partnerPhoto,
   onMessageSent,
+  hideHeader = false,
 }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [connStatus, setConnStatus] = useState(null);
   const messagesEndRef = useRef(null);
 
+  // ============================================================
+  // CHECK CONNECTION STATUS
+  // ============================================================
+  useEffect(() => {
+    async function checkConnection() {
+      try {
+        const res = await fetch(
+          `${BACKEND_URL}/interests/status/${userId}/${partnerId}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setConnStatus(data); // { status, direction }
+        } else {
+          setConnStatus({ status: "none" });
+        }
+      } catch (err) {
+        setConnStatus({ status: "none" });
+      }
+    }
+    if (userId && partnerId) checkConnection();
+  }, [userId, partnerId]);
+
+  // ============================================================
+  // LOAD MESSAGES (only if connected)
+  // ============================================================
   useEffect(() => {
     async function loadMessages() {
+      if (!connStatus || connStatus.status !== "accepted") {
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
         const res = await fetch(
@@ -33,15 +65,18 @@ function ChatBox({
         setLoading(false);
       }
     }
-    if (userId && partnerId) loadMessages();
-  }, [userId, partnerId]);
+    loadMessages();
+  }, [userId, partnerId, connStatus]);
 
+  // Mark as read + auto-scroll + polling
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  useEffect(() => {
+    if (connStatus?.status !== "accepted") return;
     if (!userId || !partnerId) return;
+
+    fetch(`${BACKEND_URL}/messages/mark-read/${userId}/${partnerId}`, {
+      method: "PATCH",
+    }).catch(() => {});
+
     const interval = setInterval(async () => {
       try {
         const res = await fetch(
@@ -51,13 +86,18 @@ function ChatBox({
           const data = await res.json();
           setMessages(data.messages || []);
         }
-      } catch (err) {
-        /* silent */
-      }
+      } catch (err) {}
     }, 5000);
     return () => clearInterval(interval);
-  }, [userId, partnerId]);
+  }, [userId, partnerId, connStatus]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ============================================================
+  // SEND MESSAGE
+  // ============================================================
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!text.trim() || sending) return;
@@ -77,13 +117,14 @@ function ChatBox({
         }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        const data = await res.json();
         setMessages((prev) => [...prev, data.data]);
         if (onMessageSent) onMessageSent();
       } else {
         setText(msgText);
-        alert("Failed to send message. Please try again.");
+        alert(data.error || "Failed to send message.");
       }
     } catch (err) {
       console.error("Send error:", err);
@@ -93,40 +134,68 @@ function ChatBox({
     }
   };
 
-  return (
-    <div style={wrapperStyle}>
-      <div style={headerStyle}>
-        <div style={headerAvatarStyle}>
-          {partnerPhoto ? (
-            <img
-              src={partnerPhoto}
-              alt={partnerName}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            "👤"
-          )}
-        </div>
-        <div>
-          <p style={{ margin: 0, fontWeight: "600", color: "#1e3a8a" }}>
-            {partnerName}
-          </p>
-          <p style={{ margin: 0, fontSize: "12px", color: "#22c55e" }}>
-            ● Online
-          </p>
+  // ============================================================
+  // LOADING STATE
+  // ============================================================
+  if (!connStatus) {
+    return (
+      <div style={wrapperStyle}>
+        <div style={{ padding: "40px", textAlign: "center", color: "#888" }}>
+          Checking connection...
         </div>
       </div>
+    );
+  }
+
+  // ============================================================
+  // NOT CONNECTED — show lock screen
+  // ============================================================
+  if (connStatus.status !== "accepted") {
+    return (
+      <LockedChat
+        partnerName={partnerName}
+        partnerId={partnerId}
+        status={connStatus.status}
+        direction={connStatus.direction}
+      />
+    );
+  }
+
+  // ============================================================
+  // CONNECTED — normal chat UI
+  // ============================================================
+  return (
+    <div style={wrapperStyle}>
+      {!hideHeader && (
+        <div style={headerStyle}>
+          <div style={headerAvatarStyle}>
+            {partnerPhoto ? (
+              <img
+                src={partnerPhoto}
+                alt={partnerName}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              "👤"
+            )}
+          </div>
+          <div>
+            <p style={{ margin: 0, fontWeight: "600", color: "#1e3a8a" }}>
+              {partnerName}
+            </p>
+            <p style={{ margin: 0, fontSize: "11px", color: "#22c55e" }}>
+              ✅ Connected
+            </p>
+          </div>
+        </div>
+      )}
 
       <div style={messagesAreaStyle}>
         {loading ? (
-          <p style={{ textAlign: "center", color: "#888" }}>
-            Loading messages...
-          </p>
+          <p style={{ textAlign: "center", color: "#888" }}>Loading messages...</p>
         ) : messages.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 20px" }}>
-            <p style={{ color: "#888", marginBottom: "8px" }}>
-              No messages yet 👋
-            </p>
+            <p style={{ color: "#888", marginBottom: "8px" }}>No messages yet 👋</p>
             <p style={{ color: "#aaa", fontSize: "13px" }}>
               Say hi to {partnerName} to start the conversation!
             </p>
@@ -168,6 +237,91 @@ function ChatBox({
   );
 }
 
+// ============================================================
+// LOCKED CHAT SCREEN
+// ============================================================
+function LockedChat({ partnerName, partnerId, status, direction }) {
+  // Determine what to show based on status
+  let icon = "🔒";
+  let title = "Messaging Locked";
+  let message = "";
+  let actionBtn = null;
+
+  if (status === "none") {
+    title = "Send Interest First";
+    message = `You need to send ${partnerName} an interest before you can message them.`;
+    actionBtn = (
+      <Link to={`/profile/${partnerId}`} style={lockedPrimaryBtn}>
+        💌 View Profile & Send Interest
+      </Link>
+    );
+  } else if (status === "pending" && direction === "sent") {
+    icon = "⏳";
+    title = "Waiting for Acceptance";
+    message = `${partnerName} hasn't accepted your interest yet. You'll be able to message once they accept.`;
+    actionBtn = (
+      <Link to="/interests" style={lockedSecondaryBtn}>
+        📤 View Sent Interests
+      </Link>
+    );
+  } else if (status === "pending" && direction === "received") {
+    icon = "📥";
+    title = "Respond to Interest";
+    message = `${partnerName} sent you an interest. Accept it to start messaging.`;
+    actionBtn = (
+      <Link to="/interests" style={lockedPrimaryBtn}>
+        📥 Respond in Interests
+      </Link>
+    );
+  } else if (status === "declined") {
+    icon = "🚫";
+    title = "Conversation Unavailable";
+    message = "This connection was declined. You cannot message this user.";
+    actionBtn = (
+      <Link to="/search" style={lockedSecondaryBtn}>
+        🔍 Find Other Matches
+      </Link>
+    );
+  }
+
+  return (
+    <div style={wrapperStyle}>
+      <div style={lockedContainerStyle}>
+        <div style={{ fontSize: "56px", marginBottom: "16px" }}>{icon}</div>
+        <h3 style={{ margin: "0 0 12px 0", color: "#1e3a8a", fontSize: "18px" }}>
+          {title}
+        </h3>
+        <p
+          style={{
+            margin: "0 0 24px 0",
+            color: "#666",
+            fontSize: "14px",
+            lineHeight: "1.6",
+            maxWidth: "340px",
+          }}
+        >
+          {message}
+        </p>
+        {actionBtn}
+        <p
+          style={{
+            marginTop: "24px",
+            fontSize: "12px",
+            color: "#aaa",
+            maxWidth: "340px",
+          }}
+        >
+          🔒 For safety, Vivaha only allows messaging between users who have
+          both accepted each other's interest.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MESSAGE BUBBLE
+// ============================================================
 function MessageBubble({ message, isOwn }) {
   return (
     <div
@@ -205,15 +359,15 @@ function MessageBubble({ message, isOwn }) {
   );
 }
 
-function formatTime(timestamp) {
-  if (!timestamp) return "";
-  const d = new Date(timestamp);
-  return d.toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function formatTime(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 }
 
+// ============================================================
+// STYLES
+// ============================================================
 const wrapperStyle = {
   display: "flex",
   flexDirection: "column",
@@ -277,6 +431,41 @@ const sendButtonStyle = {
   fontWeight: "bold",
   fontSize: "14px",
   cursor: "pointer",
+};
+
+const lockedContainerStyle = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "40px 24px",
+  textAlign: "center",
+  background: "#fafafa",
+};
+
+const lockedPrimaryBtn = {
+  background: "linear-gradient(135deg, #dc2626, #f97316)",
+  color: "white",
+  padding: "12px 24px",
+  borderRadius: "10px",
+  textDecoration: "none",
+  fontWeight: "bold",
+  fontSize: "14px",
+  display: "inline-block",
+  boxShadow: "0 4px 12px rgba(220, 38, 38, 0.3)",
+};
+
+const lockedSecondaryBtn = {
+  background: "white",
+  color: "#1e3a8a",
+  padding: "12px 24px",
+  borderRadius: "10px",
+  textDecoration: "none",
+  fontWeight: "bold",
+  fontSize: "14px",
+  display: "inline-block",
+  border: "1px solid #d1d5db",
 };
 
 export default ChatBox;
