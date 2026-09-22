@@ -70,6 +70,42 @@ function Navigation() {
     const interval = setInterval(fetchUnread, 30000);
     return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
+  // Listen for badge-refresh events (fired by ChatBox / Interests)
+  useEffect(() => {
+    function refreshAll() {
+      if (!user) return;
+
+      // Refresh unread messages
+      fetch(`${BACKEND_URL}/messages/unread/${user.id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d) setUnreadCount(d.unreadCount || 0);
+        })
+        .catch(() => {});
+
+      // Refresh pending interests
+      fetch(`${BACKEND_URL}/interests/count/${user.id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d) setInterestCount(d.pendingCount || 0);
+        })
+        .catch(() => {});
+
+      // Refresh notifications count
+      fetch(`${BACKEND_URL}/notifications/count/${user.id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d) {
+            // Update the NotificationBell via its own listener
+            window.dispatchEvent(new Event("notification-refresh"));
+          }
+        })
+        .catch(() => {});
+    }
+
+    window.addEventListener("badge-refresh", refreshAll);
+    return () => window.removeEventListener("badge-refresh", refreshAll);
+  }, [user]);
 
   useEffect(() => {
     if (!user) { setInterestCount(0); return; }
