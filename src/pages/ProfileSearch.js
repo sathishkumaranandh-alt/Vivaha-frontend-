@@ -9,7 +9,7 @@ function ProfileSearch() {
   const [filters, setFilters] = useState({
     age_min: "",
     age_max: "",
-    gender: "",
+    gender: "", // Will be auto-set based on logged-in user
     religion: "",
     location: "",
   });
@@ -19,33 +19,77 @@ function ProfileSearch() {
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [myGender, setMyGender] = useState(null);
+  const [community, setCommunity] = useState("");
 
   // ============================================================
-  // GET CURRENT USER + INITIAL SEARCH
+  // GET CURRENT USER + AUTO-FILTER OPPOSITE GENDER
   // ============================================================
   useEffect(() => {
-    async function getCurrentUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
+    async function init() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          // Not logged in — show everyone
+          setSearched(true);
+          runSearch({}, null, "");
+          return;
+        }
+
         setCurrentUserId(user.id);
+
+        // Fetch my profile to get my gender + community
+        const res = await fetch(`${BACKEND_URL}/profile/${user.id}`);
+        let myProfile = null;
+        if (res.ok) {
+          const data = await res.json();
+          myProfile = data.profile;
+        }
+
+        const gender = myProfile?.gender || null;
+        const myCommunity = myProfile?.community || localStorage.getItem("community") || "";
+
+        setMyGender(gender);
+        setCommunity(myCommunity);
+
+        // Auto-set gender filter to OPPOSITE
+        const oppositeGender =
+          gender === "male" ? "female" : gender === "female" ? "male" : "";
+
+        const initialFilters = {
+          age_min: "",
+          age_max: "",
+          gender: oppositeGender,
+          religion: "",
+          location: "",
+        };
+        setFilters(initialFilters);
+
+        // Run search with the initial filters
+        await runSearch(initialFilters, user.id, myCommunity);
+      } catch (err) {
+        console.error("Init error:", err);
+        setError("Could not load search page.");
       }
     }
-    getCurrentUser();
-    runSearch();
+    init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ============================================================
   // RUN SEARCH
   // ============================================================
-  const runSearch = async (customFilters = null, excludeId = null) => {
+  const runSearch = async (customFilters = null, excludeId = null, customCommunity = null) => {
     try {
       setLoading(true);
       setError(null);
 
       const f = customFilters || filters;
+      const communityToUse = customCommunity !== null ? customCommunity : community;
+      const userIdToExclude = excludeId || currentUserId;
 
       const params = new URLSearchParams();
       if (f.age_min) params.append("age_min", f.age_min);
@@ -53,6 +97,7 @@ function ProfileSearch() {
       if (f.gender) params.append("gender", f.gender);
       if (f.religion) params.append("religion", f.religion);
       if (f.location) params.append("location", f.location);
+      if (communityToUse) params.append("community", communityToUse);
 
       const url = `${BACKEND_URL}/profile/search${
         params.toString() ? "?" + params.toString() : ""
@@ -63,19 +108,19 @@ function ProfileSearch() {
 
       const data = await res.json();
 
-      // Exclude the current user from results
-      const userIdToExclude = excludeId || currentUserId;
-      const filtered = userIdToExclude
-        ? (data.results || []).filter((p) => p.id !== userIdToExclude)
-        : data.results || [];
+      // Exclude myself and filter to only opposite gender as a safety net
+      const filtered = (data.results || []).filter((p) => {
+        if (userIdToExclude && p.id === userIdToExclude) return false;
+        // Extra safety: hide same-gender profiles
+        if (myGender && p.gender && p.gender === myGender) return false;
+        return true;
+      });
 
       setResults(filtered);
       setSearched(true);
     } catch (err) {
       console.error("Search error:", err);
-      setError(
-        "Could not load results. Backend may be waking up — try again in 30 seconds."
-      );
+      setError("Could not load results. Backend may be waking up — try again in 30 seconds.");
     } finally {
       setLoading(false);
     }
@@ -94,10 +139,14 @@ function ProfileSearch() {
   };
 
   const handleClear = () => {
+    // Clear only the user-adjustable fields, keep gender opposite-locked
+    const oppositeGender =
+      myGender === "male" ? "female" : myGender === "female" ? "male" : "";
+
     const cleared = {
       age_min: "",
       age_max: "",
-      gender: "",
+      gender: oppositeGender,
       religion: "",
       location: "",
     };
@@ -113,7 +162,9 @@ function ProfileSearch() {
       <div style={headerStyle}>
         <h1 style={titleStyle}>🔍 Find Your Match</h1>
         <p style={subtitleStyle}>
-          Use the filters below to discover compatible partners
+          {myGender
+            ? `Showing ${myGender === "male" ? "female" : "male"} profiles${community ? ` from ${community} community` : ""}`
+            : "Use the filters below to discover compatible partners"}
         </p>
       </div>
 
@@ -148,12 +199,20 @@ function ProfileSearch() {
           </div>
 
           <div style={fieldWrapperStyle}>
-            <label style={labelStyle}>Gender</label>
+            <label style={labelStyle}>
+              Gender{" "}
+              {myGender && (
+                <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: "500" }}>
+                  (auto-selected)
+                </span>
+              )}
+            </label>
             <select
               name="gender"
               value={filters.gender}
               onChange={handleChange}
               style={inputStyle}
+              disabled={!!myGender} // Lock it so users can't change opposite-gender rule
             >
               <option value="">Any</option>
               <option value="male">Male</option>
@@ -312,9 +371,6 @@ function ProfileCard({ profile }) {
   );
 }
 
-// ============================================================
-// HELPERS
-// ============================================================
 function capitalize(str) {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);
@@ -323,29 +379,10 @@ function capitalize(str) {
 // ============================================================
 // STYLES
 // ============================================================
-const pageStyle = {
-  maxWidth: "1100px",
-  margin: "0 auto",
-  padding: "24px 16px",
-};
-
-const headerStyle = {
-  textAlign: "center",
-  marginBottom: "24px",
-};
-
-const titleStyle = {
-  color: "#1e3a8a",
-  fontSize: "32px",
-  margin: "0 0 8px 0",
-};
-
-const subtitleStyle = {
-  color: "#666",
-  fontSize: "15px",
-  margin: 0,
-};
-
+const pageStyle = { maxWidth: "1100px", margin: "0 auto", padding: "24px 16px" };
+const headerStyle = { textAlign: "center", marginBottom: "24px" };
+const titleStyle = { color: "#1e3a8a", fontSize: "28px", margin: "0 0 8px 0" };
+const subtitleStyle = { color: "#666", fontSize: "14px", margin: 0 };
 const filterCardStyle = {
   background: "white",
   borderRadius: "12px",
@@ -353,26 +390,14 @@ const filterCardStyle = {
   boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
   marginBottom: "32px",
 };
-
 const filterGridStyle = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
   gap: "16px",
   marginBottom: "16px",
 };
-
-const fieldWrapperStyle = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "4px",
-};
-
-const labelStyle = {
-  fontSize: "13px",
-  fontWeight: "600",
-  color: "#555",
-};
-
+const fieldWrapperStyle = { display: "flex", flexDirection: "column", gap: "4px" };
+const labelStyle = { fontSize: "13px", fontWeight: "600", color: "#555" };
 const inputStyle = {
   padding: "10px 12px",
   borderRadius: "8px",
@@ -382,14 +407,9 @@ const inputStyle = {
   outline: "none",
   width: "100%",
   boxSizing: "border-box",
+  background: "white",
 };
-
-const buttonRowStyle = {
-  display: "flex",
-  gap: "12px",
-  flexWrap: "wrap",
-};
-
+const buttonRowStyle = { display: "flex", gap: "12px", flexWrap: "wrap" };
 const searchButtonStyle = {
   flex: 1,
   minWidth: "140px",
@@ -402,7 +422,6 @@ const searchButtonStyle = {
   fontSize: "15px",
   cursor: "pointer",
 };
-
 const clearButtonStyle = {
   background: "#e5e7eb",
   color: "#1e3a8a",
@@ -413,23 +432,13 @@ const clearButtonStyle = {
   fontSize: "15px",
   cursor: "pointer",
 };
-
-const resultsSectionStyle = {
-  marginTop: "16px",
-};
-
-const resultsHeaderStyle = {
-  color: "#333",
-  fontSize: "18px",
-  marginBottom: "16px",
-};
-
+const resultsSectionStyle = { marginTop: "16px" };
+const resultsHeaderStyle = { color: "#333", fontSize: "18px", marginBottom: "16px" };
 const resultsGridStyle = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
   gap: "20px",
 };
-
 const cardStyle = {
   background: "white",
   borderRadius: "12px",
@@ -439,7 +448,6 @@ const cardStyle = {
   flexDirection: "column",
   gap: "10px",
 };
-
 const cardPhotoWrapperStyle = {
   width: "80px",
   height: "80px",
@@ -449,28 +457,14 @@ const cardPhotoWrapperStyle = {
   overflow: "hidden",
   border: "2px solid #e5e7eb",
 };
-
-const cardNameStyle = {
-  margin: 0,
-  textAlign: "center",
-  color: "#1e3a8a",
-  fontSize: "18px",
-};
-
-const cardMetaStyle = {
-  margin: 0,
-  textAlign: "center",
-  color: "#666",
-  fontSize: "14px",
-};
-
+const cardNameStyle = { margin: 0, textAlign: "center", color: "#1e3a8a", fontSize: "18px" };
+const cardMetaStyle = { margin: 0, textAlign: "center", color: "#666", fontSize: "14px" };
 const cardDetailsStyle = {
   display: "flex",
   flexWrap: "wrap",
   gap: "6px",
   justifyContent: "center",
 };
-
 const tagStyle = {
   background: "#eff6ff",
   color: "#1e40af",
@@ -478,7 +472,6 @@ const tagStyle = {
   borderRadius: "6px",
   fontSize: "12px",
 };
-
 const bioStyle = {
   fontSize: "13px",
   color: "#555",
@@ -487,7 +480,6 @@ const bioStyle = {
   lineHeight: "1.5",
   textAlign: "center",
 };
-
 const viewButtonStyle = {
   display: "block",
   textAlign: "center",
