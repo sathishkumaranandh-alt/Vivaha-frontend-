@@ -267,12 +267,12 @@ function ReceivedTab({ items, isMobile, busy, onAccept, onDecline }) {
               actions={
                 <>
                   <button
-                    onClick={onAccept}
-                    disabled={busy === i.id}
-                    style={acceptBtn}
-                  >
-                    ✅ Accept
-                  </button>
+  onClick={() => onAccept(i)}
+  disabled={busy === i.id}
+  style={acceptBtn}
+>
+  ✅ Accept
+</button>
                   <button
                     onClick={onDecline}
                     disabled={busy === i.id}
