@@ -73,7 +73,18 @@ function ChatBox({
     if (connStatus?.status !== "accepted") return;
     if (!userId || !partnerId) return;
 
+    // Mark messages from this partner as read
     fetch(`${BACKEND_URL}/messages/mark-read/${userId}/${partnerId}`, {
+      method: "PATCH",
+    })
+      .then(() => {
+        // Notify navbar to refresh badge instantly
+        window.dispatchEvent(new Event("badge-refresh"));
+      })
+      .catch(() => {});
+
+    // Also mark message notifications from this partner as read
+    fetch(`${BACKEND_URL}/notifications/read-by-actor/${userId}/${partnerId}`, {
       method: "PATCH",
     }).catch(() => {});
 
