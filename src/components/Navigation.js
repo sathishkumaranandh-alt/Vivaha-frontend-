@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
+import NotificationBell from "./NotificationBell";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -26,25 +27,21 @@ function Navigation() {
   );
   const navigate = useNavigate();
 
-  // Detect mobile
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Close menu on route change
   useEffect(() => {
     setMenuOpen(false);
   }, [navigate]);
 
-  // AUTH STATE
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data?.user || null);
       setLoading(false);
     });
-
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user || null);
@@ -54,18 +51,11 @@ function Navigation() {
         }
       }
     );
-
-    return () => {
-      listener?.subscription?.unsubscribe();
-    };
+    return () => listener?.subscription?.unsubscribe();
   }, []);
 
-  // UNREAD MESSAGE COUNT — auto-refresh every 30s
   useEffect(() => {
-    if (!user) {
-      setUnreadCount(0);
-      return;
-    }
+    if (!user) { setUnreadCount(0); return; }
     let cancelled = false;
     async function fetchUnread() {
       try {
@@ -74,24 +64,15 @@ function Navigation() {
           const data = await res.json();
           setUnreadCount(data.unreadCount || 0);
         }
-      } catch (err) {
-        // silent
-      }
+      } catch (err) {}
     }
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
+    return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
 
-  // PENDING INTEREST COUNT — auto-refresh every 30s
   useEffect(() => {
-    if (!user) {
-      setInterestCount(0);
-      return;
-    }
+    if (!user) { setInterestCount(0); return; }
     let cancelled = false;
     async function fetchInterests() {
       try {
@@ -100,16 +81,11 @@ function Navigation() {
           const data = await res.json();
           setInterestCount(data.pendingCount || 0);
         }
-      } catch (err) {
-        // silent
-      }
+      } catch (err) {}
     }
     fetchInterests();
     const interval = setInterval(fetchInterests, 30000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
+    return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
 
   const handleLogout = async () => {
@@ -155,13 +131,11 @@ function Navigation() {
 
   return (
     <nav style={navStyle}>
-      {/* TOP ROW */}
       <div style={topRowStyle}>
         <h2 style={{ margin: 0, fontSize: "20px", whiteSpace: "nowrap" }}>
           Vivaha Matrimony
         </h2>
 
-        {/* Community selector */}
         <select
           value={community}
           onChange={(e) => handleCommunityChange(e.target.value)}
@@ -178,6 +152,7 @@ function Navigation() {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {user ? (
               <>
+                <NotificationBell />
                 <span style={{ fontSize: "14px", opacity: 0.9 }}>
                   👤 {user.email?.split("@")[0]}
                 </span>
@@ -199,22 +174,26 @@ function Navigation() {
         )}
 
         {isMobile && (
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            style={hamburgerStyle}
-            aria-label="Menu"
-          >
-            {menuOpen ? "✕" : "☰"}
-            {(unreadCount > 0 || interestCount > 0) && !menuOpen && (
-              <span style={hamburgerBadgeStyle}>
-                {unreadCount + interestCount > 99 ? "99+" : unreadCount + interestCount}
-              </span>
-            )}
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {user && <NotificationBell />}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              style={hamburgerStyle}
+              aria-label="Menu"
+            >
+              {menuOpen ? "✕" : "☰"}
+              {(unreadCount > 0 || interestCount > 0) && !menuOpen && (
+                <span style={hamburgerBadgeStyle}>
+                  {unreadCount + interestCount > 99
+                    ? "99+"
+                    : unreadCount + interestCount}
+                </span>
+              )}
+            </button>
+          </div>
         )}
       </div>
 
-      {/* DESKTOP LINKS */}
       {!isMobile && (
         <div style={linksRowStyle}>
           {links.map((link, i) => (
@@ -245,7 +224,6 @@ function Navigation() {
         </div>
       )}
 
-      {/* MOBILE DROPDOWN */}
       {isMobile && menuOpen && (
         <div style={mobileMenuStyle}>
           {links.map((link) => (
@@ -253,10 +231,7 @@ function Navigation() {
               key={link.to}
               to={link.to}
               onClick={closeMenu}
-              style={{
-                ...mobileLinkStyle,
-                color: link.color || "white",
-              }}
+              style={{ ...mobileLinkStyle, color: link.color || "white" }}
             >
               {link.label}
               {link.badge > 0 && (
@@ -308,173 +283,23 @@ function Navigation() {
   );
 }
 
-// ============================================================
-// STYLES
-// ============================================================
-const navStyle = {
-  padding: "14px 16px",
-  background: "#1e3a8a",
-  color: "white",
-  position: "sticky",
-  top: 0,
-  zIndex: 100,
-  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-};
-const topRowStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "10px",
-  flexWrap: "wrap",
-};
-const linksRowStyle = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "4px",
-  alignItems: "center",
-  fontSize: "15px",
-  marginTop: "12px",
-};
-const navLinkStyle = {
-  textDecoration: "none",
-  padding: "4px 8px",
-  fontWeight: "600",
-  display: "inline-block",
-};
+const navStyle = { padding: "14px 16px", background: "#1e3a8a", color: "white", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" };
+const topRowStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" };
+const linksRowStyle = { display: "flex", flexWrap: "wrap", gap: "4px", alignItems: "center", fontSize: "15px", marginTop: "12px" };
+const navLinkStyle = { textDecoration: "none", padding: "4px 8px", fontWeight: "600", display: "inline-block" };
 const dividerStyle = { color: "rgba(255,255,255,0.4)", margin: "0 2px" };
-const communitySelectStyle = {
-  background: "rgba(255,255,255,0.15)",
-  color: "white",
-  border: "1px solid rgba(255,255,255,0.4)",
-  padding: "8px 12px",
-  borderRadius: "8px",
-  fontSize: "14px",
-  fontWeight: "600",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  outline: "none",
-  flex: 1,
-  maxWidth: "220px",
-  minWidth: "160px",
-};
-const authLinkStyle = {
-  color: "white",
-  textDecoration: "none",
-  padding: "6px 14px",
-  borderRadius: "6px",
-  border: "1px solid rgba(255,255,255,0.5)",
-  fontWeight: "600",
-  fontSize: "14px",
-};
-const registerButtonStyle = {
-  color: "#1e3a8a",
-  background: "white",
-  textDecoration: "none",
-  padding: "6px 14px",
-  borderRadius: "6px",
-  fontWeight: "700",
-  fontSize: "14px",
-};
-const logoutButtonStyle = {
-  background: "rgba(255,255,255,0.15)",
-  color: "white",
-  border: "1px solid rgba(255,255,255,0.5)",
-  padding: "6px 14px",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontWeight: "600",
-  fontSize: "14px",
-};
-const badgeStyle = {
-  display: "inline-block",
-  background: "#dc2626",
-  color: "white",
-  fontSize: "11px",
-  fontWeight: "bold",
-  borderRadius: "10px",
-  padding: "2px 6px",
-  marginLeft: "6px",
-  minWidth: "18px",
-  textAlign: "center",
-  lineHeight: "14px",
-  verticalAlign: "middle",
-};
-const hamburgerStyle = {
-  background: "rgba(255,255,255,0.15)",
-  color: "white",
-  border: "1px solid rgba(255,255,255,0.3)",
-  width: "44px",
-  height: "44px",
-  borderRadius: "8px",
-  fontSize: "20px",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  position: "relative",
-  flexShrink: 0,
-};
-const hamburgerBadgeStyle = {
-  position: "absolute",
-  top: "-6px",
-  right: "-6px",
-  background: "#dc2626",
-  color: "white",
-  fontSize: "10px",
-  fontWeight: "bold",
-  borderRadius: "10px",
-  padding: "2px 5px",
-  minWidth: "16px",
-};
-const mobileMenuStyle = {
-  marginTop: "12px",
-  paddingTop: "12px",
-  borderTop: "1px solid rgba(255,255,255,0.2)",
-  display: "flex",
-  flexDirection: "column",
-  gap: "4px",
-};
-const mobileLinkStyle = {
-  textDecoration: "none",
-  padding: "14px 12px",
-  borderRadius: "8px",
-  fontWeight: "600",
-  fontSize: "16px",
-  display: "flex",
-  alignItems: "center",
-  background: "rgba(255,255,255,0.05)",
-};
-const mobileDividerStyle = {
-  height: "1px",
-  background: "rgba(255,255,255,0.2)",
-  margin: "10px 0",
-};
-const mobileUserStyle = {
-  padding: "10px 12px",
-  fontSize: "14px",
-  opacity: 0.9,
-};
-const mobileLogoutButtonStyle = {
-  background: "rgba(255,255,255,0.15)",
-  color: "white",
-  border: "1px solid rgba(255,255,255,0.4)",
-  padding: "12px",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontWeight: "600",
-  fontSize: "15px",
-  width: "100%",
-};
-const mobileAuthButtonStyle = {
-  flex: 1,
-  padding: "12px",
-  textAlign: "center",
-  borderRadius: "8px",
-  border: "1px solid white",
-  color: "white",
-  textDecoration: "none",
-  fontWeight: "600",
-  fontSize: "15px",
-};
+const communitySelectStyle = { background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.4)", padding: "8px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit", outline: "none", flex: 1, maxWidth: "220px", minWidth: "160px" };
+const authLinkStyle = { color: "white", textDecoration: "none", padding: "6px 14px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.5)", fontWeight: "600", fontSize: "14px" };
+const registerButtonStyle = { color: "#1e3a8a", background: "white", textDecoration: "none", padding: "6px 14px", borderRadius: "6px", fontWeight: "700", fontSize: "14px" };
+const logoutButtonStyle = { background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "14px" };
+const badgeStyle = { display: "inline-block", background: "#dc2626", color: "white", fontSize: "11px", fontWeight: "bold", borderRadius: "10px", padding: "2px 6px", marginLeft: "6px", minWidth: "18px", textAlign: "center", lineHeight: "14px", verticalAlign: "middle" };
+const hamburgerStyle = { background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.3)", width: "44px", height: "44px", borderRadius: "8px", fontSize: "20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", flexShrink: 0 };
+const hamburgerBadgeStyle = { position: "absolute", top: "-6px", right: "-6px", background: "#dc2626", color: "white", fontSize: "10px", fontWeight: "bold", borderRadius: "10px", padding: "2px 5px", minWidth: "16px" };
+const mobileMenuStyle = { marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.2)", display: "flex", flexDirection: "column", gap: "4px" };
+const mobileLinkStyle = { textDecoration: "none", padding: "14px 12px", borderRadius: "8px", fontWeight: "600", fontSize: "16px", display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)" };
+const mobileDividerStyle = { height: "1px", background: "rgba(255,255,255,0.2)", margin: "10px 0" };
+const mobileUserStyle = { padding: "10px 12px", fontSize: "14px", opacity: 0.9 };
+const mobileLogoutButtonStyle = { background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.4)", padding: "12px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "15px", width: "100%" };
+const mobileAuthButtonStyle = { flex: 1, padding: "12px", textAlign: "center", borderRadius: "8px", border: "1px solid white", color: "white", textDecoration: "none", fontWeight: "600", fontSize: "15px" };
 
 export default Navigation;
