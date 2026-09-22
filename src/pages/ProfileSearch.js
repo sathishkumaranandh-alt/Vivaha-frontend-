@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import supabase from "../supabaseClient";
+import { toast } from "../utils/toast";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -21,6 +22,8 @@ function ProfileSearch() {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [myGender, setMyGender] = useState(null);
   const [community, setCommunity] = useState("");
+  const [shortlistedIds, setShortlistedIds] = useState(new Set());
+  const [sentInterestIds, setSentInterestIds] = useState(new Set());
 
   useEffect(() => {
     async function init() {
@@ -35,6 +38,7 @@ function ProfileSearch() {
 
         setCurrentUserId(user.id);
 
+        // Load my profile
         const res = await fetch(`${BACKEND_URL}/profile/${user.id}`);
         let myProfile = null;
         if (res.ok) {
@@ -43,11 +47,16 @@ function ProfileSearch() {
         }
 
         const gender = myProfile?.gender || null;
-        const myCommunity =
-          myProfile?.community || localStorage.getItem("community") || "";
+        const myCommunity = myProfile?.community || localStorage.getItem("community") || "";
 
         setMyGender(gender);
         setCommunity(myCommunity);
+
+        // Load shortlists + sent interests (for heart/interest buttons)
+        await Promise.all([
+          loadShortlists(user.id),
+          loadSentInterests(user.id),
+        ]);
 
         const oppositeGender =
           gender === "male" ? "female" : gender === "female" ? "male" : "";
@@ -70,6 +79,118 @@ function ProfileSearch() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ============================================================
+  // LOAD SHORTLISTS
+  // ============================================================
+  const loadShortlists = async (userId) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/interests/shortlisted/${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const ids = new Set((data.shortlisted || []).map((s) => s.shortlisted_user_id));
+        setShortlistedIds(ids);
+      }
+    } catch (err) {
+      console.error("Load shortlists error:", err);
+    }
+  };
+
+  // ============================================================
+  // LOAD SENT INTERESTS
+  // ============================================================
+  const loadSentInterests = async (userId) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/interests/sent/${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const ids = new Set((data.interests || []).map((i) => i.receiver_id));
+        setSentInterestIds(ids);
+      }
+    } catch (err) {
+      console.error("Load sent interests error:", err);
+    }
+  };
+
+  // ============================================================
+  // TOGGLE SHORTLIST
+  // ============================================================
+  const toggleShortlist = async (targetUserId, targetName) => {
+    if (!currentUserId) {
+      toast.error("Please log in first");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/interests/shortlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: currentUserId,
+          shortlisted_user_id: targetUserId,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const newSet = new Set(shortlistedIds);
+        if (data.action === "added") {
+          newSet.add(targetUserId);
+          toast.success(`Shortlisted ${targetName || "profile"}`);
+        } else {
+          newSet.delete(targetUserId);
+          toast.info("Removed from shortlist");
+        }
+        setShortlistedIds(newSet);
+      }
+    } catch (err) {
+      console.error("Shortlist error:", err);
+      toast.error("Failed to update shortlist");
+    }
+  };
+
+  // ============================================================
+  // SEND INTEREST
+  // ============================================================
+  const sendInterest = async (targetUserId, targetName) => {
+    if (!currentUserId) {
+      toast.error("Please log in first");
+      return;
+    }
+
+    if (sentInterestIds.has(targetUserId)) {
+      toast.info("Interest already sent to " + (targetName || "this user"));
+      return;
+    }
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/interests/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sender_id: currentUserId,
+          receiver_id: targetUserId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const newSet = new Set(sentInterestIds);
+        newSet.add(targetUserId);
+        setSentInterestIds(newSet);
+        toast.success(`❤️ Interest sent to ${targetName || "user"}!`);
+      } else {
+        toast.error(data.error || "Could not send interest");
+      }
+    } catch (err) {
+      console.error("Send interest error:", err);
+      toast.error("Network error");
+    }
+  };
+
+  // ============================================================
+  // RUN SEARCH
+  // ============================================================
   const runSearch = async (customFilters = null, excludeId = null, customCommunity = null) => {
     try {
       setLoading(true);
@@ -209,7 +330,14 @@ function ProfileSearch() {
 
             <div style={resultsGridStyle}>
               {results.map((profile) => (
-                <ProfileCard key={profile.id} profile={profile} />
+                <ProfileCard
+                  key={profile.id}
+                  profile={profile}
+                  isShortlisted={shortlistedIds.has(profile.id)}
+                  interestSent={sentInterestIds.has(profile.id)}
+                  onToggleShortlist={() => toggleShortlist(profile.id, profile.name)}
+                  onSendInterest={() => sendInterest(profile.id, profile.name)}
+                />
               ))}
             </div>
           </>
@@ -220,109 +348,84 @@ function ProfileSearch() {
 }
 
 // ============================================================
-// 🎨 NEW BEAUTIFUL PROFILE CARD
+// PROFILE CARD WITH FUNCTIONAL BUTTONS
 // ============================================================
-function ProfileCard({ profile }) {
-  const [liked, setLiked] = useState(false);
-
+function ProfileCard({ profile, isShortlisted, interestSent, onToggleShortlist, onSendInterest }) {
   const communityLabel = profile.community
     ? profile.community.charAt(0).toUpperCase() + profile.community.slice(1)
     : null;
 
   return (
     <div style={cardStyle}>
-      {/* ---------- HEADER: Photo + Badges ---------- */}
+      {/* PHOTO */}
       <div style={photoWrapperStyle}>
         {profile.photo_url ? (
-          <img
-            src={profile.photo_url}
-            alt={profile.name}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
+          <img src={profile.photo_url} alt={profile.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={photoPlaceholderStyle}>👤</div>
         )}
-
-        {/* Verified Badge */}
         {profile.is_verified && (
-          <div style={verifiedBadgeStyle} title="Verified Profile">
-            ✓
-          </div>
+          <div style={verifiedBadgeStyle} title="Verified Profile">✓</div>
         )}
-
-        {/* Online dot (simulated) */}
         <div style={onlineDotStyle} title="Recently active" />
       </div>
 
-      {/* ---------- NAME + BADGES ---------- */}
+      {/* NAME + BADGES */}
       <div style={{ textAlign: "center", marginTop: "12px" }}>
         <h3 style={cardNameStyle}>
           {profile.name || "Anonymous"}
-          {profile.is_verified && (
-            <span style={{ color: "#2563eb", marginLeft: "4px" }} title="Verified">
-              ✔️
-            </span>
-          )}
+          {profile.is_verified && <span style={{ color: "#2563eb", marginLeft: "4px" }}>✔️</span>}
         </h3>
 
-        {/* Community + Age + Location */}
         <div style={metaRowStyle}>
-          {communityLabel && (
-            <span style={communityTagStyle}>🏷️ {communityLabel}</span>
-          )}
-          {profile.age && (
-            <span style={metaTextStyle}>{profile.age} yrs</span>
-          )}
+          {communityLabel && <span style={communityTagStyle}>🏷️ {communityLabel}</span>}
+          {profile.age && <span style={metaTextStyle}>{profile.age} yrs</span>}
         </div>
 
-        {profile.location && (
-          <p style={locationTextStyle}>📍 {profile.location}</p>
-        )}
+        {profile.location && <p style={locationTextStyle}>📍 {profile.location}</p>}
       </div>
 
-      {/* ---------- DETAIL PILLS ---------- */}
+      {/* DETAIL PILLS */}
       <div style={pillsRowStyle}>
-        {profile.religion && (
-          <span style={pillStyle}>🕉️ {profile.religion}</span>
-        )}
-        {profile.education && (
-          <span style={pillStyle}>🎓 {profile.education}</span>
-        )}
-        {profile.occupation && (
-          <span style={pillStyle}>💼 {profile.occupation}</span>
-        )}
+        {profile.religion && <span style={pillStyle}>🕉️ {profile.religion}</span>}
+        {profile.education && <span style={pillStyle}>🎓 {profile.education}</span>}
+        {profile.occupation && <span style={pillStyle}>💼 {profile.occupation}</span>}
       </div>
 
-      {/* ---------- BIO PREVIEW ---------- */}
+      {/* BIO */}
       {profile.bio && (
         <p style={bioStyle}>
           "{profile.bio.length > 70 ? profile.bio.slice(0, 70) + "..." : profile.bio}"
         </p>
       )}
 
-      {/* ---------- ACTION BUTTONS ---------- */}
+      {/* ACTIONS */}
       <div style={actionsRowStyle}>
-        <Link to={`/profile/${profile.id}`} style={viewBtnStyle}>
-          View Profile
-        </Link>
+        <Link to={`/profile/${profile.id}`} style={viewBtnStyle}>View</Link>
         <button
-          onClick={() => setLiked(!liked)}
+          onClick={onToggleShortlist}
           style={{
             ...iconBtnStyle,
-            background: liked ? "#fee2e2" : "#f3f4f6",
-            color: liked ? "#dc2626" : "#666",
+            background: isShortlisted ? "#fee2e2" : "#f3f4f6",
+            color: isShortlisted ? "#dc2626" : "#666",
           }}
-          title={liked ? "Remove from shortlist" : "Add to shortlist"}
+          title={isShortlisted ? "Remove from shortlist" : "Add to shortlist"}
         >
-          {liked ? "❤️" : "🤍"}
+          {isShortlisted ? "❤️" : "🤍"}
         </button>
-        <Link
-          to={`/messages?to=${profile.id}`}
-          style={iconBtnStyle}
-          title="Send Message"
+        <button
+          onClick={onSendInterest}
+          disabled={interestSent}
+          style={{
+            ...iconBtnStyle,
+            background: interestSent ? "#fef3c7" : "#dbeafe",
+            color: interestSent ? "#92400e" : "#1e40af",
+            cursor: interestSent ? "not-allowed" : "pointer",
+          }}
+          title={interestSent ? "Interest sent" : "Send interest"}
         >
-          💬
-        </Link>
+          {interestSent ? "✔️" : "💌"}
+        </button>
       </div>
     </div>
   );
@@ -335,235 +438,32 @@ const pageStyle = { maxWidth: "1100px", margin: "0 auto", padding: "24px 16px" }
 const headerStyle = { textAlign: "center", marginBottom: "24px" };
 const titleStyle = { color: "#1e3a8a", fontSize: "28px", margin: "0 0 8px 0" };
 const subtitleStyle = { color: "#666", fontSize: "14px", margin: 0 };
-const filterCardStyle = {
-  background: "white",
-  borderRadius: "12px",
-  padding: "20px",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-  marginBottom: "32px",
-};
-const filterGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-  gap: "16px",
-  marginBottom: "16px",
-};
+const filterCardStyle = { background: "white", borderRadius: "12px", padding: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", marginBottom: "32px" };
+const filterGridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "16px", marginBottom: "16px" };
 const fieldWrapperStyle = { display: "flex", flexDirection: "column", gap: "4px" };
 const labelStyle = { fontSize: "13px", fontWeight: "600", color: "#555" };
-const inputStyle = {
-  padding: "10px 12px",
-  borderRadius: "8px",
-  border: "1px solid #d1d5db",
-  fontSize: "14px",
-  fontFamily: "inherit",
-  outline: "none",
-  width: "100%",
-  boxSizing: "border-box",
-  background: "white",
-};
+const inputStyle = { padding: "10px 12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", fontFamily: "inherit", outline: "none", width: "100%", boxSizing: "border-box", background: "white" };
 const buttonRowStyle = { display: "flex", gap: "12px", flexWrap: "wrap" };
-const searchButtonStyle = {
-  flex: 1,
-  minWidth: "140px",
-  background: "#1e3a8a",
-  color: "white",
-  border: "none",
-  padding: "12px 24px",
-  borderRadius: "8px",
-  fontWeight: "bold",
-  fontSize: "15px",
-  cursor: "pointer",
-};
-const clearButtonStyle = {
-  background: "#e5e7eb",
-  color: "#1e3a8a",
-  border: "none",
-  padding: "12px 24px",
-  borderRadius: "8px",
-  fontWeight: "bold",
-  fontSize: "15px",
-  cursor: "pointer",
-};
+const searchButtonStyle = { flex: 1, minWidth: "140px", background: "#1e3a8a", color: "white", border: "none", padding: "12px 24px", borderRadius: "8px", fontWeight: "bold", fontSize: "15px", cursor: "pointer" };
+const clearButtonStyle = { background: "#e5e7eb", color: "#1e3a8a", border: "none", padding: "12px 24px", borderRadius: "8px", fontWeight: "bold", fontSize: "15px", cursor: "pointer" };
 const resultsSectionStyle = { marginTop: "16px" };
 const resultsHeaderStyle = { color: "#333", fontSize: "18px", marginBottom: "16px" };
-
-// ============================================================
-// GRID
-// ============================================================
-const resultsGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-  gap: "20px",
-};
-
-// ============================================================
-// NEW BEAUTIFUL CARD STYLES
-// ============================================================
-const cardStyle = {
-  background: "white",
-  borderRadius: "16px",
-  padding: "16px",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-  display: "flex",
-  flexDirection: "column",
-  gap: "10px",
-  transition: "transform 0.2s, box-shadow 0.2s",
-  border: "1px solid #f0f0f0",
-  position: "relative",
-};
-
-const photoWrapperStyle = {
-  width: "110px",
-  height: "110px",
-  borderRadius: "50%",
-  background: "linear-gradient(135deg, #dbeafe, #bfdbfe)",
-  margin: "0 auto",
-  position: "relative",
-  border: "3px solid #1e3a8a",
-  overflow: "hidden",
-  boxShadow: "0 4px 12px rgba(30, 58, 138, 0.2)",
-};
-
-const photoPlaceholderStyle = {
-  fontSize: "52px",
-  width: "100%",
-  height: "100%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const verifiedBadgeStyle = {
-  position: "absolute",
-  bottom: "4px",
-  right: "4px",
-  background: "#2563eb",
-  color: "white",
-  width: "24px",
-  height: "24px",
-  borderRadius: "50%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "14px",
-  fontWeight: "bold",
-  border: "2px solid white",
-  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-};
-
-const onlineDotStyle = {
-  position: "absolute",
-  top: "6px",
-  right: "6px",
-  background: "#22c55e",
-  width: "12px",
-  height: "12px",
-  borderRadius: "50%",
-  border: "2px solid white",
-  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-};
-
-const cardNameStyle = {
-  margin: 0,
-  color: "#1e3a8a",
-  fontSize: "19px",
-  fontWeight: "700",
-  textAlign: "center",
-};
-
-const metaRowStyle = {
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  gap: "8px",
-  marginTop: "4px",
-  flexWrap: "wrap",
-};
-
-const communityTagStyle = {
-  background: "#eff6ff",
-  color: "#1e40af",
-  padding: "3px 10px",
-  borderRadius: "12px",
-  fontSize: "11px",
-  fontWeight: "600",
-};
-
-const metaTextStyle = {
-  color: "#666",
-  fontSize: "13px",
-  fontWeight: "500",
-};
-
-const locationTextStyle = {
-  margin: "4px 0 0 0",
-  color: "#888",
-  fontSize: "13px",
-};
-
-const pillsRowStyle = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "6px",
-  justifyContent: "center",
-  marginTop: "4px",
-};
-
-const pillStyle = {
-  background: "#f3f4f6",
-  color: "#4b5563",
-  padding: "4px 10px",
-  borderRadius: "8px",
-  fontSize: "11px",
-  fontWeight: "500",
-};
-
-const bioStyle = {
-  fontSize: "12px",
-  color: "#666",
-  fontStyle: "italic",
-  margin: "6px 0 0 0",
-  lineHeight: "1.5",
-  textAlign: "center",
-  padding: "8px 6px",
-  background: "#fafafa",
-  borderRadius: "8px",
-};
-
-const actionsRowStyle = {
-  display: "flex",
-  gap: "6px",
-  marginTop: "auto",
-  paddingTop: "8px",
-};
-
-const viewBtnStyle = {
-  flex: 1,
-  textAlign: "center",
-  padding: "10px",
-  background: "linear-gradient(135deg, #1e3a8a, #3b82f6)",
-  color: "white",
-  textDecoration: "none",
-  borderRadius: "8px",
-  fontWeight: "bold",
-  fontSize: "14px",
-  boxShadow: "0 2px 8px rgba(30, 58, 138, 0.3)",
-};
-
-const iconBtnStyle = {
-  background: "#f3f4f6",
-  color: "#666",
-  border: "none",
-  width: "42px",
-  height: "42px",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontSize: "18px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  textDecoration: "none",
-  flexShrink: 0,
-};
+const resultsGridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "20px" };
+const cardStyle = { background: "white", borderRadius: "16px", padding: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: "10px", border: "1px solid #f0f0f0" };
+const photoWrapperStyle = { width: "110px", height: "110px", borderRadius: "50%", background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", margin: "0 auto", position: "relative", border: "3px solid #1e3a8a", overflow: "hidden", boxShadow: "0 4px 12px rgba(30, 58, 138, 0.2)" };
+const photoPlaceholderStyle = { fontSize: "52px", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" };
+const verifiedBadgeStyle = { position: "absolute", bottom: "4px", right: "4px", background: "#2563eb", color: "white", width: "24px", height: "24px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "bold", border: "2px solid white", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" };
+const onlineDotStyle = { position: "absolute", top: "6px", right: "6px", background: "#22c55e", width: "12px", height: "12px", borderRadius: "50%", border: "2px solid white" };
+const cardNameStyle = { margin: 0, color: "#1e3a8a", fontSize: "19px", fontWeight: "700", textAlign: "center" };
+const metaRowStyle = { display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", marginTop: "4px", flexWrap: "wrap" };
+const communityTagStyle = { background: "#eff6ff", color: "#1e40af", padding: "3px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "600" };
+const metaTextStyle = { color: "#666", fontSize: "13px", fontWeight: "500" };
+const locationTextStyle = { margin: "4px 0 0 0", color: "#888", fontSize: "13px" };
+const pillsRowStyle = { display: "flex", flexWrap: "wrap", gap: "6px", justifyContent: "center", marginTop: "4px" };
+const pillStyle = { background: "#f3f4f6", color: "#4b5563", padding: "4px 10px", borderRadius: "8px", fontSize: "11px", fontWeight: "500" };
+const bioStyle = { fontSize: "12px", color: "#666", fontStyle: "italic", margin: "6px 0 0 0", lineHeight: "1.5", textAlign: "center", padding: "8px 6px", background: "#fafafa", borderRadius: "8px" };
+const actionsRowStyle = { display: "flex", gap: "6px", marginTop: "auto", paddingTop: "8px" };
+const viewBtnStyle = { flex: 1, textAlign: "center", padding: "10px", background: "linear-gradient(135deg, #1e3a8a, #3b82f6)", color: "white", textDecoration: "none", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", boxShadow: "0 2px 8px rgba(30, 58, 138, 0.3)" };
+const iconBtnStyle = { background: "#f3f4f6", color: "#666", border: "none", width: "42px", height: "42px", borderRadius: "8px", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", flexShrink: 0 };
 
 export default ProfileSearch;
