@@ -6,6 +6,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 // Pages
 import Home from "./pages/Home";
+import SuccessStories from "./pages/SuccessStories";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
@@ -30,6 +31,7 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
+<Route path="/success-stories" element={<SuccessStories />} />
         <Route path="/login" element={<Login />} />
 
         {/* Protected routes */}
