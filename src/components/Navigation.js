@@ -3,17 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 import NotificationBell from "./NotificationBell";
+import { useCommunities } from "../utils/communities";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
-
-const COMMUNITIES = [
-  { value: "", label: "🌐 All Communities" },
-  { value: "vanniyar", label: "🔥 Vanniyar" },
-  { value: "naidu", label: "💫 Naidu" },
-  { value: "kallar", label: "⚡ Kallar" },
-  { value: "thevar", label: "🌟 Thevar" },
-];
 
 function Navigation() {
   const [user, setUser] = useState(null);
@@ -25,6 +18,7 @@ function Navigation() {
   const [community, setCommunity] = useState(
     localStorage.getItem("community") || ""
   );
+  const { communities: dbCommunities } = useCommunities();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -70,42 +64,6 @@ function Navigation() {
     const interval = setInterval(fetchUnread, 30000);
     return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
-  // Listen for badge-refresh events (fired by ChatBox / Interests)
-  useEffect(() => {
-    function refreshAll() {
-      if (!user) return;
-
-      // Refresh unread messages
-      fetch(`${BACKEND_URL}/messages/unread/${user.id}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (d) setUnreadCount(d.unreadCount || 0);
-        })
-        .catch(() => {});
-
-      // Refresh pending interests
-      fetch(`${BACKEND_URL}/interests/count/${user.id}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (d) setInterestCount(d.pendingCount || 0);
-        })
-        .catch(() => {});
-
-      // Refresh notifications count
-      fetch(`${BACKEND_URL}/notifications/count/${user.id}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (d) {
-            // Update the NotificationBell via its own listener
-            window.dispatchEvent(new Event("notification-refresh"));
-          }
-        })
-        .catch(() => {});
-    }
-
-    window.addEventListener("badge-refresh", refreshAll);
-    return () => window.removeEventListener("badge-refresh", refreshAll);
-  }, [user]);
 
   useEffect(() => {
     if (!user) { setInterestCount(0); return; }
@@ -122,6 +80,23 @@ function Navigation() {
     fetchInterests();
     const interval = setInterval(fetchInterests, 30000);
     return () => { cancelled = true; clearInterval(interval); };
+  }, [user]);
+
+  useEffect(() => {
+    function refreshAll() {
+      if (!user) return;
+      fetch(`${BACKEND_URL}/messages/unread/${user.id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d) setUnreadCount(d.unreadCount || 0); })
+        .catch(() => {});
+      fetch(`${BACKEND_URL}/interests/count/${user.id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d) setInterestCount(d.pendingCount || 0); })
+        .catch(() => {});
+      window.dispatchEvent(new Event("notification-refresh"));
+    }
+    window.addEventListener("badge-refresh", refreshAll);
+    return () => window.removeEventListener("badge-refresh", refreshAll);
   }, [user]);
 
   const handleLogout = async () => {
@@ -177,9 +152,10 @@ function Navigation() {
           onChange={(e) => handleCommunityChange(e.target.value)}
           style={communitySelectStyle}
         >
-          {COMMUNITIES.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
+          <option value="">🌐 All Communities</option>
+          {dbCommunities.map((c) => (
+            <option key={c.slug} value={c.slug}>
+              {c.emoji || "👥"} {c.name}
             </option>
           ))}
         </select>
