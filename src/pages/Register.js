@@ -269,44 +269,38 @@ function Register() {
             </Field>
 
             <label style={labelStyle}>Your Community</label>
-            {loadingCommunities ? (
-              <p style={{ fontSize: "13px", color: "#888" }}>Loading communities...</p>
-            ) : communities.length === 0 ? (
-              <p style={{ fontSize: "13px", color: "#b91c1c" }}>
-                No communities available. Please contact support.
-              </p>
-            ) : (
-              <div style={communityGridStyle}>
-                {communities.map((c) => (
-                  <button
-                    key={c.slug}
-                    type="button"
-                    onClick={() => update("community", c.slug)}
-                    style={{
-                      ...communityCardStyle,
-                      border:
-                        form.community === c.slug
-                          ? "2px solid #1e3a8a"
-                          : "2px solid #e5e7eb",
-                      background:
-                        form.community === c.slug ? "#eff6ff" : "white",
-                      color: form.community === c.slug ? "#1e3a8a" : "#555",
-                    }}
-                  >
-                    <div style={{ fontSize: "22px" }}>{c.emoji || "👥"}</div>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        marginTop: "4px",
-                      }}
-                    >
-                      {c.name}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+{loadingCommunities ? (
+  <p style={{ fontSize: "13px", color: "#888" }}>Loading communities...</p>
+) : communities.length === 0 ? (
+  <p style={{ fontSize: "13px", color: "#b91c1c" }}>
+    No communities available. Please contact support.
+  </p>
+) : (
+  <div style={inputWrapStyle}>
+    <span style={iconStyle}>🏷️</span>
+    <select
+      value={form.community}
+      onChange={(e) => update("community", e.target.value)}
+      style={{
+        ...inputFieldStyle,
+        cursor: "pointer",
+        appearance: "none",
+        backgroundImage:
+          "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e\")",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "right 14px center",
+        paddingRight: "40px",
+      }}
+    >
+      <option value="">-- Select Your Community --</option>
+      {communities.map((c) => (
+        <option key={c.slug} value={c.slug}>
+          {c.emoji || "👥"} {c.name}
+        </option>
+      ))}
+    </select>
+  </div>
+)}
 
             <div style={btnRowStyle}>
               <button
