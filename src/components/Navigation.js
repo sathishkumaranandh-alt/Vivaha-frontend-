@@ -128,8 +128,9 @@ function Navigation() {
     );
   }
 
-  const links = [
+    const links = [
     { to: "/", label: "Home" },
+    { to: "/dashboard", label: "Dashboard" },
     { to: "/search", label: "Search" },
     { to: "/matches", label: "Matches" },
     { to: "/interests", label: "Interests", badge: interestCount },
