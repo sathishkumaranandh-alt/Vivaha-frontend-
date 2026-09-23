@@ -60,11 +60,6 @@ function Register() {
     if (step > 1) setStep(step - 1);
   };
 
-  const skipStep = async () => {
-    if (step < TOTAL_STEPS) setStep(step + 1);
-    else await finishRegistration();
-  };
-
   // ============================================================
   // STEP 1: Create account
   // ============================================================
