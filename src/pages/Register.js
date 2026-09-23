@@ -4,9 +4,6 @@ import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 import ImageUpload from "../components/ImageUpload";
 
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
-
 const COMMUNITIES = [
   { value: "vanniyar", label: "Vanniyar", emoji: "🔥" },
   { value: "naidu", label: "Naidu", emoji: "💫" },
@@ -59,17 +56,7 @@ function Register() {
   }, [searchParams]);
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
-
-  // ============================================================
-  // STEP NAVIGATION
-  // ============================================================
-  const nextStep = async () => {
-    if (step === 1) await handleStep1();
-    else if (step === 2) await handleStep2();
-    else if (step === 3) await handleStep3();
-  };
-
-  const prevStep = () => {
+ const prevStep = () => {
     if (step > 1) setStep(step - 1);
   };
 
