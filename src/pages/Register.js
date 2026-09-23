@@ -673,22 +673,6 @@ const textareaStyle = {
   boxSizing: "border-box",
 };
 
-const communityGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(3, 1fr)",
-  gap: "8px",
-  marginTop: "-4px",
-};
-
-const communityCardStyle = {
-  padding: "12px 6px",
-  borderRadius: "12px",
-  cursor: "pointer",
-  textAlign: "center",
-  transition: "all 0.2s",
-  fontFamily: "inherit",
-};
-
 const genderRowStyle = {
   display: "grid",
   gridTemplateColumns: "repeat(3, 1fr)",
