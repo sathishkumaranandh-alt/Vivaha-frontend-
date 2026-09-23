@@ -4,6 +4,10 @@ import { Link } from "react-router-dom";
 function Footer() {
   const year = new Date().getFullYear();
 
+  const handleComingSoon = (e) => {
+    e.preventDefault();
+  };
+
   return (
     <>
       {/* ===== STRIP ABOVE FOOTER ===== */}
@@ -42,12 +46,12 @@ function Footer() {
                 <span style={miniBadgeStyle}>✅ Verified Profiles</span>
               </div>
 
-              {/* Social */}
+              {/* Social — using buttons instead of anchors */}
               <div style={socialRowStyle}>
-                <a href="#" style={socialBtnStyle} aria-label="Facebook">f</a>
-                <a href="#" style={socialBtnStyle} aria-label="Instagram">📷</a>
-                <a href="#" style={socialBtnStyle} aria-label="YouTube">▶</a>
-                <a href="#" style={socialBtnStyle} aria-label="WhatsApp">💬</a>
+                <button style={socialBtnStyle} aria-label="Facebook" onClick={handleComingSoon}>f</button>
+                <button style={socialBtnStyle} aria-label="Instagram" onClick={handleComingSoon}>📷</button>
+                <button style={socialBtnStyle} aria-label="YouTube" onClick={handleComingSoon}>▶</button>
+                <button style={socialBtnStyle} aria-label="WhatsApp" onClick={handleComingSoon}>💬</button>
               </div>
             </div>
 
@@ -57,28 +61,28 @@ function Footer() {
               <Link to="/search" style={colLinkStyle}>Browse Profiles</Link>
               <Link to="/search" style={colLinkStyle}>Search</Link>
               <Link to="/matches" style={colLinkStyle}>Matches</Link>
-              <Link to="/" style={colLinkStyle}>Success Stories</Link>
+              <Link to="/interests" style={colLinkStyle}>Interests</Link>
               <Link to="/register" style={colLinkStyle}>Register Free</Link>
             </div>
 
             {/* COMPANY */}
             <div>
               <h4 style={colTitleStyle}>Company</h4>
-              <a href="#" style={colLinkStyle}>About Us</a>
-              <a href="#" style={colLinkStyle}>Contact Us</a>
-              <a href="#" style={colLinkStyle}>Careers</a>
-              <a href="#" style={colLinkStyle}>Blog</a>
-              <a href="#" style={colLinkStyle}>Help Center</a>
+              <button onClick={handleComingSoon} style={colButtonStyle}>About Us</button>
+              <button onClick={handleComingSoon} style={colButtonStyle}>Contact Us</button>
+              <button onClick={handleComingSoon} style={colButtonStyle}>Careers</button>
+              <button onClick={handleComingSoon} style={colButtonStyle}>Blog</button>
+              <button onClick={handleComingSoon} style={colButtonStyle}>Help Center</button>
             </div>
 
             {/* LEGAL */}
             <div>
               <h4 style={colTitleStyle}>Legal</h4>
-              <a href="#" style={colLinkStyle}>Terms of Service</a>
-              <a href="#" style={colLinkStyle}>Privacy Policy</a>
-              <a href="#" style={colLinkStyle}>Cookie Policy</a>
-              <a href="#" style={colLinkStyle}>Refund Policy</a>
-              <a href="#" style={colLinkStyle}>Report Abuse</a>
+              <button onClick={handleComingSoon} style={colButtonStyle}>Terms of Service</button>
+              <button onClick={handleComingSoon} style={colButtonStyle}>Privacy Policy</button>
+              <button onClick={handleComingSoon} style={colButtonStyle}>Cookie Policy</button>
+              <button onClick={handleComingSoon} style={colButtonStyle}>Refund Policy</button>
+              <button onClick={handleComingSoon} style={colButtonStyle}>Report Abuse</button>
             </div>
 
             {/* CONTACT */}
@@ -110,11 +114,11 @@ function Footer() {
               <span style={{ color: "#D4A017" }}>❤</span> for finding lifelong partners.
             </p>
             <div style={bottomLinksStyle}>
-              <a href="#" style={bottomLinkStyle}>Terms</a>
+              <button onClick={handleComingSoon} style={bottomLinkBtnStyle}>Terms</button>
               <span style={bottomDividerStyle}>•</span>
-              <a href="#" style={bottomLinkStyle}>Privacy</a>
+              <button onClick={handleComingSoon} style={bottomLinkBtnStyle}>Privacy</button>
               <span style={bottomDividerStyle}>•</span>
-              <a href="#" style={bottomLinkStyle}>Sitemap</a>
+              <button onClick={handleComingSoon} style={bottomLinkBtnStyle}>Sitemap</button>
             </div>
           </div>
         </div>
@@ -253,10 +257,10 @@ const socialBtnStyle = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  textDecoration: "none",
   fontSize: "14px",
   fontWeight: "bold",
-  transition: "all 0.2s",
+  cursor: "pointer",
+  fontFamily: "inherit",
 };
 
 const colTitleStyle = {
@@ -265,7 +269,6 @@ const colTitleStyle = {
   fontWeight: 800,
   letterSpacing: "2px",
   textTransform: "uppercase",
-  marginBottom: "18px",
   margin: "0 0 18px 0",
 };
 
@@ -275,7 +278,19 @@ const colLinkStyle = {
   textDecoration: "none",
   fontSize: "13px",
   marginBottom: "10px",
-  transition: "color 0.2s",
+};
+
+const colButtonStyle = {
+  display: "block",
+  background: "transparent",
+  border: "none",
+  color: "rgba(255,255,255,0.6)",
+  fontSize: "13px",
+  marginBottom: "10px",
+  padding: 0,
+  cursor: "pointer",
+  textAlign: "left",
+  fontFamily: "inherit",
 };
 
 const contactLineStyle = {
@@ -316,10 +331,14 @@ const bottomLinksStyle = {
   gap: "10px",
 };
 
-const bottomLinkStyle = {
+const bottomLinkBtnStyle = {
+  background: "transparent",
+  border: "none",
   color: "rgba(255,255,255,0.4)",
   fontSize: "12px",
-  textDecoration: "none",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  padding: 0,
 };
 
 const bottomDividerStyle = {
