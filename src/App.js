@@ -16,6 +16,7 @@ import SubscriptionDashboard from "./pages/SubscriptionDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
+import AdminCommunities from "./pages/AdminCommunities";
 import Messages from "./pages/Messages";
 import Interests from "./pages/Interests";
 
@@ -120,6 +121,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+<Route
+  path="/admin-communities"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminCommunities />
+    </ProtectedRoute>
+  }
+/>
         <Route
           path="/admin-settings"
           element={
