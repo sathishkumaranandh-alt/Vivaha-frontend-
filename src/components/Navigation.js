@@ -121,70 +121,93 @@ function Navigation() {
   if (loading) {
     return (
       <nav style={navStyle}>
-        <h2 style={{ margin: 0, fontSize: "20px" }}>Vivaha Matrimony</h2>
+        <h2 style={{ margin: 0, fontSize: "20px", color: "#8B0A2E", fontFamily: "'Playfair Display', serif" }}>
+          Vivaha Matrimony
+        </h2>
       </nav>
     );
   }
 
   const links = [
     { to: "/", label: "Home" },
-    { to: "/profile", label: "Profile" },
     { to: "/search", label: "Search" },
     { to: "/matches", label: "Matches" },
-    { to: "/recommendations", label: "Recommendations" },
-    { to: "/interests", label: "Interests", badge: interestCount, badgeColor: "#f59e0b" },
+    { to: "/interests", label: "Interests", badge: interestCount },
     { to: "/messages", label: "Messages", badge: unreadCount },
-    { to: "/subscription", label: "Subscription" },
+    { to: "/subscription", label: "Pricing" },
     ...(user?.email === "sathishkumaranandh@gmail.com"
-      ? [{ to: "/admin", label: "👑 Admin", color: "#fbbf24" }]
+      ? [{ to: "/admin", label: "👑 Admin", color: "#D4A017" }]
       : []),
   ];
 
   return (
     <nav style={navStyle}>
       <div style={topRowStyle}>
-        <h2 style={{ margin: 0, fontSize: "20px", whiteSpace: "nowrap" }}>
-          Vivaha Matrimony
-        </h2>
+        {/* LOGO */}
+        <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={logoCircleStyle}>♥</div>
+          <div style={{ lineHeight: 1.1 }}>
+            <div style={logoTextStyle}>Vivaha Matrimony</div>
+            <div style={logoSubStyle}>FIND YOUR SOULMATE</div>
+          </div>
+        </Link>
 
-        <select
-          value={community}
-          onChange={(e) => handleCommunityChange(e.target.value)}
-          style={communitySelectStyle}
-        >
-          <option value="">🌐 All Communities</option>
-          {dbCommunities.map((c) => (
-            <option key={c.slug} value={c.slug}>
-              {c.emoji || "👥"} {c.name}
-            </option>
-          ))}
-        </select>
-
+        {/* NAV LINKS — desktop */}
         {!isMobile && (
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={desktopLinksStyle}>
+            {links.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                style={{
+                  ...navLinkStyle,
+                  color: link.color || "#2D1B1B",
+                }}
+              >
+                {link.label}
+                {link.badge > 0 && (
+                  <span style={badgeStyle}>
+                    {link.badge > 99 ? "99+" : link.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* RIGHT SIDE */}
+        {!isMobile && (
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             {user ? (
               <>
                 <NotificationBell />
-                <span style={{ fontSize: "14px", opacity: 0.9 }}>
-                  👤 {user.email?.split("@")[0]}
-                </span>
-                <button onClick={handleLogout} style={logoutButtonStyle}>
+                <div style={userChipStyle}>
+                  <div style={userAvatarStyle}>
+                    {user.email?.[0]?.toUpperCase() || "U"}
+                  </div>
+                  <span style={userNameStyle}>
+                    {user.email?.split("@")[0]}
+                  </span>
+                  <span style={{ fontSize: "10px", color: "#8a6b6b" }}>▾</span>
+                </div>
+                <button onClick={handleLogout} style={logoutBtnStyle}>
                   Logout
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" style={authLinkStyle}>
+                <Link to="/login" style={loginBtnStyle}>
                   Login
                 </Link>
-                <Link to="/register" style={registerButtonStyle}>
-                  Register
+                <Link to="/register" style={registerBtnStyle}>
+                  Register Free
                 </Link>
               </>
             )}
           </div>
         )}
 
+        {/* MOBILE */}
         {isMobile && (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {user && <NotificationBell />}
@@ -194,66 +217,41 @@ function Navigation() {
               aria-label="Menu"
             >
               {menuOpen ? "✕" : "☰"}
-              {(unreadCount > 0 || interestCount > 0) && !menuOpen && (
-                <span style={hamburgerBadgeStyle}>
-                  {unreadCount + interestCount > 99
-                    ? "99+"
-                    : unreadCount + interestCount}
-                </span>
-              )}
             </button>
           </div>
         )}
       </div>
 
-      {!isMobile && (
-        <div style={linksRowStyle}>
-          {links.map((link, i) => (
-            <React.Fragment key={link.to}>
-              {i > 0 && <span style={dividerStyle}>|</span>}
-              <Link
-                to={link.to}
-                style={{
-                  ...navLinkStyle,
-                  position: "relative",
-                  color: link.color || "white",
-                }}
-              >
-                {link.label}
-                {link.badge > 0 && (
-                  <span
-                    style={{
-                      ...badgeStyle,
-                      background: link.badgeColor || "#dc2626",
-                    }}
-                  >
-                    {link.badge > 99 ? "99+" : link.badge}
-                  </span>
-                )}
-              </Link>
-            </React.Fragment>
-          ))}
-        </div>
-      )}
-
+      {/* MOBILE MENU */}
       {isMobile && menuOpen && (
         <div style={mobileMenuStyle}>
+          {/* Community selector */}
+          <select
+            value={community}
+            onChange={(e) => handleCommunityChange(e.target.value)}
+            style={mobileCommunitySelectStyle}
+          >
+            <option value="">🌐 All Communities</option>
+            {dbCommunities.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.emoji || "👥"} {c.name}
+              </option>
+            ))}
+          </select>
+
           {links.map((link) => (
             <Link
               key={link.to}
               to={link.to}
               onClick={closeMenu}
-              style={{ ...mobileLinkStyle, color: link.color || "white" }}
+              style={{
+                ...mobileLinkStyle,
+                color: link.color || "#2D1B1B",
+              }}
             >
               {link.label}
               {link.badge > 0 && (
-                <span
-                  style={{
-                    ...badgeStyle,
-                    background: link.badgeColor || "#dc2626",
-                    marginLeft: "auto",
-                  }}
-                >
+                <span style={{ ...badgeStyle, marginLeft: "auto" }}>
                   {link.badge > 99 ? "99+" : link.badge}
                 </span>
               )}
@@ -267,24 +265,16 @@ function Navigation() {
               <div style={mobileUserStyle}>
                 👤 {user.email?.split("@")[0]}
               </div>
-              <button onClick={handleLogout} style={mobileLogoutButtonStyle}>
+              <button onClick={handleLogout} style={mobileLogoutBtnStyle}>
                 Logout
               </button>
             </>
           ) : (
             <div style={{ display: "flex", gap: "10px", padding: "8px 0" }}>
-              <Link to="/login" onClick={closeMenu} style={mobileAuthButtonStyle}>
+              <Link to="/login" onClick={closeMenu} style={mobileLoginBtnStyle}>
                 Login
               </Link>
-              <Link
-                to="/register"
-                onClick={closeMenu}
-                style={{
-                  ...mobileAuthButtonStyle,
-                  background: "white",
-                  color: "#1e3a8a",
-                }}
-              >
+              <Link to="/register" onClick={closeMenu} style={mobileRegisterBtnStyle}>
                 Register
               </Link>
             </div>
@@ -295,23 +285,250 @@ function Navigation() {
   );
 }
 
-const navStyle = { padding: "14px 16px", background: "#1e3a8a", color: "white", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" };
-const topRowStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" };
-const linksRowStyle = { display: "flex", flexWrap: "wrap", gap: "4px", alignItems: "center", fontSize: "15px", marginTop: "12px" };
-const navLinkStyle = { textDecoration: "none", padding: "4px 8px", fontWeight: "600", display: "inline-block" };
-const dividerStyle = { color: "rgba(255,255,255,0.4)", margin: "0 2px" };
-const communitySelectStyle = { background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.4)", padding: "8px 12px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit", outline: "none", flex: 1, maxWidth: "220px", minWidth: "160px" };
-const authLinkStyle = { color: "white", textDecoration: "none", padding: "6px 14px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.5)", fontWeight: "600", fontSize: "14px" };
-const registerButtonStyle = { color: "#1e3a8a", background: "white", textDecoration: "none", padding: "6px 14px", borderRadius: "6px", fontWeight: "700", fontSize: "14px" };
-const logoutButtonStyle = { background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "14px" };
-const badgeStyle = { display: "inline-block", background: "#dc2626", color: "white", fontSize: "11px", fontWeight: "bold", borderRadius: "10px", padding: "2px 6px", marginLeft: "6px", minWidth: "18px", textAlign: "center", lineHeight: "14px", verticalAlign: "middle" };
-const hamburgerStyle = { background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.3)", width: "44px", height: "44px", borderRadius: "8px", fontSize: "20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", flexShrink: 0 };
-const hamburgerBadgeStyle = { position: "absolute", top: "-6px", right: "-6px", background: "#dc2626", color: "white", fontSize: "10px", fontWeight: "bold", borderRadius: "10px", padding: "2px 5px", minWidth: "16px" };
-const mobileMenuStyle = { marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.2)", display: "flex", flexDirection: "column", gap: "4px" };
-const mobileLinkStyle = { textDecoration: "none", padding: "14px 12px", borderRadius: "8px", fontWeight: "600", fontSize: "16px", display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)" };
-const mobileDividerStyle = { height: "1px", background: "rgba(255,255,255,0.2)", margin: "10px 0" };
-const mobileUserStyle = { padding: "10px 12px", fontSize: "14px", opacity: 0.9 };
-const mobileLogoutButtonStyle = { background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.4)", padding: "12px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "15px", width: "100%" };
-const mobileAuthButtonStyle = { flex: 1, padding: "12px", textAlign: "center", borderRadius: "8px", border: "1px solid white", color: "white", textDecoration: "none", fontWeight: "600", fontSize: "15px" };
+// ============================================================
+// STYLES
+// ============================================================
+const navStyle = {
+  background: "white",
+  borderBottom: "1px solid #f0e0e0",
+  padding: "14px 24px",
+  position: "sticky",
+  top: 0,
+  zIndex: 100,
+  boxShadow: "0 2px 12px rgba(139,10,46,0.04)",
+};
+
+const topRowStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "20px",
+  flexWrap: "wrap",
+  maxWidth: "1300px",
+  margin: "0 auto",
+};
+
+const logoCircleStyle = {
+  width: "38px",
+  height: "38px",
+  borderRadius: "50%",
+  background: "#8B0A2E",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "#D4A017",
+  fontSize: "18px",
+  fontWeight: "bold",
+};
+
+const logoTextStyle = {
+  fontFamily: "'Playfair Display', serif",
+  fontSize: "18px",
+  fontWeight: 900,
+  color: "#8B0A2E",
+  letterSpacing: "-0.3px",
+};
+
+const logoSubStyle = {
+  fontSize: "8px",
+  color: "#D4A017",
+  fontWeight: 700,
+  letterSpacing: "2px",
+  textTransform: "uppercase",
+  marginTop: "2px",
+};
+
+const desktopLinksStyle = {
+  display: "flex",
+  gap: "24px",
+  alignItems: "center",
+  fontSize: "13px",
+  fontWeight: 500,
+};
+
+const navLinkStyle = {
+  textDecoration: "none",
+  position: "relative",
+  padding: "4px 0",
+  transition: "color 0.2s",
+};
+
+const badgeStyle = {
+  display: "inline-block",
+  background: "#8B0A2E",
+  color: "white",
+  fontSize: "10px",
+  fontWeight: "bold",
+  borderRadius: "10px",
+  padding: "2px 6px",
+  marginLeft: "6px",
+  minWidth: "18px",
+  textAlign: "center",
+  lineHeight: "14px",
+  verticalAlign: "middle",
+};
+
+const userChipStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  background: "#FFF9F5",
+  border: "1px solid #f0e0e0",
+  padding: "6px 14px",
+  borderRadius: "24px",
+  cursor: "pointer",
+};
+
+const userAvatarStyle = {
+  width: "26px",
+  height: "26px",
+  borderRadius: "50%",
+  background: "linear-gradient(135deg, #8B0A2E, #a01438)",
+  color: "white",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "12px",
+  fontWeight: "bold",
+};
+
+const userNameStyle = {
+  fontSize: "13px",
+  fontWeight: 600,
+  color: "#2D1B1B",
+};
+
+const loginBtnStyle = {
+  color: "#8B0A2E",
+  textDecoration: "none",
+  padding: "9px 20px",
+  borderRadius: "8px",
+  border: "1.5px solid #8B0A2E",
+  fontWeight: 600,
+  fontSize: "13px",
+  background: "white",
+};
+
+const registerBtnStyle = {
+  color: "white",
+  background: "#8B0A2E",
+  textDecoration: "none",
+  padding: "9px 22px",
+  borderRadius: "8px",
+  fontWeight: 600,
+  fontSize: "13px",
+  boxShadow: "0 4px 12px rgba(139,10,46,0.25)",
+};
+
+const logoutBtnStyle = {
+  background: "transparent",
+  color: "#8a6b6b",
+  border: "1px solid #f0e0e0",
+  padding: "7px 14px",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: 600,
+  fontSize: "12px",
+};
+
+const hamburgerStyle = {
+  background: "#FFF9F5",
+  color: "#8B0A2E",
+  border: "1px solid #f0e0e0",
+  width: "42px",
+  height: "42px",
+  borderRadius: "10px",
+  fontSize: "20px",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  position: "relative",
+  flexShrink: 0,
+};
+
+const mobileMenuStyle = {
+  marginTop: "14px",
+  paddingTop: "14px",
+  borderTop: "1px solid #f0e0e0",
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+};
+
+const mobileCommunitySelectStyle = {
+  width: "100%",
+  padding: "12px",
+  borderRadius: "10px",
+  border: "1px solid #f0e0e0",
+  background: "#FFF9F5",
+  color: "#2D1B1B",
+  fontSize: "14px",
+  fontWeight: 600,
+  marginBottom: "10px",
+  fontFamily: "inherit",
+};
+
+const mobileLinkStyle = {
+  textDecoration: "none",
+  padding: "14px 12px",
+  borderRadius: "10px",
+  fontWeight: 600,
+  fontSize: "15px",
+  display: "flex",
+  alignItems: "center",
+  background: "#FFF9F5",
+};
+
+const mobileDividerStyle = {
+  height: "1px",
+  background: "#f0e0e0",
+  margin: "10px 0",
+};
+
+const mobileUserStyle = {
+  padding: "10px 12px",
+  fontSize: "14px",
+  color: "#2D1B1B",
+  fontWeight: 600,
+};
+
+const mobileLogoutBtnStyle = {
+  background: "#8B0A2E",
+  color: "white",
+  border: "none",
+  padding: "14px",
+  borderRadius: "10px",
+  cursor: "pointer",
+  fontWeight: 600,
+  fontSize: "14px",
+  width: "100%",
+  fontFamily: "inherit",
+};
+
+const mobileLoginBtnStyle = {
+  flex: 1,
+  padding: "14px",
+  textAlign: "center",
+  borderRadius: "10px",
+  border: "1.5px solid #8B0A2E",
+  color: "#8B0A2E",
+  textDecoration: "none",
+  fontWeight: 600,
+  fontSize: "14px",
+  background: "white",
+};
+
+const mobileRegisterBtnStyle = {
+  flex: 1,
+  padding: "14px",
+  textAlign: "center",
+  borderRadius: "10px",
+  background: "#8B0A2E",
+  color: "white",
+  textDecoration: "none",
+  fontWeight: 600,
+  fontSize: "14px",
+};
 
 export default Navigation;
