@@ -226,7 +226,7 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
                 <>
                   <img
                     src={photo.photo_url}
-                    alt={`Photo ${i + 1}`}
+                    alt={`Thumbnail ${i + 1}`}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
 
