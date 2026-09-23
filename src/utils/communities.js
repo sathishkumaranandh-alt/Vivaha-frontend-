@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
@@ -41,8 +43,6 @@ export function clearCommunitiesCache() {
 /**
  * React hook to use communities in components.
  */
-import { useState, useEffect } from "react";
-
 export function useCommunities() {
   const [communities, setCommunities] = useState([]);
   const [loading, setLoading] = useState(true);
