@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import ProfileSearch from "./pages/ProfileSearch";
 import Matches from "./pages/Matches";
 import Recommendations from "./pages/Recommendations";
+import UserSettings from "./pages/UserSettings";
 import Subscription from "./pages/Subscription";
 import SubscriptionDashboard from "./pages/SubscriptionDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -115,6 +116,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+<Route
+  path="/settings"
+  element={
+    <ProtectedRoute>
+      <UserSettings />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Admin routes */}
         <Route
