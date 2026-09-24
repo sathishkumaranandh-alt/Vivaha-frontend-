@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCommunities } from "../utils/communities";
+import InstallCard from "../components/InstallCard";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -402,7 +403,8 @@ function Home() {
             </div>
           </div>
         </div>
-      </div>
+      </div>     {/* ========== INSTALL APP SUGGESTION ========== */}
+      <InstallCard />
 
       {/* ========== FEATURED ========== */}
       <div style={S.section}>
