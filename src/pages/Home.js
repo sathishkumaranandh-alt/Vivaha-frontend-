@@ -5,15 +5,21 @@ import { useCommunities } from "../utils/communities";
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
-// Fallback values (shown while loading or if DB fails)
+const DEFAULT_HERO_IMAGE =
+  "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1600&q=80";
+
 const DEFAULTS = {
-  home_eyebrow: "Tradition · Trust · Together Forever",
+  home_eyebrow: "TRADITION · TRUST · TOGETHER FOREVER",
   home_title: "Find Your Perfect Life Partner",
   home_tamil_subtitle: "நம் பாரம்பரியம்... உங்கள் வாழ்க்கைத் துணைக்கு...",
   home_subtitle:
     "Vivaha Matrimony brings together like-minded hearts for a better tomorrow.",
-  home_hero_image:
-    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&q=80",
+  home_hero_image: DEFAULT_HERO_IMAGE,
+  home_color_eyebrow: "#8B0A2E",
+  home_color_title: "#8B0A2E",
+  home_color_tamil: "#8B0A2E",
+  home_color_subtitle: "#5c3030",
+  home_color_trust: "#8B0A2E",
   home_trust_1_title: "Verified Profiles",
   home_trust_1_desc: "100% genuine",
   home_trust_2_title: "Safe & Secure",
@@ -45,7 +51,6 @@ function Home() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
-  // Load settings + featured profiles
   useEffect(() => {
     async function load() {
       try {
@@ -86,254 +91,159 @@ function Home() {
     navigate(`/search?${params.toString()}`);
   };
 
+  const heroImage = settings.home_hero_image || DEFAULT_HERO_IMAGE;
+
   const S = {
     page: { background: "#FFF9F5", fontFamily: "'Inter', sans-serif" },
 
-    // HERO
+    // FULL-WIDTH HERO
     hero: {
-      display: isMobile ? "block" : "grid",
-      gridTemplateColumns: isMobile ? undefined : "1fr 1fr",
-      minHeight: isMobile ? "auto" : "560px",
-      background: "linear-gradient(135deg, #FFF5F0 0%, #FFE9E3 100%)",
       position: "relative",
+      minHeight: isMobile ? "auto" : "600px",
+      backgroundImage: `url('${heroImage}')`,
+      backgroundSize: "cover",
+      backgroundPosition: isMobile ? "center" : "center top",
+      backgroundRepeat: "no-repeat",
+      display: "flex",
+      alignItems: "center",
+      padding: isMobile ? "40px 20px" : "60px 60px",
       overflow: "hidden",
     },
-    heroLeft: {
-      padding: isMobile ? "40px 20px" : "60px 50px",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      position: "relative",
-      zIndex: 2,
+    heroOverlay: {
+      position: "absolute",
+      inset: 0,
+      background: isMobile
+        ? "linear-gradient(180deg, rgba(255,249,245,0.95) 0%, rgba(255,249,245,0.85) 60%, rgba(255,249,245,0.4) 100%)"
+        : "linear-gradient(90deg, rgba(255,249,245,0.96) 0%, rgba(255,249,245,0.88) 35%, rgba(255,249,245,0.5) 55%, rgba(255,249,245,0.1) 100%)",
+      zIndex: 1,
     },
-    heroRight: isMobile ? { display: "none" } : {
-      backgroundImage: `url('${settings.home_hero_image}')`,
-      backgroundSize: "cover",
-      backgroundPosition: "center top",
-      position: "relative",
-    },
+    heroContent: { position: "relative", zIndex: 2, maxWidth: isMobile ? "100%" : "560px" },
+
     eyebrow: {
       display: "flex",
       alignItems: "center",
       gap: "10px",
       fontSize: "11px",
-      color: "#8B0A2E",
+      color: settings.home_color_eyebrow,
       fontWeight: 700,
       letterSpacing: "2.5px",
       textTransform: "uppercase",
       marginBottom: "20px",
     },
-    eyebrowIcon: { color: "#8B0A2E", fontSize: "14px" },
+    eyebrowIcon: { color: settings.home_color_eyebrow, fontSize: "14px" },
     h1: {
       fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "32px" : "52px",
+      fontSize: isMobile ? "32px" : "56px",
       fontWeight: 900,
-      color: "#8B0A2E",
-      lineHeight: 1.08,
-      letterSpacing: "-1px",
+      color: settings.home_color_title,
+      lineHeight: 1.05,
+      letterSpacing: "-1.5px",
       marginBottom: "18px",
     },
     tamilSubtitle: {
       fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "16px" : "20px",
-      color: "#8B0A2E",
-      marginBottom: "16px",
-      fontWeight: 600,
-      fontStyle: "italic",
+      fontSize: isMobile ? "15px" : "19px",
+      color: settings.home_color_tamil,
+      marginBottom: "14px",
+      fontWeight: 500,
     },
     subtitle: {
-      color: "#8a6b6b",
+      color: settings.home_color_subtitle,
       fontSize: isMobile ? "14px" : "16px",
-      marginBottom: "28px",
+      marginBottom: "26px",
       maxWidth: "480px",
       lineHeight: 1.7,
     },
 
-    // TRUST BADGES
-    trustRow: {
-      display: "flex",
-      gap: "20px",
-      flexWrap: "wrap",
-      marginBottom: "28px",
-    },
-    trustItem: {
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-      fontSize: "12px",
-      color: "#555",
-    },
+    trustRow: { display: "flex", gap: isMobile ? "12px" : "20px", flexWrap: "wrap", marginBottom: "28px" },
+    trustItem: { display: "flex", alignItems: "center", gap: "8px" },
     trustIcon: {
-      width: "32px",
-      height: "32px",
-      borderRadius: "50%",
-      background: "#FDF2F6",
-      border: "1px solid #f0e0e0",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "14px",
-      flexShrink: 0,
+      width: "34px", height: "34px", borderRadius: "50%",
+      background: "#FFF9F5", border: `1.5px solid ${settings.home_color_trust}`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: "15px", color: settings.home_color_trust, flexShrink: 0,
     },
     trustText: { lineHeight: 1.2 },
-    trustTitle: { fontWeight: 700, color: "#8B0A2E", fontSize: "12px" },
+    trustTitle: { fontWeight: 700, color: settings.home_color_trust, fontSize: "12px" },
     trustDesc: { color: "#8a6b6b", fontSize: "10px" },
 
-    // SEARCH BOX
     searchBox: {
-      background: "white",
-      borderRadius: "16px",
-      padding: "16px",
-      boxShadow: "0 12px 40px rgba(139,10,46,0.12)",
-      border: "1px solid #f0e0e0",
-      maxWidth: "480px",
+      background: "white", borderRadius: "16px", padding: "16px",
+      boxShadow: "0 12px 40px rgba(139,10,46,0.15)",
+      border: "1px solid rgba(240,224,224,0.8)",
+      maxWidth: "520px",
     },
-    searchGrid: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: "10px",
-      marginBottom: "12px",
-    },
+    searchGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" },
     searchField: {
-      background: "#FFF9F5",
-      border: "1px solid #f0e0e0",
-      borderRadius: "10px",
-      padding: "10px 12px",
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
+      background: "#FFF9F5", border: "1px solid #f0e0e0", borderRadius: "10px",
+      padding: "11px 12px", display: "flex", alignItems: "center", gap: "8px",
     },
     select: {
-      border: "none",
-      background: "transparent",
-      fontFamily: "inherit",
-      fontSize: "13px",
-      fontWeight: 500,
-      color: "#2D1B1B",
-      outline: "none",
-      width: "100%",
-      cursor: "pointer",
+      border: "none", background: "transparent", fontFamily: "inherit",
+      fontSize: "13px", fontWeight: 500, color: "#2D1B1B", outline: "none",
+      width: "100%", cursor: "pointer",
     },
     searchBtn: {
-      width: "100%",
-      background: "#8B0A2E",
-      color: "white",
-      border: "none",
-      padding: "14px",
-      borderRadius: "10px",
-      fontWeight: 700,
-      fontSize: "14px",
-      cursor: "pointer",
-      fontFamily: "inherit",
+      width: "100%", background: "#8B0A2E", color: "white", border: "none",
+      padding: "14px", borderRadius: "10px", fontWeight: 700, fontSize: "14px",
+      cursor: "pointer", fontFamily: "inherit",
       boxShadow: "0 4px 14px rgba(139,10,46,0.3)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "8px",
+      display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
     },
 
-    // FEATURED
-    section: {
-      maxWidth: "1200px",
-      margin: "0 auto",
-      padding: isMobile ? "40px 16px" : "60px 32px",
-    },
-    sectionHead: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "baseline",
-      marginBottom: "28px",
-    },
+    section: { maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "40px 16px" : "60px 32px" },
+    sectionHead: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "28px" },
     sectionTitle: {
       fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "22px" : "26px",
-      fontWeight: 700,
-      color: "#8B0A2E",
+      fontSize: isMobile ? "22px" : "26px", fontWeight: 700, color: "#8B0A2E",
     },
-    viewAll: {
-      color: "#8B0A2E",
-      fontSize: "13px",
-      fontWeight: 600,
-      textDecoration: "none",
-    },
+    viewAll: { color: "#8B0A2E", fontSize: "13px", fontWeight: 600, textDecoration: "none" },
     grid: {
       display: "grid",
       gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
       gap: isMobile ? "12px" : "20px",
     },
     fcard: {
-      background: "white",
-      borderRadius: "16px",
-      overflow: "hidden",
-      boxShadow: "0 4px 20px rgba(139,10,46,0.06)",
-      border: "1px solid #f0e0e0",
+      background: "white", borderRadius: "16px", overflow: "hidden",
+      boxShadow: "0 4px 20px rgba(139,10,46,0.06)", border: "1px solid #f0e0e0",
     },
     fcardPhoto: {
       height: isMobile ? "150px" : "200px",
       background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: isMobile ? "50px" : "60px",
-      position: "relative",
-      overflow: "hidden",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: isMobile ? "50px" : "60px", position: "relative", overflow: "hidden",
     },
     verifiedBadge: {
-      position: "absolute",
-      top: "10px",
-      right: "10px",
-      background: "#10B981",
-      color: "white",
-      fontSize: "10px",
-      fontWeight: 700,
-      padding: "3px 9px",
-      borderRadius: "10px",
+      position: "absolute", top: "10px", right: "10px",
+      background: "#10B981", color: "white", fontSize: "10px", fontWeight: 700,
+      padding: "3px 9px", borderRadius: "10px",
     },
     fcardBody: { padding: "14px 16px 16px" },
     fcardName: {
-      fontFamily: "'Playfair Display', serif",
-      fontSize: "17px",
-      fontWeight: 700,
-      color: "#8B0A2E",
-      marginBottom: "4px",
+      fontFamily: "'Playfair Display', serif", fontSize: "17px",
+      fontWeight: 700, color: "#8B0A2E", marginBottom: "4px",
     },
-    fcardMeta: {
-      fontSize: "11px",
-      color: "#8a6b6b",
-      marginBottom: "10px",
-      lineHeight: 1.4,
-    },
+    fcardMeta: { fontSize: "11px", color: "#8a6b6b", marginBottom: "10px", lineHeight: 1.4 },
     fcardTag: {
-      display: "inline-block",
-      background: "#FDF2F6",
-      color: "#8B0A2E",
-      padding: "3px 9px",
-      borderRadius: "8px",
-      fontSize: "10px",
-      fontWeight: 600,
-      margin: "2px 2px 2px 0",
+      display: "inline-block", background: "#FDF2F6", color: "#8B0A2E",
+      padding: "3px 9px", borderRadius: "8px", fontSize: "10px",
+      fontWeight: 600, margin: "2px 2px 2px 0",
     },
     fcardBtn: {
-      display: "block",
-      textAlign: "center",
-      marginTop: "12px",
-      background: "#8B0A2E",
-      color: "white",
-      padding: "9px",
-      borderRadius: "8px",
-      textDecoration: "none",
-      fontWeight: 700,
-      fontSize: "12px",
+      display: "block", textAlign: "center", marginTop: "12px",
+      background: "#8B0A2E", color: "white", padding: "9px",
+      borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "12px",
     },
   };
 
   return (
     <div style={S.page}>
-      {/* ========== HERO ========== */}
+      {/* HERO */}
       <section style={S.hero}>
-        <div style={S.heroLeft}>
+        <div style={S.heroOverlay} />
+        <div style={S.heroContent}>
           <div style={S.eyebrow}>
-            <span style={S.eyebrowIcon}>✦</span>
+            <span style={S.eyebrowIcon}>❁</span>
             {settings.home_eyebrow}
           </div>
 
@@ -345,44 +255,20 @@ function Home() {
 
           <p style={S.subtitle}>{settings.home_subtitle}</p>
 
-          {/* Trust badges */}
           <div style={S.trustRow}>
-            <TrustBadge
-              icon="🛡️"
-              title={settings.home_trust_1_title}
-              desc={settings.home_trust_1_desc}
-              styles={S}
-            />
-            <TrustBadge
-              icon="🔒"
-              title={settings.home_trust_2_title}
-              desc={settings.home_trust_2_desc}
-              styles={S}
-            />
-            <TrustBadge
-              icon="👥"
-              title={settings.home_trust_3_title}
-              desc={settings.home_trust_3_desc}
-              styles={S}
-            />
-            <TrustBadge
-              icon="❤️"
-              title={settings.home_trust_4_title}
-              desc={settings.home_trust_4_desc}
-              styles={S}
-            />
+            <TrustBadge icon="🛡️" title={settings.home_trust_1_title} desc={settings.home_trust_1_desc} styles={S} />
+            <TrustBadge icon="🔒" title={settings.home_trust_2_title} desc={settings.home_trust_2_desc} styles={S} />
+            <TrustBadge icon="👥" title={settings.home_trust_3_title} desc={settings.home_trust_3_desc} styles={S} />
+            <TrustBadge icon="❤️" title={settings.home_trust_4_title} desc={settings.home_trust_4_desc} styles={S} />
           </div>
 
-          {/* Search box */}
           <form onSubmit={handleHeroSearch} style={S.searchBox}>
             <div style={S.searchGrid}>
               <div style={S.searchField}>
                 <span>👤</span>
                 <select
                   value={heroSearch.lookingFor}
-                  onChange={(e) =>
-                    setHeroSearch({ ...heroSearch, lookingFor: e.target.value })
-                  }
+                  onChange={(e) => setHeroSearch({ ...heroSearch, lookingFor: e.target.value })}
                   style={S.select}
                 >
                   <option value="female">Bride</option>
@@ -393,9 +279,7 @@ function Home() {
                 <span>🎂</span>
                 <select
                   value={heroSearch.age}
-                  onChange={(e) =>
-                    setHeroSearch({ ...heroSearch, age: e.target.value })
-                  }
+                  onChange={(e) => setHeroSearch({ ...heroSearch, age: e.target.value })}
                   style={S.select}
                 >
                   <option value="21-30">21 - 30 years</option>
@@ -409,9 +293,7 @@ function Home() {
                   type="text"
                   placeholder="Location"
                   value={heroSearch.location}
-                  onChange={(e) =>
-                    setHeroSearch({ ...heroSearch, location: e.target.value })
-                  }
+                  onChange={(e) => setHeroSearch({ ...heroSearch, location: e.target.value })}
                   style={S.select}
                 />
               </div>
@@ -419,51 +301,34 @@ function Home() {
                 <span>🏷️</span>
                 <select
                   value={heroSearch.community}
-                  onChange={(e) =>
-                    setHeroSearch({ ...heroSearch, community: e.target.value })
-                  }
+                  onChange={(e) => setHeroSearch({ ...heroSearch, community: e.target.value })}
                   style={S.select}
                 >
                   <option value="">Any Community</option>
                   {communities.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.name}
-                    </option>
+                    <option key={c.slug} value={c.slug}>{c.name}</option>
                   ))}
                 </select>
               </div>
             </div>
-            <button type="submit" style={S.searchBtn}>
-              🔍 Search Profiles
-            </button>
+            <button type="submit" style={S.searchBtn}>🔍 Search Profiles</button>
           </form>
         </div>
-
-        <div style={S.heroRight} />
       </section>
 
-      {/* ========== FEATURED ========== */}
+      {/* FEATURED */}
       <div style={S.section}>
         <div style={S.sectionHead}>
           <h2 style={S.sectionTitle}>Featured Profiles</h2>
-          <Link to="/search" style={S.viewAll}>
-            View All →
-          </Link>
+          <Link to="/search" style={S.viewAll}>View All →</Link>
         </div>
 
         {loading ? (
-          <p style={{ textAlign: "center", color: "#8a6b6b" }}>
-            Loading profiles...
-          </p>
+          <p style={{ textAlign: "center", color: "#8a6b6b" }}>Loading profiles...</p>
         ) : featured.length === 0 ? (
           <p style={{ textAlign: "center", color: "#8a6b6b" }}>
             No profiles yet.{" "}
-            <Link
-              to="/register"
-              style={{ color: "#8B0A2E", fontWeight: "bold" }}
-            >
-              Be the first to register!
-            </Link>
+            <Link to="/register" style={{ color: "#8B0A2E", fontWeight: "bold" }}>Be the first to register!</Link>
           </p>
         ) : (
           <div style={S.grid}>
@@ -471,21 +336,9 @@ function Home() {
               <div key={user.id} style={S.fcard}>
                 <div style={S.fcardPhoto}>
                   {user.photo_url ? (
-                    <img
-                      src={user.photo_url}
-                      alt=""
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    "👤"
-                  )}
-                  {user.is_verified && (
-                    <div style={S.verifiedBadge}>✓ Verified</div>
-                  )}
+                    <img src={user.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : ("👤")}
+                  {user.is_verified && <div style={S.verifiedBadge}>✓ Verified</div>}
                 </div>
                 <div style={S.fcardBody}>
                   <div style={S.fcardName}>{user.name || "Anonymous"}</div>
@@ -496,16 +349,11 @@ function Home() {
                   </div>
                   {user.community && (
                     <span style={S.fcardTag}>
-                      {user.community.charAt(0).toUpperCase() +
-                        user.community.slice(1)}
+                      {user.community.charAt(0).toUpperCase() + user.community.slice(1)}
                     </span>
                   )}
-                  {user.education && (
-                    <span style={S.fcardTag}>{user.education}</span>
-                  )}
-                  <Link to={`/profile/${user.id}`} style={S.fcardBtn}>
-                    View Profile
-                  </Link>
+                  {user.education && <span style={S.fcardTag}>{user.education}</span>}
+                  <Link to={`/profile/${user.id}`} style={S.fcardBtn}>View Profile</Link>
                 </div>
               </div>
             ))}
@@ -516,9 +364,6 @@ function Home() {
   );
 }
 
-// ============================================================
-// Trust Badge Sub-Component
-// ============================================================
 function TrustBadge({ icon, title, desc, styles }) {
   return (
     <div style={styles.trustItem}>
