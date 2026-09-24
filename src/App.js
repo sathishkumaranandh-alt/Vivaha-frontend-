@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navigation";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
+import InstallAppButton from "./components/InstallAppButton";
 
 // Pages
 import Home from "./pages/Home";
@@ -160,6 +161,7 @@ function App() {
         />
           </Routes>
       <Footer />
+<InstallAppButton />
     </Router>
   );
 }
