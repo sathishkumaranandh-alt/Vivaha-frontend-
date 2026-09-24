@@ -404,6 +404,9 @@ function Home() {
           </div>
         </div>
       </div>
+{/* ========== INSTALL APP SUGGESTION ========== */}
+      <InstallCard />
+
 
       {/* ========== FEATURED ========== */}
       <div style={S.section}>
