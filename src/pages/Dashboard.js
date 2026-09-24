@@ -338,7 +338,7 @@ function Dashboard() {
               <span style={S.badgeDot}>{counts.messages}</span>
             )}
           </Link>
-          <Link to="/admin-settings" style={S.navItem}>
+          <Link to="/settings" style={S.navItem}>
             ⚙️ Settings
           </Link>
         </aside>
