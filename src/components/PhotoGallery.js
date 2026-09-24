@@ -191,7 +191,6 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
   // ⭐ Slots to display:
   // - When editable (own profile): always MAX_PHOTOS (5) with empty + slots
   // - When readOnly (other profile): only as many as they have photos
-  const slotsToDisplay = readOnly ? photos.length : MAX_PHOTOS;
 
   const currentLightboxPhoto =
     lightboxIndex !== null ? photos[lightboxIndex] : null;
