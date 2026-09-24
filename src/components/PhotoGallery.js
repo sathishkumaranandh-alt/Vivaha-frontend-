@@ -362,9 +362,9 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
             )}
 
             {/* Photo */}
-            <img
+                        <img
               src={currentLightboxPhoto.photo_url}
-              alt={`Photo ${lightboxIndex + 1}`}
+              alt={`Image ${lightboxIndex + 1}`}
               style={lightboxImgStyle}
             />
 
