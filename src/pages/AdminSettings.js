@@ -281,6 +281,63 @@ function AdminSettings() {
             textarea
           />
 
+          {/* ============ BLOCK POSITIONS ============ */}
+          <h3 style={{ ...S.sectionTitle, marginTop: 32 }}>🎯 Block Positions</h3>
+          <p style={S.sectionDesc}>
+            Move each block (Text, Trust, Search) anywhere on the hero image. X = % from left, Y = % from top, Width = % of hero width.
+          </p>
+
+          <div style={S.notice}>
+            💡 <strong>Try:</strong> Text at X:6 Y:18, Trust at X:6 Y:65, Search at X:6 Y:74 = classic left-aligned layout.
+            <br />
+            Or: Text at X:25 Y:10, Trust at X:25 Y:60, Search at X:25 Y:70 = centered feel.
+          </div>
+
+          {/* TEXT BLOCK */}
+          <div style={S.positionGroup}>
+            <div style={S.positionGroupTitle}>📝 Text Block</div>
+            <Slider label="Text — X (from left)" value={settings.home_text_x || "6"} onChange={(v) => handleSettingChange("home_text_x", v)} min={0} max={90} step={1} unit="%" />
+            <Slider label="Text — Y (from top)" value={settings.home_text_y || "18"} onChange={(v) => handleSettingChange("home_text_y", v)} min={0} max={90} step={1} unit="%" />
+            <Slider label="Text — Width" value={settings.home_text_width || "50"} onChange={(v) => handleSettingChange("home_text_width", v)} min={20} max={100} step={1} unit="%" />
+          </div>
+
+          {/* TRUST BLOCK */}
+          <div style={S.positionGroup}>
+            <div style={S.positionGroupTitle}>✨ Trust Badges Block</div>
+            <Slider label="Trust — X (from left)" value={settings.home_trust_x || "6"} onChange={(v) => handleSettingChange("home_trust_x", v)} min={0} max={90} step={1} unit="%" />
+            <Slider label="Trust — Y (from top)" value={settings.home_trust_y || "65"} onChange={(v) => handleSettingChange("home_trust_y", v)} min={0} max={95} step={1} unit="%" />
+            <Slider label="Trust — Width" value={settings.home_trust_width || "50"} onChange={(v) => handleSettingChange("home_trust_width", v)} min={20} max={100} step={1} unit="%" />
+          </div>
+
+          {/* SEARCH BLOCK */}
+          <div style={S.positionGroup}>
+            <div style={S.positionGroupTitle}>🔍 Search Box Block</div>
+            <Slider label="Search — X (from left)" value={settings.home_search_x || "6"} onChange={(v) => handleSettingChange("home_search_x", v)} min={0} max={90} step={1} unit="%" />
+            <Slider label="Search — Y (from top)" value={settings.home_search_y || "74"} onChange={(v) => handleSettingChange("home_search_y", v)} min={0} max={95} step={1} unit="%" />
+            <Slider label="Search — Width" value={settings.home_search_width || "45"} onChange={(v) => handleSettingChange("home_search_width", v)} min={20} max={100} step={1} unit="%" />
+          </div>
+
+          {/* Reset */}
+          <div style={{ marginTop: 12 }}>
+            <button
+              onClick={() => {
+                handleSettingChange("home_text_x", "6");
+                handleSettingChange("home_text_y", "18");
+                handleSettingChange("home_text_width", "50");
+                handleSettingChange("home_trust_x", "6");
+                handleSettingChange("home_trust_y", "65");
+                handleSettingChange("home_trust_width", "50");
+                handleSettingChange("home_search_x", "6");
+                handleSettingChange("home_search_y", "74");
+                handleSettingChange("home_search_width", "45");
+                toast.info("Positions reset — click Save to apply");
+              }}
+              style={S.resetPositionBtn}
+            >
+              ↺ Reset to Default Positions
+            </button>
+          </div>
+
           {/* ============ HERO IMAGE ============ */}
           <h3 style={{ ...S.sectionTitle, marginTop: 32 }}>🖼️ Hero Image</h3>
 
