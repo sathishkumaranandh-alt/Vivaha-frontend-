@@ -15,10 +15,30 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
   const fileInputRef = useRef(null);
   const [pendingSlot, setPendingSlot] = useState(null);
 
+  // Lightbox state
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+
   useEffect(() => {
     if (userId) loadPhotos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const handleKey = (e) => {
+      if (e.key === "Escape") setLightboxIndex(null);
+      if (e.key === "ArrowRight") nextPhoto();
+      if (e.key === "ArrowLeft") prevPhoto();
+    };
+    window.addEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightboxIndex, photos]);
 
   const loadPhotos = async () => {
     try {
@@ -147,6 +167,22 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
     }
   };
 
+  // ============================================================
+  // LIGHTBOX NAVIGATION
+  // ============================================================
+  const openLightbox = (photoId) => {
+    const index = photos.findIndex((p) => p.id === photoId);
+    if (index !== -1) setLightboxIndex(index);
+  };
+
+  const nextPhoto = () => {
+    setLightboxIndex((prev) => (prev + 1) % photos.length);
+  };
+
+  const prevPhoto = () => {
+    setLightboxIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  };
+
   if (loading) {
     return (
       <div style={{ padding: "30px", textAlign: "center", color: "#8a6b6b", fontSize: "13px" }}>
@@ -157,10 +193,11 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
 
   const primary = photos.find((p) => p.is_primary) || photos[0];
   const secondaries = photos.filter((p) => p.id !== primary?.id);
+  const currentLightboxPhoto =
+    lightboxIndex !== null ? photos[lightboxIndex] : null;
 
   return (
     <div>
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -176,15 +213,18 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
             <img
               src={primary.photo_url}
               alt="Main"
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }}
+              onClick={() => openLightbox(primary.id)}
             />
             {!readOnly && (
               <button
-                onClick={() => handleDelete(primary.id, true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(primary.id, true);
+                }}
                 disabled={busy === primary.id}
                 style={deleteMainBtnStyle}
                 title="Delete main photo"
-                type="button"
               >
                 ✕
               </button>
@@ -195,7 +235,6 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
             onClick={() => handleAddClick(0)}
             disabled={uploading === 0 || readOnly}
             style={addMainBtnStyle}
-            type="button"
           >
             <span style={{ fontSize: "48px" }}>📷</span>
             <span style={{ fontSize: "13px", fontWeight: 700 }}>
@@ -227,36 +266,44 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
                   <img
                     src={photo.photo_url}
                     alt={`Thumbnail ${i + 1}`}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      cursor: "zoom-in",
+                    }}
+                    onClick={() => openLightbox(photo.id)}
                   />
 
                   {!isPrimarySlot && !readOnly && (
                     <button
-                      onClick={() => handleSetPrimary(photo.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSetPrimary(photo.id);
+                      }}
                       disabled={busy === photo.id}
                       style={setMainBtnStyle}
                       title="Set as main photo"
-                      type="button"
                     >
-                      MAIN
+                      SET MAIN
                     </button>
                   )}
 
                   {!isPrimarySlot && !readOnly && (
                     <button
-                      onClick={() => handleDelete(photo.id, false)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(photo.id, false);
+                      }}
                       disabled={busy === photo.id}
                       style={deleteSmallBtnStyle}
                       title="Delete"
-                      type="button"
                     >
                       ✕
                     </button>
                   )}
 
-                  {isPrimarySlot && (
-                    <div style={primaryBadgeStyle}>MAIN</div>
-                  )}
+                  {isPrimarySlot && <div style={primaryBadgeStyle}>MAIN</div>}
                 </>
               ) : (
                 <button
@@ -267,7 +314,6 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
                     cursor: uploading === i || readOnly ? "not-allowed" : "pointer",
                   }}
                   title={uploading === i ? "Uploading..." : "Add photo"}
-                  type="button"
                 >
                   {uploading === i ? "⏳" : "+"}
                 </button>
@@ -277,13 +323,92 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
         })}
       </div>
 
-      {/* HINT */}
       <p style={hintStyle}>
         {photos.length}/{MAX_PHOTOS} photos uploaded
-        {!readOnly && photos.length > 0 && (
-          <> • Tap <strong>MAIN</strong> on any photo to make it primary</>
+        {photos.length > 0 && (
+          <> • Tap any photo to view full size</>
         )}
       </p>
+
+      {/* ============================================================
+          LIGHTBOX
+      ============================================================ */}
+      {lightboxIndex !== null && currentLightboxPhoto && (
+        <div style={lightboxOverlayStyle} onClick={() => setLightboxIndex(null)}>
+          <div style={lightboxContentStyle} onClick={(e) => e.stopPropagation()}>
+            {/* Close */}
+            <button
+              onClick={() => setLightboxIndex(null)}
+              style={lightboxCloseStyle}
+              title="Close (Esc)"
+            >
+              ✕
+            </button>
+
+            {/* Counter */}
+            <div style={lightboxCounterStyle}>
+              {lightboxIndex + 1} / {photos.length}
+            </div>
+
+            {/* Prev */}
+            {photos.length > 1 && (
+              <button
+                onClick={prevPhoto}
+                style={{ ...lightboxNavStyle, left: "16px" }}
+                title="Previous (←)"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* Photo */}
+            <img
+              src={currentLightboxPhoto.photo_url}
+              alt={`Photo ${lightboxIndex + 1}`}
+              style={lightboxImgStyle}
+            />
+
+            {/* Next */}
+            {photos.length > 1 && (
+              <button
+                onClick={nextPhoto}
+                style={{ ...lightboxNavStyle, right: "16px" }}
+                title="Next (→)"
+              >
+                ›
+              </button>
+            )}
+
+            {/* Thumbnail strip at bottom */}
+            {photos.length > 1 && (
+              <div style={lightboxThumbStripStyle}>
+                {photos.map((p, idx) => (
+                  <div
+                    key={p.id}
+                    onClick={() => setLightboxIndex(idx)}
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      borderRadius: "6px",
+                      overflow: "hidden",
+                      border: idx === lightboxIndex ? "2px solid #D4A017" : "2px solid rgba(255,255,255,0.3)",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                      opacity: idx === lightboxIndex ? 1 : 0.6,
+                    }}
+                  >
+                    <img
+                      src={p.photo_url}
+                      alt=""
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -331,6 +456,7 @@ const deleteMainBtnStyle = {
   fontSize: "14px",
   fontWeight: "bold",
   fontFamily: "inherit",
+  zIndex: 3,
 };
 
 const overlayStyle = {
@@ -385,6 +511,7 @@ const setMainBtnStyle = {
   fontWeight: 700,
   cursor: "pointer",
   fontFamily: "inherit",
+  zIndex: 3,
 };
 
 const deleteSmallBtnStyle = {
@@ -401,6 +528,7 @@ const deleteSmallBtnStyle = {
   fontSize: "10px",
   padding: 0,
   fontFamily: "inherit",
+  zIndex: 3,
 };
 
 const primaryBadgeStyle = {
@@ -414,6 +542,7 @@ const primaryBadgeStyle = {
   padding: "2px 5px",
   borderRadius: "4px",
   fontFamily: "inherit",
+  zIndex: 3,
 };
 
 const addSlotBtnStyle = {
@@ -436,6 +565,98 @@ const hintStyle = {
   color: "#8a6b6b",
   marginTop: "10px",
   marginBottom: 0,
+};
+
+// ============================================================
+// LIGHTBOX STYLES
+// ============================================================
+const lightboxOverlayStyle = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,0.92)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 9999,
+  padding: "20px",
+  animation: "fadeIn 0.2s ease-out",
+};
+
+const lightboxContentStyle = {
+  position: "relative",
+  maxWidth: "90vw",
+  maxHeight: "90vh",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+};
+
+const lightboxImgStyle = {
+  maxWidth: "90vw",
+  maxHeight: "80vh",
+  objectFit: "contain",
+  borderRadius: "12px",
+  boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+};
+
+const lightboxCloseStyle = {
+  position: "absolute",
+  top: "-50px",
+  right: "0",
+  background: "rgba(255,255,255,0.15)",
+  border: "1px solid rgba(255,255,255,0.3)",
+  color: "white",
+  width: "40px",
+  height: "40px",
+  borderRadius: "50%",
+  fontSize: "18px",
+  fontWeight: "bold",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontFamily: "inherit",
+};
+
+const lightboxCounterStyle = {
+  position: "absolute",
+  top: "-44px",
+  left: "0",
+  color: "rgba(255,255,255,0.7)",
+  fontSize: "13px",
+  fontWeight: 600,
+  letterSpacing: "1px",
+};
+
+const lightboxNavStyle = {
+  position: "absolute",
+  top: "50%",
+  transform: "translateY(-50%)",
+  background: "rgba(255,255,255,0.15)",
+  border: "1px solid rgba(255,255,255,0.3)",
+  color: "white",
+  width: "48px",
+  height: "48px",
+  borderRadius: "50%",
+  fontSize: "28px",
+  fontWeight: "bold",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontFamily: "inherit",
+  lineHeight: 1,
+  transition: "background 0.2s",
+  userSelect: "none",
+};
+
+const lightboxThumbStripStyle = {
+  display: "flex",
+  gap: "8px",
+  marginTop: "20px",
+  padding: "0 10px",
+  overflowX: "auto",
+  maxWidth: "90vw",
 };
 
 export default PhotoGallery;
