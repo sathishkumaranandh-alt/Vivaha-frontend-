@@ -3,9 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
-
 function UserSettings() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
