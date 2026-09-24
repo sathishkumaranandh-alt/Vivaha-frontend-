@@ -5,14 +5,33 @@ import { useCommunities } from "../utils/communities";
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
+// Fallback values (shown while loading or if DB fails)
+const DEFAULTS = {
+  home_eyebrow: "Tradition · Trust · Together Forever",
+  home_title: "Find Your Perfect Life Partner",
+  home_tamil_subtitle: "நம் பாரம்பரியம்... உங்கள் வாழ்க்கைத் துணைக்கு...",
+  home_subtitle:
+    "Vivaha Matrimony brings together like-minded hearts for a better tomorrow.",
+  home_hero_image:
+    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&q=80",
+  home_trust_1_title: "Verified Profiles",
+  home_trust_1_desc: "100% genuine",
+  home_trust_2_title: "Safe & Secure",
+  home_trust_2_desc: "Privacy first",
+  home_trust_3_title: "Wide Community",
+  home_trust_3_desc: "All communities",
+  home_trust_4_title: "Dedicated Support",
+  home_trust_4_desc: "We are here",
+};
+
 function Home() {
   const navigate = useNavigate();
   const { communities } = useCommunities();
   const [featured, setFeatured] = useState([]);
+  const [settings, setSettings] = useState(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
 
-  // Hero search form
   const [heroSearch, setHeroSearch] = useState({
     lookingFor: "female",
     age: "21-30",
@@ -26,21 +45,31 @@ function Home() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
+  // Load settings + featured profiles
   useEffect(() => {
-    async function loadFeatured() {
+    async function load() {
       try {
-        const res = await fetch(`${BACKEND_URL}/profile/search`);
-        if (res.ok) {
-          const data = await res.json();
+        const [settingsRes, featuredRes] = await Promise.all([
+          fetch(`${BACKEND_URL}/settings`),
+          fetch(`${BACKEND_URL}/profile/search`),
+        ]);
+
+        if (settingsRes.ok) {
+          const data = await settingsRes.json();
+          setSettings({ ...DEFAULTS, ...(data.settings || {}) });
+        }
+
+        if (featuredRes.ok) {
+          const data = await featuredRes.json();
           setFeatured((data.results || []).slice(0, 4));
         }
       } catch (err) {
-        console.error("Featured load error:", err);
+        console.error("Home load error:", err);
       } finally {
         setLoading(false);
       }
     }
-    loadFeatured();
+    load();
   }, []);
 
   const handleHeroSearch = (e) => {
@@ -58,44 +87,99 @@ function Home() {
   };
 
   const S = {
+    page: { background: "#FFF9F5", fontFamily: "'Inter', sans-serif" },
+
+    // HERO
     hero: {
-      display: isMobile ? "flex" : "grid",
+      display: isMobile ? "block" : "grid",
       gridTemplateColumns: isMobile ? undefined : "1fr 1fr",
-      flexDirection: isMobile ? "column" : undefined,
-      minHeight: isMobile ? "auto" : "520px",
+      minHeight: isMobile ? "auto" : "560px",
       background: "linear-gradient(135deg, #FFF5F0 0%, #FFE9E3 100%)",
+      position: "relative",
+      overflow: "hidden",
     },
-    heroText: {
-      padding: isMobile ? "40px 20px" : "70px 50px",
+    heroLeft: {
+      padding: isMobile ? "40px 20px" : "60px 50px",
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
+      position: "relative",
+      zIndex: 2,
     },
-    trustline: {
+    heroRight: isMobile ? { display: "none" } : {
+      backgroundImage: `url('${settings.home_hero_image}')`,
+      backgroundSize: "cover",
+      backgroundPosition: "center top",
+      position: "relative",
+    },
+    eyebrow: {
       display: "flex",
-      gap: "14px",
+      alignItems: "center",
+      gap: "10px",
       fontSize: "11px",
-      color: "#D4A017",
+      color: "#8B0A2E",
       fontWeight: 700,
-      letterSpacing: "1.5px",
+      letterSpacing: "2.5px",
       textTransform: "uppercase",
       marginBottom: "20px",
     },
+    eyebrowIcon: { color: "#8B0A2E", fontSize: "14px" },
     h1: {
       fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "30px" : "42px",
-      fontWeight: 700,
+      fontSize: isMobile ? "32px" : "52px",
+      fontWeight: 900,
       color: "#8B0A2E",
-      lineHeight: 1.15,
-      letterSpacing: "-0.5px",
+      lineHeight: 1.08,
+      letterSpacing: "-1px",
+      marginBottom: "18px",
+    },
+    tamilSubtitle: {
+      fontFamily: "'Playfair Display', serif",
+      fontSize: isMobile ? "16px" : "20px",
+      color: "#8B0A2E",
       marginBottom: "16px",
+      fontWeight: 600,
+      fontStyle: "italic",
     },
     subtitle: {
       color: "#8a6b6b",
-      fontSize: isMobile ? "14px" : "15px",
+      fontSize: isMobile ? "14px" : "16px",
       marginBottom: "28px",
-      maxWidth: "460px",
+      maxWidth: "480px",
+      lineHeight: 1.7,
     },
+
+    // TRUST BADGES
+    trustRow: {
+      display: "flex",
+      gap: "20px",
+      flexWrap: "wrap",
+      marginBottom: "28px",
+    },
+    trustItem: {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      fontSize: "12px",
+      color: "#555",
+    },
+    trustIcon: {
+      width: "32px",
+      height: "32px",
+      borderRadius: "50%",
+      background: "#FDF2F6",
+      border: "1px solid #f0e0e0",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "14px",
+      flexShrink: 0,
+    },
+    trustText: { lineHeight: 1.2 },
+    trustTitle: { fontWeight: 700, color: "#8B0A2E", fontSize: "12px" },
+    trustDesc: { color: "#8a6b6b", fontSize: "10px" },
+
+    // SEARCH BOX
     searchBox: {
       background: "white",
       borderRadius: "16px",
@@ -106,7 +190,7 @@ function Home() {
     },
     searchGrid: {
       display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+      gridTemplateColumns: "1fr 1fr",
       gap: "10px",
       marginBottom: "12px",
     },
@@ -142,35 +226,13 @@ function Home() {
       cursor: "pointer",
       fontFamily: "inherit",
       boxShadow: "0 4px 14px rgba(139,10,46,0.3)",
-    },
-    heroImage: {
-      backgroundImage:
-        "url('https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      minHeight: isMobile ? "260px" : "auto",
-      order: isMobile ? -1 : 0,
-    },
-    trustBar: {
-      display: "grid",
-      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
-      background: "white",
-      padding: isMobile ? "20px" : "24px 40px",
-      gap: isMobile ? "16px" : "20px",
-      borderBottom: "1px solid #f0e0e0",
-    },
-    trustItem: { display: "flex", alignItems: "center", gap: "12px" },
-    trustIcon: {
-      width: "42px",
-      height: "42px",
-      borderRadius: "50%",
-      background: "#FDF2F6",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      fontSize: "18px",
-      flexShrink: 0,
+      gap: "8px",
     },
+
+    // FEATURED
     section: {
       maxWidth: "1200px",
       margin: "0 auto",
@@ -196,9 +258,7 @@ function Home() {
     },
     grid: {
       display: "grid",
-      gridTemplateColumns: isMobile
-        ? "1fr 1fr"
-        : "repeat(4, 1fr)",
+      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
       gap: isMobile ? "12px" : "20px",
     },
     fcard: {
@@ -268,27 +328,52 @@ function Home() {
   };
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div style={S.page}>
       {/* ========== HERO ========== */}
       <section style={S.hero}>
-        <div style={S.heroText}>
-          <div style={S.trustline}>
-            <span>Trusted</span>
-            <span>•</span>
-            <span>Secure</span>
-            <span>•</span>
-            <span>Genuine</span>
+        <div style={S.heroLeft}>
+          <div style={S.eyebrow}>
+            <span style={S.eyebrowIcon}>✦</span>
+            {settings.home_eyebrow}
           </div>
-          <h1 style={S.h1}>
-            Find Your
-            <br />
-            Perfect Life Partner
-          </h1>
-          <p style={S.subtitle}>
-            Vivaha Matrimony brings together like-minded hearts for a better
-            tomorrow.
-          </p>
 
+          <h1 style={S.h1}>{settings.home_title}</h1>
+
+          {settings.home_tamil_subtitle && (
+            <div style={S.tamilSubtitle}>{settings.home_tamil_subtitle}</div>
+          )}
+
+          <p style={S.subtitle}>{settings.home_subtitle}</p>
+
+          {/* Trust badges */}
+          <div style={S.trustRow}>
+            <TrustBadge
+              icon="🛡️"
+              title={settings.home_trust_1_title}
+              desc={settings.home_trust_1_desc}
+              styles={S}
+            />
+            <TrustBadge
+              icon="🔒"
+              title={settings.home_trust_2_title}
+              desc={settings.home_trust_2_desc}
+              styles={S}
+            />
+            <TrustBadge
+              icon="👥"
+              title={settings.home_trust_3_title}
+              desc={settings.home_trust_3_desc}
+              styles={S}
+            />
+            <TrustBadge
+              icon="❤️"
+              title={settings.home_trust_4_title}
+              desc={settings.home_trust_4_desc}
+              styles={S}
+            />
+          </div>
+
+          {/* Search box */}
           <form onSubmit={handleHeroSearch} style={S.searchBox}>
             <div style={S.searchGrid}>
               <div style={S.searchField}>
@@ -353,57 +438,9 @@ function Home() {
             </button>
           </form>
         </div>
-        <div style={S.heroImage} />
+
+        <div style={S.heroRight} />
       </section>
-
-      {/* ========== TRUST BAR ========== */}
-      <div style={S.trustBar}>
-        <div style={S.trustItem}>
-          <div style={S.trustIcon}>✅</div>
-          <div>
-            <div style={{ fontSize: "13px", fontWeight: 700, color: "#8B0A2E" }}>
-              Verified Profiles
-            </div>
-            <div style={{ fontSize: "11px", color: "#8a6b6b" }}>
-              100% genuine profiles
-            </div>
-          </div>
-        </div>
-        <div style={S.trustItem}>
-          <div style={S.trustIcon}>🔒</div>
-          <div>
-            <div style={{ fontSize: "13px", fontWeight: 700, color: "#8B0A2E" }}>
-              Safe & Secure
-            </div>
-            <div style={{ fontSize: "11px", color: "#8a6b6b" }}>
-              Your privacy our priority
-            </div>
-          </div>
-        </div>
-        <div style={S.trustItem}>
-          <div style={S.trustIcon}>👥</div>
-          <div>
-            <div style={{ fontSize: "13px", fontWeight: 700, color: "#8B0A2E" }}>
-              Wide Community
-            </div>
-            <div style={{ fontSize: "11px", color: "#8a6b6b" }}>
-              All major communities
-            </div>
-          </div>
-        </div>
-        <div style={S.trustItem}>
-          <div style={S.trustIcon}>💬</div>
-          <div>
-            <div style={{ fontSize: "13px", fontWeight: 700, color: "#8B0A2E" }}>
-              Dedicated Support
-            </div>
-            <div style={{ fontSize: "11px", color: "#8a6b6b" }}>
-              We are here for you
-            </div>
-          </div>
-        </div>
-      </div>
-
 
       {/* ========== FEATURED ========== */}
       <div style={S.section}>
@@ -421,7 +458,10 @@ function Home() {
         ) : featured.length === 0 ? (
           <p style={{ textAlign: "center", color: "#8a6b6b" }}>
             No profiles yet.{" "}
-            <Link to="/register" style={{ color: "#8B0A2E", fontWeight: "bold" }}>
+            <Link
+              to="/register"
+              style={{ color: "#8B0A2E", fontWeight: "bold" }}
+            >
               Be the first to register!
             </Link>
           </p>
@@ -433,7 +473,7 @@ function Home() {
                   {user.photo_url ? (
                     <img
                       src={user.photo_url}
-                      alt={user.name}
+                      alt=""
                       style={{
                         width: "100%",
                         height: "100%",
@@ -471,6 +511,21 @@ function Home() {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Trust Badge Sub-Component
+// ============================================================
+function TrustBadge({ icon, title, desc, styles }) {
+  return (
+    <div style={styles.trustItem}>
+      <div style={styles.trustIcon}>{icon}</div>
+      <div style={styles.trustText}>
+        <div style={styles.trustTitle}>{title}</div>
+        <div style={styles.trustDesc}>{desc}</div>
       </div>
     </div>
   );
