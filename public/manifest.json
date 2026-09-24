@@ -1,0 +1,28 @@
+{
+  "short_name": "Vivaha",
+  "name": "Vivaha Matrimony — Find Your Life Partner",
+  "description": "India's most trusted matrimony platform for finding meaningful, lifelong relationships within your community.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#8B0A2E",
+  "background_color": "#FFF9F5",
+  "scope": "/",
+  "categories": ["lifestyle", "social"],
+  "lang": "en-IN",
+  "dir": "ltr"
+}
