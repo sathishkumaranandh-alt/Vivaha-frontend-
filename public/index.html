@@ -3,13 +3,41 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#1e3a8a" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="theme-color" content="#8B0A2E" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+    <!-- iOS Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Vivaha" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/icon-192.png" />
+
+    <!-- Android Support -->
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- SEO -->
     <meta
       name="description"
-      content="Matrimonial platform built with React and Supabase"
+      content="Vivaha Matrimony — India's most trusted platform for finding meaningful, lifelong relationships within your community. Join thousands of families."
     />
-    <title>Matrimonial Platform</title>
+    <meta name="keywords" content="matrimony, marriage, vivaha, tamil matrimony, indian wedding, bride, groom, match making" />
+    <meta name="author" content="Vivaha Matrimony" />
+
+    <!-- Open Graph (for WhatsApp/Facebook shares) -->
+    <meta property="og:title" content="Vivaha Matrimony — Find Your Life Partner" />
+    <meta property="og:description" content="India's most trusted matrimony platform for finding lifelong relationships within your community." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="%PUBLIC_URL%/icon-512.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Vivaha Matrimony" />
+    <meta name="twitter:description" content="Find your perfect life partner on Vivaha." />
+
+    <title>Vivaha Matrimony — Find Your Life Partner</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
