@@ -245,10 +245,11 @@ function Profile() {
               📷 Your Photos (up to 5)
             </label>
             {currentUserId && (
-              <PhotoGallery
+           <PhotoGallery
                 userId={currentUserId}
                 onPrimaryChange={(url) => setProfile({ ...profile, photo_url: url })}
-              />
+                fallbackPhotoUrl={profile.photo_url}
+              /> 
             )}
           </div>
 
@@ -463,10 +464,12 @@ function Profile() {
           </div>
         )}
 
-        <PhotoGallery
+               <PhotoGallery
           userId={id || currentUserId}
           readOnly={!isOwnProfile}
-        />
+          fallbackPhotoUrl={profile.photo_url}
+          onPrimaryChange={(url) => setProfile({ ...profile, photo_url: url })}
+        /> 
 
         {!isOwnProfile && (
           <button
