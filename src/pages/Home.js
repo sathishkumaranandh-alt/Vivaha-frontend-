@@ -160,31 +160,29 @@ function Home() {
     page: { background: "#FFF9F5", fontFamily: "'Inter', sans-serif" },
 
     // ============ HERO ============
-    hero: {
+       hero: {
       position: "relative",
       minHeight: isMobile ? "auto" : `${settings.home_hero_height}px`,
       backgroundImage: `url('${heroImage}')`,
       backgroundSize: "cover",
-      backgroundPosition: isMobile ? "center" : "center top",
+      backgroundPosition: "center",
       backgroundRepeat: "no-repeat",
+      backgroundAttachment: "scroll",
       display: "block",
-      padding: isMobile ? "40px 20px" : "0",
+      padding: isMobile ? "60px 20px 80px" : "0",
       overflow: "hidden",
     },
     heroOverlay: {
       position: "absolute",
       inset: 0,
       background: isMobile
-        ? `linear-gradient(180deg, rgba(255,249,245,${overlayOpacity / 100}) 0%, rgba(255,249,245,${overlayOpacity / 130}) 60%, rgba(255,249,245,0.4) 100%)`
+        ? `linear-gradient(180deg, rgba(255,249,245,${Math.min(overlayOpacity, 96) / 100}) 0%, rgba(255,249,245,${Math.min(overlayOpacity, 96) / 100}) 100%)`
         : `linear-gradient(90deg, rgba(255,249,245,${overlayOpacity / 100}) 0%, rgba(255,249,245,${overlayOpacity / 105}) 35%, rgba(255,249,245,0.5) 55%, rgba(255,249,245,0.1) 100%)`,
       zIndex: 1,
     },
-
-    // Mobile wrapper keeps flow layout
     mobileContentWrapper: isMobile
-      ? { position: "relative", zIndex: 3, display: "flex", flexDirection: "column", gap: "24px" }
+      ? { position: "relative", zIndex: 3, display: "flex", flexDirection: "column", gap: "28px", paddingBottom: "20px" }
       : {},
-
     // ============ TEXT BLOCK ============
     eyebrow: {
       display: "flex",
