@@ -10,10 +10,9 @@ const MAX_PHOTOS = 5;
 function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(null);
   const fileInputRef = useRef(null);
-  const [pendingSlot, setPendingSlot] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
   useEffect(() => {
@@ -21,6 +20,7 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  // Keyboard navigation for lightbox
   useEffect(() => {
     if (lightboxIndex === null) return;
     const handleKey = (e) => {
@@ -52,12 +52,6 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
     }
   };
 
-  const handleAddClick = (slotIndex) => {
-    if (readOnly) return;
-    setPendingSlot(slotIndex);
-    fileInputRef.current?.click();
-  };
-
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -71,7 +65,7 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
       return;
     }
 
-    setUploading(pendingSlot);
+    setUploading(true);
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${userId}-${Date.now()}.${fileExt}`;
@@ -113,8 +107,7 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
       console.error("Upload error:", err);
       toast.error("Upload failed. Try again.");
     } finally {
-      setUploading(null);
-      setPendingSlot(null);
+      setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -169,13 +162,8 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
     if (index !== -1) setLightboxIndex(index);
   };
 
-  const nextPhoto = () => {
-    setLightboxIndex((prev) => (prev + 1) % photos.length);
-  };
-
-  const prevPhoto = () => {
-    setLightboxIndex((prev) => (prev - 1 + photos.length) % photos.length);
-  };
+  const nextPhoto = () => setLightboxIndex((prev) => (prev + 1) % photos.length);
+  const prevPhoto = () => setLightboxIndex((prev) => (prev - 1 + photos.length) % photos.length);
 
   if (loading) {
     return (
@@ -187,16 +175,10 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
 
   const primary = photos.find((p) => p.is_primary) || photos[0];
   const secondaries = photos.filter((p) => p.id !== primary?.id);
-
-  // ⭐ Slots to display:
-  // - When editable (own profile): always MAX_PHOTOS (5) with empty + slots
-  // - When readOnly (other profile): only as many as they have photos
-
-  const currentLightboxPhoto =
-    lightboxIndex !== null ? photos[lightboxIndex] : null;
+  const currentLightboxPhoto = lightboxIndex !== null ? photos[lightboxIndex] : null;
 
   // ============================================================
-  // READ-ONLY MODE WITH NO PHOTOS
+  // MODE 1: READ-ONLY (Viewing another user) — NO PHOTOS
   // ============================================================
   if (readOnly && photos.length === 0) {
     return (
@@ -210,12 +192,12 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
   }
 
   // ============================================================
-  // READ-ONLY MODE WITH PHOTOS
+  // MODE 2: READ-ONLY (Viewing another user) — HAS PHOTOS
   // ============================================================
   if (readOnly) {
     return (
       <div>
-        {/* MAIN PHOTO */}
+        {/* Main photo */}
         <div style={mainWrapperStyle}>
           <img
             src={primary.photo_url}
@@ -225,20 +207,15 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
           />
         </div>
 
-        {/* THUMBNAILS — only actual photos, no empty slots */}
+        {/* Only actual thumbnails - NO empty + slots */}
         {secondaries.length > 0 && (
-          <div style={thumbsRowStyle}>
-            {secondaries.map((photo, i) => (
+          <div style={thumbsRowStyle(secondaries.length)}>
+            {secondaries.map((photo) => (
               <div key={photo.id} style={thumbWrapperStyle(false, true)}>
                 <img
                   src={photo.photo_url}
                   alt=""
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    cursor: "zoom-in",
-                  }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }}
                   onClick={() => openLightbox(photo.id)}
                 />
               </div>
@@ -246,12 +223,11 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
           </div>
         )}
 
-        {/* Counter */}
         <p style={hintStyle}>
           {photos.length} {photos.length === 1 ? "photo" : "photos"} · Tap to view full size
         </p>
 
-        {/* LIGHTBOX */}
+        {/* Lightbox */}
         {lightboxIndex !== null && currentLightboxPhoto && (
           <Lightbox
             photos={photos}
@@ -267,7 +243,7 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
   }
 
   // ============================================================
-  // EDITABLE MODE (OWN PROFILE)
+  // MODE 3: EDITABLE (Own profile) — Show 5 slots always
   // ============================================================
   return (
     <div>
@@ -279,7 +255,7 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
         style={{ display: "none" }}
       />
 
-      {/* MAIN PHOTO */}
+      {/* Main photo */}
       <div style={mainWrapperStyle}>
         {primary ? (
           <>
@@ -303,19 +279,19 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
           </>
         ) : (
           <button
-            onClick={() => handleAddClick(0)}
-            disabled={uploading === 0}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
             style={addMainBtnStyle}
             type="button"
           >
             <span style={{ fontSize: "48px" }}>📷</span>
             <span style={{ fontSize: "13px", fontWeight: 700 }}>
-              {uploading === 0 ? "Uploading..." : "Add Main Photo"}
+              {uploading ? "Uploading..." : "Add Main Photo"}
             </span>
           </button>
         )}
 
-        {uploading === 0 && (
+        {uploading && (
           <div style={overlayStyle}>
             <div style={spinnerSmallStyle} />
             <span style={{ color: "white", fontSize: "12px", fontWeight: 600 }}>
@@ -325,8 +301,8 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
         )}
       </div>
 
-      {/* THUMBNAIL SLOTS — always 5 in editable mode */}
-      <div style={thumbsRowStyle}>
+      {/* 5 thumbnail slots */}
+      <div style={thumbsRowStyle(5)}>
         {Array.from({ length: MAX_PHOTOS }).map((_, i) => {
           const photo = i === 0 ? primary : secondaries[i - 1];
           const isPrimarySlot = i === 0;
@@ -338,57 +314,48 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
                   <img
                     src={photo.photo_url}
                     alt=""
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      cursor: "zoom-in",
-                    }}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }}
                     onClick={() => openLightbox(photo.id)}
                   />
 
                   {!isPrimarySlot && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSetPrimary(photo.id);
-                      }}
-                      disabled={busy === photo.id}
-                      style={setMainBtnStyle}
-                      title="Set as main photo"
-                    >
-                      MAIN
-                    </button>
-                  )}
-
-                  {!isPrimarySlot && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(photo.id, false);
-                      }}
-                      disabled={busy === photo.id}
-                      style={deleteSmallBtnStyle}
-                      title="Delete"
-                    >
-                      ✕
-                    </button>
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSetPrimary(photo.id);
+                        }}
+                        disabled={busy === photo.id}
+                        style={setMainBtnStyle}
+                        title="Set as main photo"
+                      >
+                        MAIN
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(photo.id, false);
+                        }}
+                        disabled={busy === photo.id}
+                        style={deleteSmallBtnStyle}
+                        title="Delete"
+                      >
+                        ✕
+                      </button>
+                    </>
                   )}
 
                   {isPrimarySlot && <div style={primaryBadgeStyle}>MAIN</div>}
                 </>
               ) : (
                 <button
-                  onClick={() => handleAddClick(i)}
-                  disabled={uploading === i}
-                  style={{
-                    ...addSlotBtnStyle,
-                    cursor: uploading === i ? "not-allowed" : "pointer",
-                  }}
-                  title={uploading === i ? "Uploading..." : "Add photo"}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  style={addSlotBtnStyle}
+                  title="Add photo"
                   type="button"
                 >
-                  {uploading === i ? "⏳" : "+"}
+                  {uploading ? "⏳" : "+"}
                 </button>
               )}
             </div>
@@ -398,10 +365,10 @@ function PhotoGallery({ userId, onPrimaryChange, readOnly = false }) {
 
       <p style={hintStyle}>
         {photos.length}/{MAX_PHOTOS} photos uploaded
-        {photos.length > 0 && <> • Tap any photo to view full size</>}
+        {photos.length > 0 && <> · Tap any photo to view full size</>}
       </p>
 
-      {/* LIGHTBOX */}
+      {/* Lightbox */}
       {lightboxIndex !== null && currentLightboxPhoto && (
         <Lightbox
           photos={photos}
@@ -426,34 +393,17 @@ function Lightbox({ photos, index, onClose, onPrev, onNext, onSelect }) {
   return (
     <div style={lightboxOverlayStyle} onClick={onClose}>
       <div style={lightboxContentStyle} onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} style={lightboxCloseStyle} title="Close (Esc)">
-          ✕
-        </button>
-
-        <div style={lightboxCounterStyle}>
-          {index + 1} / {photos.length}
-        </div>
+        <button onClick={onClose} style={lightboxCloseStyle} title="Close (Esc)">✕</button>
+        <div style={lightboxCounterStyle}>{index + 1} / {photos.length}</div>
 
         {photos.length > 1 && (
-          <button
-            onClick={onPrev}
-            style={{ ...lightboxNavStyle, left: "16px" }}
-            title="Previous (←)"
-          >
-            ‹
-          </button>
+          <button onClick={onPrev} style={{ ...lightboxNavStyle, left: "16px" }} title="Previous">‹</button>
         )}
 
         <img src={photo.photo_url} alt="" style={lightboxImgStyle} />
 
         {photos.length > 1 && (
-          <button
-            onClick={onNext}
-            style={{ ...lightboxNavStyle, right: "16px" }}
-            title="Next (→)"
-          >
-            ›
-          </button>
+          <button onClick={onNext} style={{ ...lightboxNavStyle, right: "16px" }} title="Next">›</button>
         )}
 
         {photos.length > 1 && (
@@ -467,20 +417,13 @@ function Lightbox({ photos, index, onClose, onPrev, onNext, onSelect }) {
                   height: "50px",
                   borderRadius: "6px",
                   overflow: "hidden",
-                  border:
-                    idx === index
-                      ? "2px solid #D4A017"
-                      : "2px solid rgba(255,255,255,0.3)",
+                  border: idx === index ? "2px solid #D4A017" : "2px solid rgba(255,255,255,0.3)",
                   cursor: "pointer",
                   flexShrink: 0,
                   opacity: idx === index ? 1 : 0.6,
                 }}
               >
-                <img
-                  src={p.photo_url}
-                  alt=""
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
+                <img src={p.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </div>
             ))}
           </div>
@@ -568,11 +511,12 @@ const spinnerSmallStyle = {
   animation: "spin 1s linear infinite",
 };
 
-const thumbsRowStyle = {
+// Grid columns adjusts to number of photos
+const thumbsRowStyle = (count) => ({
   display: "grid",
-  gridTemplateColumns: "repeat(5, 1fr)",
+  gridTemplateColumns: `repeat(${Math.max(count, 1)}, 1fr)`,
   gap: "6px",
-};
+});
 
 const thumbWrapperStyle = (isPrimarySlot, hasPhoto) => ({
   position: "relative",
@@ -646,6 +590,7 @@ const addSlotBtnStyle = {
   justifyContent: "center",
   width: "100%",
   height: "100%",
+  cursor: "pointer",
 };
 
 const hintStyle = {
@@ -656,9 +601,6 @@ const hintStyle = {
   marginBottom: 0,
 };
 
-// ============================================================
-// LIGHTBOX STYLES
-// ============================================================
 const lightboxOverlayStyle = {
   position: "fixed",
   inset: 0,
