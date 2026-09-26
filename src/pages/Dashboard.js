@@ -338,6 +338,9 @@ function Dashboard() {
               <span style={S.badgeDot}>{counts.messages}</span>
             )}
           </Link>
+                      <Link to="/visitors" style={S.navItem}>
+            👀 Who Viewed Me
+          </Link>
           <Link to="/settings" style={S.navItem}>
             ⚙️ Settings
           </Link>
