@@ -8,6 +8,10 @@ import { useCommunities } from "../utils/communities";
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
+const DEFAULT_SETTINGS = {
+  site_name: "Vivaha Matrimony",
+};
+
 function Navigation() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +22,7 @@ function Navigation() {
   const [community, setCommunity] = useState(
     localStorage.getItem("community") || ""
   );
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const { communities: dbCommunities } = useCommunities();
   const navigate = useNavigate();
 
@@ -30,6 +35,17 @@ function Navigation() {
   useEffect(() => {
     setMenuOpen(false);
   }, [navigate]);
+
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/settings`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && d.settings) {
+          setSettings({ ...DEFAULT_SETTINGS, ...d.settings });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -122,18 +138,18 @@ function Navigation() {
     return (
       <nav style={navStyle}>
         <h2 style={{ margin: 0, fontSize: "20px", color: "#8B0A2E", fontFamily: "'Playfair Display', serif" }}>
-          Vivaha Matrimony
+          {settings.site_name}
         </h2>
       </nav>
     );
   }
 
-    const links = [
+  const links = [
     { to: "/", label: "Home" },
     { to: "/dashboard", label: "Dashboard" },
     { to: "/search", label: "Search" },
     { to: "/matches", label: "Matches" },
-{ to: "/success-stories", label: "Success Stories" },
+    { to: "/success-stories", label: "Success Stories" },
     { to: "/interests", label: "Interests", badge: interestCount },
     { to: "/messages", label: "Messages", badge: unreadCount },
     { to: "/subscription", label: "Pricing" },
@@ -149,7 +165,7 @@ function Navigation() {
         <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
           <div style={logoCircleStyle}>♥</div>
           <div style={{ lineHeight: 1.1 }}>
-            <div style={logoTextStyle}>Vivaha Matrimony</div>
+            <div style={logoTextStyle}>{settings.site_name}</div>
             <div style={logoSubStyle}>FIND YOUR SOULMATE</div>
           </div>
         </Link>
