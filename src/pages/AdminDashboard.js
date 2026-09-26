@@ -214,6 +214,20 @@ function AdminDashboard() {
           >
             ⚙️ Settings
           </Link>
+                        <Link
+            to="/admin-form-builder"
+            style={{
+              background: "#0284c7",
+              color: "white",
+              padding: "10px 20px",
+              borderRadius: 8,
+              textDecoration: "none",
+              fontWeight: "bold",
+              fontSize: 14,
+            }}
+          >
+            🛠️ Form Builder
+          </Link>
         </div>
       </div>
 
