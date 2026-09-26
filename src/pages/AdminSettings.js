@@ -872,4 +872,4 @@ const S = {
   },
 };
 
-export default AdminSettings;
+export default AdminSettings
