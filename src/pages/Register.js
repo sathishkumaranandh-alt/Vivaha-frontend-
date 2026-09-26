@@ -11,7 +11,7 @@ const TOTAL_STEPS = 5;
 function Register() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { communities, loading: loadingCommunities } = useCommunities();
+  const { communities } = useCommunities();
   const [step, setStep] = useState(1);
   const [userId, setUserId] = useState(null);
   const [saving, setSaving] = useState(false);
