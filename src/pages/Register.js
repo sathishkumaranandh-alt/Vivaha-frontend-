@@ -59,6 +59,16 @@ function Register() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+    // Redirect logged-in users to dashboard
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        navigate("/dashboard");
+      }
+    });
+  }, [navigate]);
+
+  // Pre-fill community from URL
   useEffect(() => {
     const c = searchParams.get("community");
     if (c) setForm((f) => ({ ...f, community: c }));
