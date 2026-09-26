@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import ProfileSearch from "./pages/ProfileSearch";
 import Matches from "./pages/Matches";
 import Recommendations from "./pages/Recommendations";
+import AdminFormBuilder from "./pages/AdminFormBuilder";
 import UserSettings from "./pages/UserSettings";
 import Subscription from "./pages/Subscription";
 import SubscriptionDashboard from "./pages/SubscriptionDashboard";
@@ -90,6 +91,7 @@ function App() {
         <Route path="/admin-analytics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnalytics /></ProtectedRoute>} />
         <Route path="/admin-communities" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommunities /></ProtectedRoute>} />
         <Route path="/admin-settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
+        <Route path="/admin-form-builder" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFormBuilder /></ProtectedRoute>} />
       </Routes>
       <Footer />
       <InstallAppButton />
