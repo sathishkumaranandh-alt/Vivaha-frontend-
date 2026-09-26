@@ -46,7 +46,7 @@ function AdminFormBuilder() {
 
   const handleAdd = async () => {
     if (!newField.label.trim()) return toast.error("Label is required");
-    if (!newField.field_key.trim()) return toast.error("Field Key is required (e.g. hobbies)");
+    if (!newField.field_key.trim()) return toast.error("Field Key is required");
 
     setSaving(true);
     try {
@@ -84,7 +84,7 @@ function AdminFormBuilder() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this field? Users will no longer see it.")) return;
+    if (!window.confirm("Delete this field?")) return;
     try {
       await fetch(`${BACKEND_URL}/form-config/fields/${id}`, { method: "DELETE" });
       setFields(fields.filter(f => f.id !== id));
@@ -113,7 +113,7 @@ function AdminFormBuilder() {
             🛠️ Registration Form Builder
           </h1>
           <p style={{ color: "#8a6b6b", fontSize: "13px", margin: 0 }}>
-            Add, remove, or manage the fields users fill during registration.
+            Add, remove, or manage the 5-step registration form.
           </p>
         </div>
         <Link to="/admin" style={{ background: "#e5e7eb", color: "#8B0A2E", padding: "10px 18px", borderRadius: "8px", textDecoration: "none", fontWeight: "bold", fontSize: "14px" }}>
@@ -131,7 +131,7 @@ function AdminFormBuilder() {
             <input style={S.input} placeholder="e.g. Hobbies" value={newField.label} onChange={(e) => setNewField({ ...newField, label: e.target.value })} />
           </div>
           <div>
-            <label style={S.label}>Field Key (database name, no spaces)</label>
+            <label style={S.label}>Field Key (database name)</label>
             <input style={S.input} placeholder="e.g. hobbies" value={newField.field_key} onChange={(e) => setNewField({ ...newField, field_key: e.target.value })} />
           </div>
           <div>
@@ -139,6 +139,9 @@ function AdminFormBuilder() {
             <select style={S.input} value={newField.type} onChange={(e) => setNewField({ ...newField, type: e.target.value })}>
               <option value="text">Text</option>
               <option value="number">Number</option>
+              <option value="date">Date</option>
+              <option value="tel">Phone Number</option>
+              <option value="email">Email</option>
               <option value="select">Dropdown</option>
               <option value="textarea">Long Text</option>
             </select>
@@ -146,9 +149,11 @@ function AdminFormBuilder() {
           <div>
             <label style={S.label}>Show in Step</label>
             <select style={S.input} value={newField.step} onChange={(e) => setNewField({ ...newField, step: e.target.value })}>
-              <option value="1">Step 1 (Account)</option>
-              <option value="2">Step 2 (Personal Info)</option>
-              <option value="3">Step 3 (Career / Bio)</option>
+              <option value="1">Step 1 - Basic Details</option>
+              <option value="2">Step 2 - Community & Horoscope</option>
+              <option value="3">Step 3 - Education & Career</option>
+              <option value="4">Step 4 - Family & Lifestyle</option>
+              <option value="5">Step 5 - Partner Preference</option>
             </select>
           </div>
         </div>
@@ -162,7 +167,7 @@ function AdminFormBuilder() {
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
           <input type="checkbox" id="req" checked={newField.is_required} onChange={(e) => setNewField({ ...newField, is_required: e.target.checked })} style={{ width: 18, height: 18, accentColor: "#8B0A2E" }} />
-          <label htmlFor="req" style={{ fontSize: "14px", color: "#2D1B1B", fontWeight: 600 }}>Make this field mandatory</label>
+          <label htmlFor="req" style={{ fontSize: "14px", color: "#2D1B1B", fontWeight: 600 }}>Make this field mandatory (monetary)</label>
         </div>
 
         <button onClick={handleAdd} disabled={saving} style={{ background: "#8B0A2E", color: "white", border: "none", padding: "12px 24px", borderRadius: "8px", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
@@ -174,7 +179,7 @@ function AdminFormBuilder() {
       <div style={{ background: "white", borderRadius: "14px", padding: "24px", border: "1px solid #f0e0e0" }}>
         <h3 style={{ color: "#8B0A2E", marginTop: 0, marginBottom: "16px", fontSize: "16px" }}>📋 Current Fields ({fields.length})</h3>
         {fields.length === 0 ? (
-          <p style={{ color: "#8a6b6b", fontSize: "13px" }}>No fields added yet. Users will see the default registration form.</p>
+          <p style={{ color: "#8a6b6b", fontSize: "13px" }}>No custom fields added yet.</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {fields.map((f) => (
