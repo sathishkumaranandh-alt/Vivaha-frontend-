@@ -18,6 +18,7 @@ import UserSettings from "./pages/UserSettings";
 import Subscription from "./pages/Subscription";
 import SubscriptionDashboard from "./pages/SubscriptionDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import Visitors from "./pages/Visitors";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
 import AdminCommunities from "./pages/AdminCommunities";
@@ -75,6 +76,7 @@ function App() {
         <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/search" element={<ProtectedRoute><ProfileSearch /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/visitors" element={<ProtectedRoute><Visitors /></ProtectedRoute>} />
         <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
         <Route path="/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />
         <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
