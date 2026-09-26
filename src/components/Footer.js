@@ -1,8 +1,31 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+
+const BACKEND_URL =
+  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+
+const DEFAULT_SETTINGS = {
+  site_name: "Vivaha Matrimony",
+  contact_email: "support@vivahamatrimony.com",
+  contact_phone: "+91 90000 00000",
+  support_hours: "Mon-Sat: 9 AM - 6 PM",
+  contact_address: "Chennai, Tamil Nadu, India",
+};
 
 function Footer() {
   const year = new Date().getFullYear();
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/settings`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && d.settings) {
+          setSettings({ ...DEFAULT_SETTINGS, ...d.settings });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleComingSoon = (e) => {
     e.preventDefault();
@@ -30,7 +53,7 @@ function Footer() {
               <div style={brandRowStyle}>
                 <div style={brandCircleStyle}>♥</div>
                 <div>
-                  <div style={brandNameStyle}>Vivaha Matrimony</div>
+                  <div style={brandNameStyle}>{settings.site_name}</div>
                   <div style={brandTagStyle}>FIND YOUR SOULMATE</div>
                 </div>
               </div>
@@ -87,19 +110,19 @@ function Footer() {
               <h4 style={colTitleStyle}>Get in Touch</h4>
               <p style={contactLineStyle}>
                 <span style={contactIconStyle}>📧</span>
-                support@vivahamatrimony.com
+                {settings.contact_email}
               </p>
               <p style={contactLineStyle}>
                 <span style={contactIconStyle}>📞</span>
-                +91 90000 00000
+                {settings.contact_phone}
               </p>
               <p style={contactLineStyle}>
                 <span style={contactIconStyle}>📍</span>
-                Chennai, Tamil Nadu, India
+                {settings.contact_address}
               </p>
               <p style={{ ...contactLineStyle, marginTop: "12px", fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>
                 <span style={contactIconStyle}>🕐</span>
-                Mon-Sat: 9 AM - 6 PM
+                {settings.support_hours}
               </p>
             </div>
           </div>
@@ -107,7 +130,7 @@ function Footer() {
           {/* BOTTOM STRIP */}
           <div style={bottomStripStyle}>
             <p style={copyrightStyle}>
-              © {year} Vivaha Matrimony. All rights reserved. Made with{" "}
+              © {year} {settings.site_name}. All rights reserved. Made with{" "}
               <span style={{ color: "#D4A017" }}>❤</span> for finding lifelong partners.
             </p>
             <div style={bottomLinksStyle}>
