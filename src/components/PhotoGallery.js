@@ -5,14 +5,13 @@ import { toast } from "../utils/toast";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 const MAX_PHOTOS = 7;
 
-function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhotoUrl }) {
+function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhotoUrl, shouldBlur = false }) {
   const [photos, setPhotos] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [lightboxIndex, setLightboxIndex] = useState(null); // Full screen viewer state
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [blurPrivate] = useState(true); // Kept for future use, no setter to avoid Vercel error
   const fileInputRef = useRef(null);
 
   const fetchPhotos = useCallback(async () => {
@@ -146,7 +145,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
   const displayPhotos = photos.length > 0 ? photos : (fallbackPhotoUrl ? [{ id: "fallback", photo_url: fallbackPhotoUrl, is_primary: true }] : []);
   const activePhoto = displayPhotos[activeIndex] || displayPhotos[0];
 
-  // Lightbox navigation
   const nextLightbox = (e) => {
     e.stopPropagation();
     setLightboxIndex((prev) => (prev + 1) % displayPhotos.length);
@@ -180,7 +178,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
                 width: "100%", 
                 height: "100%", 
                 objectFit: "cover",
-                filter: (isPrivate && blurPrivate && activePhoto.is_private) ? "blur(13px)" : "none"
+                filter: (shouldBlur || (isPrivate && activePhoto.is_private)) ? "blur(13px)" : "none"
               }} 
             />
           </div>
@@ -191,12 +189,10 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             </div>
           )}
 
-          {/* Fullscreen Hint Button */}
           <div style={{ position: "absolute", bottom: "12px", left: "12px", background: "rgba(0,0,0,0.6)", color: "white", padding: "6px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
             🔍 View Fullscreen
           </div>
 
-          {/* Action Buttons for Edit Mode */}
           {!readOnly && activePhoto.id !== "fallback" && (
             <div style={{ position: "absolute", bottom: "12px", right: "12px", display: "flex", gap: "8px" }}>
               {!activePhoto.is_primary && (
@@ -236,7 +232,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
                 width: "100%", 
                 height: "100%", 
                 objectFit: "cover",
-                filter: (isPrivate && blurPrivate && photo.is_private) ? "blur(10px)" : "none"
+                filter: (shouldBlur || (isPrivate && photo.is_private)) ? "blur(10px)" : "none"
               }} 
             />
             {photo.is_primary && (
@@ -271,7 +267,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
 
       <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleUpload} style={{ display: "none" }} />
 
-      {/* === PRIVACY CONTROLS === */}
       {!readOnly && (
         <div style={{ marginTop: "25px", borderTop: "1px solid #eee", paddingTop: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 0", borderBottom: "1px solid #eee" }}>
@@ -305,7 +300,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             backdropFilter: "blur(8px)"
           }}
         >
-          {/* Close Button */}
           <button 
             onClick={() => setLightboxIndex(null)}
             style={{
@@ -318,7 +312,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             ✕
           </button>
 
-          {/* Previous Button */}
           {displayPhotos.length > 1 && (
             <button 
               onClick={prevLightbox}
@@ -333,7 +326,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             </button>
           )}
 
-          {/* Large Image */}
           <img 
             src={displayPhotos[lightboxIndex].photo_url} 
             alt="" 
@@ -342,11 +334,11 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
               maxWidth: "100%", maxHeight: "90vh",
               objectFit: "contain", borderRadius: "8px",
               boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
-              userSelect: "none"
+              userSelect: "none",
+              filter: (shouldBlur || (isPrivate && displayPhotos[lightboxIndex].is_private)) ? "blur(20px)" : "none"
             }}
           />
 
-          {/* Next Button */}
           {displayPhotos.length > 1 && (
             <button 
               onClick={nextLightbox}
@@ -361,7 +353,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             </button>
           )}
 
-          {/* Photo Counter */}
           <div style={{
             position: "absolute", bottom: "20px", left: "50%", transform: "translateX(-50%)",
             color: "white", fontSize: "13px", fontWeight: 600, background: "rgba(0,0,0,0.7)",
