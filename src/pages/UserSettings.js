@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+
 function UserSettings() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -18,7 +20,7 @@ function UserSettings() {
   });
   const [changingPass, setChangingPass] = useState(false);
 
-  // Preferences
+  // Preferences (localStorage only)
   const [prefs, setPrefs] = useState({
     email_on_interest: true,
     email_on_message: true,
@@ -26,6 +28,13 @@ function UserSettings() {
     show_online_status: true,
     profile_visible: true,
   });
+
+  // NEW: Database-backed privacy settings
+  const [privacy, setPrivacy] = useState({
+    photo_privacy: "public",
+    contact_privacy: "matches",
+  });
+  const [savingPrivacy, setSavingPrivacy] = useState(false);
 
   // Delete account
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -47,10 +56,24 @@ function UserSettings() {
         }
         setUser(user);
 
-        // Load saved preferences from localStorage (until backend supports)
+        // Load saved preferences from localStorage
         const saved = localStorage.getItem(`prefs_${user.id}`);
         if (saved) {
           setPrefs(JSON.parse(saved));
+        }
+
+        // NEW: Load privacy settings from database
+        const { data: userData } = await supabase
+          .from("users")
+          .select("photo_privacy, contact_privacy")
+          .eq("id", user.id)
+          .single();
+
+        if (userData) {
+          setPrivacy({
+            photo_privacy: userData.photo_privacy || "public",
+            contact_privacy: userData.contact_privacy || "matches",
+          });
         }
       } catch (err) {
         console.error(err);
@@ -94,13 +117,38 @@ function UserSettings() {
   };
 
   // ============================================================
-  // PREFERENCES TOGGLE
+  // PREFERENCES TOGGLE (localStorage)
   // ============================================================
   const togglePref = (key) => {
     const updated = { ...prefs, [key]: !prefs[key] };
     setPrefs(updated);
     localStorage.setItem(`prefs_${user.id}`, JSON.stringify(updated));
     toast.success("Preferences saved");
+  };
+
+  // ============================================================
+  // NEW: SAVE PRIVACY SETTINGS (database)
+  // ============================================================
+  const handleSavePrivacy = async () => {
+    setSavingPrivacy(true);
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({
+          photo_privacy: privacy.photo_privacy,
+          contact_privacy: privacy.contact_privacy,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+      toast.success("Privacy settings saved!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save privacy settings");
+    } finally {
+      setSavingPrivacy(false);
+    }
   };
 
   // ============================================================
@@ -115,7 +163,6 @@ function UserSettings() {
 
     setDeleting(true);
     try {
-      // Delete profile data first
       await supabase.from("users").delete().eq("id", user.id);
       await supabase.from("interests").delete().eq("sender_id", user.id);
       await supabase.from("interests").delete().eq("receiver_id", user.id);
@@ -123,7 +170,6 @@ function UserSettings() {
       await supabase.from("messages").delete().eq("receiver_id", user.id);
       await supabase.from("shortlists").delete().eq("user_id", user.id);
 
-      // Sign out
       await supabase.auth.signOut();
       toast.success("Account deleted. Goodbye 👋");
       setTimeout(() => navigate("/"), 1500);
@@ -232,6 +278,18 @@ function UserSettings() {
       boxSizing: "border-box",
       cursor: "not-allowed",
     },
+    select: {
+      width: "100%",
+      padding: "12px 14px",
+      border: "1px solid #d1d5db",
+      borderRadius: "10px",
+      fontSize: "14px",
+      fontFamily: "inherit",
+      outline: "none",
+      background: "#FFF9F5",
+      boxSizing: "border-box",
+      cursor: "pointer",
+    },
     primaryBtn: {
       background: "#8B0A2E",
       color: "white",
@@ -274,6 +332,14 @@ function UserSettings() {
     toggleHint: {
       fontSize: "12px",
       color: "#8a6b6b",
+    },
+    privacyHint: {
+      fontSize: "12px",
+      color: "#888",
+      marginTop: "4px",
+      marginBottom: "16px",
+      lineHeight: 1.5,
+      fontStyle: "italic",
     },
   };
 
@@ -424,11 +490,54 @@ function UserSettings() {
           </div>
         )}
 
-        {/* ============ PRIVACY TAB ============ */}
+        {/* ============ PRIVACY TAB (EXPANDED) ============ */}
         {activeTab === "privacy" && (
           <div style={S.card}>
             <h3 style={S.cardTitle}>Privacy Settings</h3>
-            <p style={S.cardDesc}>Control who can see your profile and activity</p>
+            <p style={S.cardDesc}>Control who can see your profile, photos, and contact information</p>
+
+            {/* NEW: Photo Privacy */}
+            <label style={S.label}>Who can see my Photos?</label>
+            <select
+              value={privacy.photo_privacy}
+              onChange={(e) => setPrivacy({ ...privacy, photo_privacy: e.target.value })}
+              style={S.select}
+            >
+              <option value="public">🌍 Public - Everyone can see</option>
+              <option value="matches">💕 Matches Only - Only accepted interests</option>
+              <option value="private">🔒 Private - Nobody (blurred)</option>
+            </select>
+            <p style={S.privacyHint}>
+              If set to "Matches Only", your photos will be blurred for everyone except users whose interest you have accepted.
+            </p>
+
+            {/* NEW: Contact Privacy */}
+            <label style={S.label}>Who can see my Contact Info?</label>
+            <select
+              value={privacy.contact_privacy}
+              onChange={(e) => setPrivacy({ ...privacy, contact_privacy: e.target.value })}
+              style={S.select}
+            >
+              <option value="public">🌍 Public - Everyone can see</option>
+              <option value="matches">💕 Matches Only - Only accepted interests</option>
+              <option value="private">🔒 Private - Hidden from everyone</option>
+            </select>
+            <p style={S.privacyHint}>
+              Hides your mobile number and email from other members unless they are a match.
+            </p>
+
+            <button
+              onClick={handleSavePrivacy}
+              disabled={savingPrivacy}
+              style={{ ...S.primaryBtn, opacity: savingPrivacy ? 0.6 : 1 }}
+            >
+              {savingPrivacy ? "Saving..." : "💾 Save Privacy Settings"}
+            </button>
+
+            <hr style={{ border: "none", borderTop: "1px solid #f0e0e0", margin: "28px 0" }} />
+
+            {/* Existing local privacy toggles */}
+            <h3 style={{ ...S.cardTitle, fontSize: "16px" }}>Other Privacy Options</h3>
 
             <div style={S.toggleRow}>
               <div>
@@ -445,10 +554,6 @@ function UserSettings() {
               </div>
               <ToggleSwitch value={prefs.show_online_status} onChange={() => togglePref("show_online_status")} />
             </div>
-
-            <p style={{ fontSize: "12px", color: "#8a6b6b", marginTop: "20px", fontStyle: "italic" }}>
-              ℹ️ Advanced privacy controls coming soon.
-            </p>
           </div>
         )}
 
