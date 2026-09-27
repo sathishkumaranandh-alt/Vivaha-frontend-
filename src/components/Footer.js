@@ -148,12 +148,12 @@ function Footer() {
   );
 }
 
-const stripStyle = { background: "linear-gradient(135deg, #8B0A2E 0%, #6B0722 100%)", padding: "16px 24px", textAlign: "center", borderTop: "1px solid rgba(212, 160, 23, 0.2)" };
+const stripStyle = { background: "linear-gradient(135deg, #8B0A2E 0%, #6B0722 100%)", padding: "16px 24px", textAlign: "center", borderTop: "1px solid rgba(212, 160, 23, 0.2)", width: "100%", boxSizing: "border-box" };
 const stripInnerStyle = { maxWidth: "1000px", margin: "0 auto", display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", flexWrap: "wrap" };
 const stripItemStyle = { fontFamily: "'Playfair Display', serif", fontSize: "14px", color: "#D4A017", fontWeight: 700, letterSpacing: "0.5px", fontStyle: "italic" };
 const stripDividerStyle = { color: "rgba(212, 160, 23, 0.4)", fontSize: "14px" };
-const footerStyle = { background: "#1a0510", color: "white", padding: "60px 24px 24px" };
-const footerInnerStyle = { maxWidth: "1200px", margin: "0 auto" };
+const footerStyle = { background: "#1a0510", color: "white", padding: "60px 24px 24px", width: "100%", boxSizing: "border-box" };
+const footerInnerStyle = { maxWidth: "1200px", margin: "0 auto", width: "100%" };
 const columnsStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "40px", marginBottom: "48px" };
 const brandRowStyle = { display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" };
 const brandCircleStyle = { width: "40px", height: "40px", borderRadius: "50%", background: "#8B0A2E", display: "flex", alignItems: "center", justifyContent: "center", color: "#D4A017", fontSize: "18px", fontWeight: "bold", flexShrink: 0 };
