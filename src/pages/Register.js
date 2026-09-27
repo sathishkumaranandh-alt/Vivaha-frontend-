@@ -13,7 +13,7 @@ function Register() {
   const [searchParams] = useSearchParams();
   const { communities } = useCommunities();
   const [step, setStep] = useState(1);
-  const [userId, setUserId] = useState(null);
+  const [userId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [registrationAllowed, setRegistrationAllowed] = useState(true);
