@@ -8,6 +8,7 @@ const MAX_PHOTOS = 7;
 function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhotoUrl }) {
   const [photos, setPhotos] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState(null); // New state for full screen
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
@@ -70,7 +71,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
       }
       
       await fetchPhotos();
-      setActiveIndex(0); // Reset to first photo
+      setActiveIndex(0);
       toast.success("Photo(s) uploaded!");
     } catch (err) {
       console.error(err);
@@ -145,11 +146,32 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
   const displayPhotos = photos.length > 0 ? photos : (fallbackPhotoUrl ? [{ id: "fallback", photo_url: fallbackPhotoUrl, is_primary: true }] : []);
   const activePhoto = displayPhotos[activeIndex] || displayPhotos[0];
 
+  // Lightbox navigation
+  const nextLightbox = (e) => {
+    e.stopPropagation();
+    setLightboxIndex((prev) => (prev + 1) % displayPhotos.length);
+  };
+  const prevLightbox = (e) => {
+    e.stopPropagation();
+    setLightboxIndex((prev) => (prev - 1 + displayPhotos.length) % displayPhotos.length);
+  };
+
   return (
     <div>
       {/* === MAIN PHOTO VIEWER === */}
       {activePhoto && (
-        <div style={{ position: "relative", marginBottom: "16px", borderRadius: "16px", overflow: "hidden", boxShadow: "0 8px 24px rgba(139,10,46,0.12)", background: "#f8f8f8" }}>
+        <div 
+          onClick={() => setLightboxIndex(activeIndex)}
+          style={{ 
+            position: "relative", 
+            marginBottom: "16px", 
+            borderRadius: "16px", 
+            overflow: "hidden", 
+            boxShadow: "0 8px 24px rgba(139,10,46,0.12)", 
+            background: "#f8f8f8",
+            cursor: "pointer"
+          }}
+        >
           <div style={{ width: "100%", aspectRatio: "4 / 5", position: "relative" }}>
             <img 
               src={activePhoto.photo_url} 
@@ -169,14 +191,20 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             </div>
           )}
 
+          {/* Fullscreen Hint Button */}
+          <div style={{ position: "absolute", bottom: "12px", left: "12px", background: "rgba(0,0,0,0.6)", color: "white", padding: "6px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
+            🔍 View Fullscreen
+          </div>
+
+          {/* Action Buttons for Edit Mode */}
           {!readOnly && activePhoto.id !== "fallback" && (
             <div style={{ position: "absolute", bottom: "12px", right: "12px", display: "flex", gap: "8px" }}>
               {!activePhoto.is_primary && (
-                <button onClick={handleSetPrimary} style={{ background: "white", color: "#8B0A2E", border: "none", padding: "8px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", display: "flex", alignItems: "center", gap: "4px" }}>
+                <button onClick={(e) => { e.stopPropagation(); handleSetPrimary(); }} style={{ background: "white", color: "#8B0A2E", border: "none", padding: "8px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
                   ⭐ Set as Main
                 </button>
               )}
-              <button onClick={handleDelete} style={{ background: "#dc2626", color: "white", border: "none", width: "36px", height: "36px", borderRadius: "50%", fontSize: "16px", cursor: "pointer", boxShadow: "0 4px 12px rgba(220,38,38,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <button onClick={(e) => { e.stopPropagation(); handleDelete(); }} style={{ background: "#dc2626", color: "white", border: "none", width: "36px", height: "36px", borderRadius: "50%", fontSize: "16px", cursor: "pointer", boxShadow: "0 4px 12px rgba(220,38,38,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 🗑️
               </button>
             </div>
@@ -189,7 +217,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
         {displayPhotos.map((photo, index) => (
           <div
             key={photo.id}
-            onClick={() => setActiveIndex(index)}
+            onClick={() => { setActiveIndex(index); setLightboxIndex(index); }}
             style={{
               position: "relative",
               aspectRatio: "4 / 5",
@@ -219,7 +247,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
           </div>
         ))}
 
-        {/* Upload Button */}
         {!readOnly && displayPhotos.length < MAX_PHOTOS && (
           <div
             onClick={() => fileInputRef.current?.click()}
@@ -259,25 +286,91 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
               </span>
             </label>
           </div>
-
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 0", borderBottom: "1px solid #eee" }}>
-            <div>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "#2D1B1B" }}>👁️ Blur Private Photos</div>
-              <div style={{ fontSize: "12px", color: "#777" }}>Hide photos until access is approved</div>
-            </div>
-            <label style={{ position: "relative", width: "48px", height: "25px" }}>
-              <input type="checkbox" checked={blurPrivate} onChange={(e) => setBlurPrivate(e.target.checked)} style={{ display: "none" }} />
-              <span style={{ position: "absolute", inset: 0, background: blurPrivate ? "#8B0A2E" : "#ccc", borderRadius: "20px", cursor: "pointer", transition: ".3s" }}>
-                <span style={{ position: "absolute", width: "19px", height: "19px", left: blurPrivate ? "26px" : "3px", top: "3px", background: "white", borderRadius: "50%", transition: ".3s" }} />
-              </span>
-            </label>
-          </div>
         </div>
       )}
 
       <p style={{ fontSize: "11px", color: "#888", marginTop: "8px", textAlign: "center" }}>
         {displayPhotos.length} / {MAX_PHOTOS} photos uploaded · Tap any photo to view full size
       </p>
+
+      {/* === FULLSCREEN LIGHTBOX === */}
+      {lightboxIndex !== null && displayPhotos[lightboxIndex] && (
+        <div 
+          onClick={() => setLightboxIndex(null)}
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.95)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 99999, padding: "20px",
+            backdropFilter: "blur(8px)"
+          }}
+        >
+          {/* Close Button */}
+          <button 
+            onClick={() => setLightboxIndex(null)}
+            style={{
+              position: "absolute", top: "20px", right: "20px",
+              background: "rgba(255,255,255,0.2)", color: "white",
+              border: "none", width: "40px", height: "40px", borderRadius: "50%",
+              fontSize: "20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Previous Button */}
+          {displayPhotos.length > 1 && (
+            <button 
+              onClick={prevLightbox}
+              style={{
+                position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)",
+                background: "rgba(255,255,255,0.2)", color: "white",
+                border: "none", width: "44px", height: "44px", borderRadius: "50%",
+                fontSize: "24px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+              }}
+            >
+              ‹
+            </button>
+          )}
+
+          {/* Large Image */}
+          <img 
+            src={displayPhotos[lightboxIndex].photo_url} 
+            alt="" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{
+              maxWidth: "100%", maxHeight: "90vh",
+              objectFit: "contain", borderRadius: "8px",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+              userSelect: "none"
+            }}
+          />
+
+          {/* Next Button */}
+          {displayPhotos.length > 1 && (
+            <button 
+              onClick={nextLightbox}
+              style={{
+                position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
+                background: "rgba(255,255,255,0.2)", color: "white",
+                border: "none", width: "44px", height: "44px", borderRadius: "50%",
+                fontSize: "24px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+              }}
+            >
+              ›
+            </button>
+          )}
+
+          {/* Photo Counter */}
+          <div style={{
+            position: "absolute", bottom: "20px", left: "50%", transform: "translateX(-50%)",
+            color: "white", fontSize: "13px", fontWeight: 600, background: "rgba(0,0,0,0.7)",
+            padding: "6px 16px", borderRadius: "20px"
+          }}>
+            {lightboxIndex + 1} / {displayPhotos.length}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
