@@ -33,7 +33,15 @@ function App() {
   const [pageBg, setPageBg] = useState("#FFF9F5");
 
   useEffect(() => {
-    // Fetch the global theme setting and apply it to the whole body
+    // Force body and html to zero margin (fixes the white strip on the right)
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    document.documentElement.style.margin = "0";
+    document.documentElement.style.padding = "0";
+    document.body.style.width = "100%";
+    document.documentElement.style.width = "100%";
+
+    // Fetch the global theme setting and apply it
     fetch(`${BACKEND_URL}/settings`)
       .then((res) => res.json())
       .then((data) => {
@@ -48,9 +56,9 @@ function App() {
 
   return (
     <Router>
-      <div style={{ minHeight: "100vh", background: pageBg, display: "flex", flexDirection: "column" }}>
+      <div style={{ minHeight: "100vh", width: "100%", background: pageBg, display: "flex", flexDirection: "column" }}>
         <Navbar />
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, width: "100%" }}>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
