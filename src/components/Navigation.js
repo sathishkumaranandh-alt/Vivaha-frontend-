@@ -173,6 +173,7 @@ function Navigation() {
     { to: "/success-stories", label: "Success Stories" },
     { to: "/interests", label: "Interests", badge: interestCount },
     { to: "/messages", label: "Messages", badge: unreadCount },
+    { to: "/visitors", label: "👀 Who Viewed Me" },
     { to: "/subscription", label: "Pricing" },
     // NEW: Show Admin link if the user's role is 'admin'
     ...(role === "admin" ? [{ to: "/admin", label: "👑 Admin", color: "#D4A017" }] : []),
