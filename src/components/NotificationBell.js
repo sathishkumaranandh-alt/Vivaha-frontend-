@@ -32,7 +32,6 @@ function NotificationBell() {
     return () => clearInterval(interval);
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -66,7 +65,6 @@ function NotificationBell() {
 
   return (
     <div ref={dropdownRef} style={{ position: "relative" }}>
-      {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -104,14 +102,13 @@ function NotificationBell() {
         )}
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <div style={{
           position: "absolute",
           top: "120%",
-          right: "-60px",
+          right: "-10px",
           width: "320px",
-          maxWidth: "85vw",
+          maxWidth: "90vw",
           background: "white",
           borderRadius: "16px",
           boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
@@ -119,7 +116,6 @@ function NotificationBell() {
           zIndex: 9999,
           overflow: "hidden",
         }}>
-          {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid #f0e0e0", background: "#FFF9F5" }}>
             <h4 style={{ margin: 0, fontSize: "14px", color: "#8B0A2E", fontWeight: 700 }}>Notifications</h4>
             {unreadCount > 0 && (
@@ -129,7 +125,6 @@ function NotificationBell() {
             )}
           </div>
 
-          {/* List */}
           <div style={{ maxHeight: "350px", overflowY: "auto" }}>
             {notifications.length === 0 ? (
               <div style={{ padding: "40px 20px", textAlign: "center", color: "#8a6b6b", fontSize: "13px" }}>
@@ -145,7 +140,6 @@ function NotificationBell() {
                     borderBottom: "1px solid #f9f9f9",
                     background: n.is_read ? "white" : "#FDF2F6",
                     cursor: "pointer",
-                    transition: "background 0.2s",
                   }}
                 >
                   <div style={{ fontSize: "13px", fontWeight: 600, color: "#2D1B1B", marginBottom: "2px" }}>
