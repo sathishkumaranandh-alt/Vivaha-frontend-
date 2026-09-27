@@ -8,11 +8,11 @@ const MAX_PHOTOS = 7;
 function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhotoUrl }) {
   const [photos, setPhotos] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [lightboxIndex, setLightboxIndex] = useState(null); // New state for full screen
+  const [lightboxIndex, setLightboxIndex] = useState(null); // Full screen viewer state
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [blurPrivate, setBlurPrivate] = useState(true);
+  const [blurPrivate] = useState(true); // Kept for future use, no setter to avoid Vercel error
   const fileInputRef = useRef(null);
 
   const fetchPhotos = useCallback(async () => {
