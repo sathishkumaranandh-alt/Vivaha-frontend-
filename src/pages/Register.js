@@ -178,8 +178,21 @@ function Register() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
 
-      toast.success("🎉 Registration Successful!");
-      navigate("/profile");
+            toast.success("🎉 Registration Successful!");
+
+      // Auto-login the user after successful registration
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: form.email.trim(),
+        password: form.password,
+      });
+
+      if (loginError) {
+        console.error("Auto-login failed:", loginError);
+        toast.error("Please log in with your new account.");
+        navigate("/login");
+      } else {
+        navigate("/profile");
+      }
     } catch (err) {
       console.error(err);
       toast.error(err.message || "Network error. Please try again.");
