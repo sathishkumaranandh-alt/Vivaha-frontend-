@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = {
   contact_phone: "+91 90000 00000",
   support_hours: "Mon-Sat: 9 AM - 6 PM",
   contact_address: "Chennai, Tamil Nadu, India",
+  global_footer_bg: "#1a0510",
 };
 
 function Footer() {
@@ -45,7 +46,7 @@ function Footer() {
       </div>
 
       {/* ===== MAIN FOOTER ===== */}
-      <footer style={footerStyle}>
+      <footer style={{ ...footerStyle, background: settings.global_footer_bg || "#1a0510" }}>
         <div style={footerInnerStyle}>
           <div style={columnsStyle}>
             {/* BRAND */}
@@ -153,7 +154,7 @@ const stripItemStyle = { fontFamily: "'Playfair Display', serif", fontSize: "14p
 const stripDividerStyle = { color: "rgba(212, 160, 23, 0.4)", fontSize: "14px" };
 const footerStyle = { background: "#1a0510", color: "white", padding: "60px 24px 24px" };
 const footerInnerStyle = { maxWidth: "1200px", margin: "0 auto" };
-const columnsStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "40px", marginBottom: "48px" };
+const columnsStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "40px", marginBottom: "48px" };
 const brandRowStyle = { display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" };
 const brandCircleStyle = { width: "40px", height: "40px", borderRadius: "50%", background: "#8B0A2E", display: "flex", alignItems: "center", justifyContent: "center", color: "#D4A017", fontSize: "18px", fontWeight: "bold", flexShrink: 0 };
 const brandNameStyle = { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 900, color: "white", letterSpacing: "-0.3px", lineHeight: 1.1 };
