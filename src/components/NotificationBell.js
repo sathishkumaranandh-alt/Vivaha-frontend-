@@ -1,194 +1,162 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
+import { toast } from "../utils/toast";
 
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function NotificationBell() {
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const [notifs, setNotifs] = useState([]);
-  const [unread, setUnread] = useState(0);
-  const [userId, setUserId] = useState(null);
-  const wrapperRef = useRef(null);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  // Get current user
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data?.user?.id || null);
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => {
-      setUserId(s?.user?.id || null);
-    });
-    return () => listener?.subscription?.unsubscribe();
-  }, []);
-
-    // Load notifications + poll every 30s + listen for refresh events
-  useEffect(() => {
-    if (!userId) {
-      setNotifs([]);
-      setUnread(0);
-      return;
-    }
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const [r1, r2] = await Promise.all([
-          fetch(`${BACKEND_URL}/notifications/${userId}?limit=30`),
-          fetch(`${BACKEND_URL}/notifications/count/${userId}`),
-        ]);
-        if (r1.ok && !cancelled) {
-          const d = await r1.json();
-          setNotifs(d.notifications || []);
-        }
-        if (r2.ok && !cancelled) {
-          const d = await r2.json();
-          setUnread(d.unreadCount || 0);
-        }
-      } catch (e) {}
-    }
-
-    function handleRefresh() {
-      load();
-    }
-
-    load();
-    const interval = setInterval(load, 30000);
-    window.addEventListener("notification-refresh", handleRefresh);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      window.removeEventListener("notification-refresh", handleRefresh);
-    };
-  }, [userId]);
-
-  // Close on outside click
-  useEffect(() => {
-    function handleClick(e) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  const handleClickNotif = async (n) => {
-    if (!n.is_read) {
-      try {
-        await fetch(`${BACKEND_URL}/notifications/read/${n.id}`, {
-          method: "PATCH",
-        });
-        setNotifs((prev) =>
-          prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x))
-        );
-        setUnread((u) => Math.max(0, u - 1));
-      } catch (e) {}
-    }
-    setOpen(false);
-    if (n.link) navigate(n.link);
-  };
-
-  const handleMarkAllRead = async () => {
-    if (!userId) return;
+  const fetchNotifications = async () => {
     try {
-      await fetch(`${BACKEND_URL}/notifications/read-all/${userId}`, {
-        method: "PATCH",
-      });
-      setNotifs((prev) => prev.map((x) => ({ ...x, is_read: true })));
-      setUnread(0);
-    } catch (e) {}
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const res = await fetch(`${BACKEND_URL}/notifications/${user.id}?limit=10`);
+      if (res.ok) {
+        const data = await res.json();
+        const notifs = data.notifications || [];
+        setNotifications(notifs);
+        setUnreadCount(notifs.filter(n => !n.is_read).length);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
   };
 
-  if (!userId) return null;
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const markAllRead = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await fetch(`${BACKEND_URL}/notifications/read-all/${user.id}`, { method: "PATCH" });
+      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+      toast.success("All marked as read");
+    } catch (err) {
+      toast.error("Failed to mark all as read");
+    }
+  };
+
+  const markOneRead = async (id) => {
+    try {
+      await fetch(`${BACKEND_URL}/notifications/read/${id}`, { method: "PATCH" });
+      setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {}
+  };
 
   return (
-    <div ref={wrapperRef} style={{ position: "relative" }}>
+    <div ref={dropdownRef} style={{ position: "relative" }}>
+      {/* Bell Button */}
       <button
-        onClick={() => setOpen(!open)}
-        style={bellBtnStyle}
-        aria-label="Notifications"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          background: "transparent",
+          border: "none",
+          position: "relative",
+          cursor: "pointer",
+          padding: "6px",
+          fontSize: "22px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
         🔔
-        {unread > 0 && (
-          <span style={badgeStyle}>{unread > 99 ? "99+" : unread}</span>
+        {unreadCount > 0 && (
+          <span style={{
+            position: "absolute",
+            top: "0",
+            right: "0",
+            background: "#dc2626",
+            color: "white",
+            fontSize: "10px",
+            fontWeight: "bold",
+            borderRadius: "50%",
+            width: "18px",
+            height: "18px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "2px solid white",
+          }}>
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
         )}
       </button>
 
-      {open && (
-        <div style={dropdownStyle}>
-          <div style={headerStyle}>
-            <span style={{ fontWeight: "700", color: "#1e3a8a" }}>
-              Notifications
-            </span>
-            {unread > 0 && (
-              <button onClick={handleMarkAllRead} style={markAllBtnStyle}>
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <div style={{
+          position: "absolute",
+          top: "120%",
+          right: "-60px",
+          width: "320px",
+          maxWidth: "85vw",
+          background: "white",
+          borderRadius: "16px",
+          boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+          border: "1px solid #f0e0e0",
+          zIndex: 9999,
+          overflow: "hidden",
+        }}>
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid #f0e0e0", background: "#FFF9F5" }}>
+            <h4 style={{ margin: 0, fontSize: "14px", color: "#8B0A2E", fontWeight: 700 }}>Notifications</h4>
+            {unreadCount > 0 && (
+              <button onClick={markAllRead} style={{ background: "none", border: "none", color: "#8B0A2E", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>
                 Mark all read
               </button>
             )}
           </div>
 
-          <div style={listStyle}>
-            {notifs.length === 0 ? (
-              <div style={emptyStyle}>
-                <div style={{ fontSize: "40px", marginBottom: "8px" }}>🔔</div>
-                <p style={{ margin: 0, color: "#888", fontSize: "13px" }}>
-                  No notifications yet
-                </p>
+          {/* List */}
+          <div style={{ maxHeight: "350px", overflowY: "auto" }}>
+            {notifications.length === 0 ? (
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "#8a6b6b", fontSize: "13px" }}>
+                🔔 No notifications yet
               </div>
             ) : (
-              notifs.map((n) => (
+              notifications.map((n) => (
                 <div
                   key={n.id}
-                  onClick={() => handleClickNotif(n)}
+                  onClick={() => markOneRead(n.id)}
                   style={{
-                    ...itemStyle,
-                    background: n.is_read ? "white" : "#eff6ff",
+                    padding: "12px 16px",
+                    borderBottom: "1px solid #f9f9f9",
+                    background: n.is_read ? "white" : "#FDF2F6",
+                    cursor: "pointer",
+                    transition: "background 0.2s",
                   }}
                 >
-                  <div style={{ fontSize: "22px", flexShrink: 0 }}>
-                    {iconFor(n.type)}
+                  <div style={{ fontSize: "13px", fontWeight: 600, color: "#2D1B1B", marginBottom: "2px" }}>
+                    {n.title || "New Notification"}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontWeight: "600",
-                        fontSize: "13px",
-                        color: "#1e3a8a",
-                      }}
-                    >
-                      {n.title}
-                    </div>
-                    {n.body && (
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "#666",
-                          marginTop: "2px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                        }}
-                      >
-                        {n.body}
-                      </div>
-                    )}
-                    <div
-                      style={{
-                        fontSize: "10px",
-                        color: "#aaa",
-                        marginTop: "4px",
-                      }}
-                    >
-                      {formatTime(n.created_at)}
-                    </div>
+                  <div style={{ fontSize: "12px", color: "#8a6b6b", marginBottom: "4px" }}>
+                    {n.message || ""}
                   </div>
-                  {!n.is_read && <div style={unreadDotStyle} />}
+                  <div style={{ fontSize: "10px", color: "#aaa" }}>
+                    {n.created_at ? new Date(n.created_at).toLocaleString("en-IN") : ""}
+                  </div>
                 </div>
               ))
             )}
@@ -198,116 +166,5 @@ function NotificationBell() {
     </div>
   );
 }
-
-function iconFor(type) {
-  if (type === "interest_received") return "💌";
-  if (type === "interest_accepted") return "💕";
-  if (type === "interest_declined") return "💔";
-  if (type === "message_received") return "💬";
-  return "🔔";
-}
-
-function formatTime(ts) {
-  if (!ts) return "";
-  const d = new Date(ts);
-  const now = new Date();
-  const m = Math.floor((now - d) / 60000);
-  const h = Math.floor(m / 60);
-  const days = Math.floor(h / 24);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  if (h < 24) return `${h}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
-}
-
-const bellBtnStyle = {
-  background: "rgba(255,255,255,0.15)",
-  color: "white",
-  border: "1px solid rgba(255,255,255,0.3)",
-  width: "40px",
-  height: "40px",
-  borderRadius: "50%",
-  fontSize: "18px",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  position: "relative",
-  flexShrink: 0,
-};
-
-const badgeStyle = {
-  position: "absolute",
-  top: "-4px",
-  right: "-4px",
-  background: "#dc2626",
-  color: "white",
-  fontSize: "10px",
-  fontWeight: "bold",
-  borderRadius: "10px",
-  padding: "2px 5px",
-  minWidth: "16px",
-};
-
-const dropdownStyle = {
-  position: "absolute",
-  top: "48px",
-  right: "0",
-  width: "min(360px, 90vw)",
-  maxHeight: "480px",
-  background: "white",
-  borderRadius: "14px",
-  boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
-  overflow: "hidden",
-  zIndex: 999,
-  border: "1px solid #e5e7eb",
-};
-
-const headerStyle = {
-  padding: "14px 16px",
-  borderBottom: "1px solid #e5e7eb",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  background: "#fafafa",
-};
-
-const markAllBtnStyle = {
-  background: "transparent",
-  border: "none",
-  color: "#2563eb",
-  fontSize: "12px",
-  fontWeight: "600",
-  cursor: "pointer",
-};
-
-const listStyle = {
-  maxHeight: "400px",
-  overflowY: "auto",
-};
-
-const itemStyle = {
-  display: "flex",
-  gap: "12px",
-  padding: "12px 16px",
-  borderBottom: "1px solid #f3f4f6",
-  cursor: "pointer",
-  position: "relative",
-};
-
-const unreadDotStyle = {
-  width: "8px",
-  height: "8px",
-  borderRadius: "50%",
-  background: "#2563eb",
-  flexShrink: 0,
-  alignSelf: "center",
-};
-
-const emptyStyle = {
-  padding: "40px 20px",
-  textAlign: "center",
-};
 
 export default NotificationBell;
