@@ -14,87 +14,75 @@ import Profile from "./pages/Profile";
 import ProfileSearch from "./pages/ProfileSearch";
 import Matches from "./pages/Matches";
 import Recommendations from "./pages/Recommendations";
-import AdminFormBuilder from "./pages/AdminFormBuilder";
 import UserSettings from "./pages/UserSettings";
 import Subscription from "./pages/Subscription";
 import SubscriptionDashboard from "./pages/SubscriptionDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import Visitors from "./pages/Visitors";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
 import AdminCommunities from "./pages/AdminCommunities";
+import AdminFormBuilder from "./pages/AdminFormBuilder";
 import Messages from "./pages/Messages";
 import Interests from "./pages/Interests";
 import Dashboard from "./pages/Dashboard";
+import Visitors from "./pages/Visitors";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function App() {
-  const [maintenance, setMaintenance] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const [pageBg, setPageBg] = useState("#FFF9F5");
 
   useEffect(() => {
+    // Fetch the global theme setting and apply it to the whole body
     fetch(`${BACKEND_URL}/settings`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.settings && data.settings.maintenance_mode === "true") {
-          setMaintenance(true);
+        if (data.settings && data.settings.global_page_bg) {
+          setPageBg(data.settings.global_page_bg);
+          document.body.style.backgroundColor = data.settings.global_page_bg;
+          document.documentElement.style.backgroundColor = data.settings.global_page_bg;
         }
       })
-      .catch(console.error)
-      .finally(() => setChecking(false));
+      .catch(console.error);
   }, []);
-
-  if (checking) return <div style={{ padding: 60, textAlign: "center" }}>Loading...</div>;
-
-  // Allow admins to bypass maintenance mode
-  const isAdminPath = window.location.pathname.startsWith("/admin");
-
-  if (maintenance && !isAdminPath) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#FFF9F5", padding: 24, textAlign: "center" }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>🛠️</div>
-        <h1 style={{ color: "#8B0A2E", marginBottom: 8 }}>Under Maintenance</h1>
-        <p style={{ color: "#666", maxWidth: 400, lineHeight: 1.6 }}>
-          We are currently updating the site to serve you better. Please check back soon.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <Router>
-      <Navbar />
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/success-stories" element={<SuccessStories />} />
-        <Route path="/login" element={<Login />} />
+      <div style={{ minHeight: "100vh", background: pageBg, display: "flex", flexDirection: "column" }}>
+        <Navbar />
+        <div style={{ flex: 1 }}>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/success-stories" element={<SuccessStories />} />
+            <Route path="/login" element={<Login />} />
 
-        {/* Protected routes */}
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/search" element={<ProtectedRoute><ProfileSearch /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/visitors" element={<ProtectedRoute><Visitors /></ProtectedRoute>} />
-        <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
-        <Route path="/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />
-        <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-        <Route path="/interests" element={<ProtectedRoute><Interests /></ProtectedRoute>} />
-        <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
-        <Route path="/subscription-dashboard" element={<ProtectedRoute><SubscriptionDashboard /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
+            {/* Protected routes */}
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/search" element={<ProtectedRoute><ProfileSearch /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
+            <Route path="/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/interests" element={<ProtectedRoute><Interests /></ProtectedRoute>} />
+            <Route path="/visitors" element={<ProtectedRoute><Visitors /></ProtectedRoute>} />
+            <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+            <Route path="/subscription-dashboard" element={<ProtectedRoute><SubscriptionDashboard /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
 
-        {/* Admin routes */}
-        <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin-analytics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnalytics /></ProtectedRoute>} />
-        <Route path="/admin-communities" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommunities /></ProtectedRoute>} />
-        <Route path="/admin-settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
-        <Route path="/admin-form-builder" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFormBuilder /></ProtectedRoute>} />
-      </Routes>
-      <Footer />
-      <InstallAppButton />
+            {/* Admin routes */}
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin-analytics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnalytics /></ProtectedRoute>} />
+            <Route path="/admin-communities" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommunities /></ProtectedRoute>} />
+            <Route path="/admin-settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
+            <Route path="/admin-form-builder" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFormBuilder /></ProtectedRoute>} />
+          </Routes>
+        </div>
+        <Footer />
+        <InstallAppButton />
+      </div>
     </Router>
   );
 }
