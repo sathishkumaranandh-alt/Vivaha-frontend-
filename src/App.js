@@ -5,7 +5,6 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import InstallAppButton from "./components/InstallAppButton";
 
-// Pages
 import Home from "./pages/Home";
 import SuccessStories from "./pages/SuccessStories";
 import Register from "./pages/Register";
@@ -37,8 +36,8 @@ function App() {
     document.body.style.padding = "0";
     document.documentElement.style.margin = "0";
     document.documentElement.style.padding = "0";
-    document.body.style.width = "100%";
-    document.documentElement.style.width = "100%";
+    document.body.style.overflowX = "hidden";
+    document.documentElement.style.overflowX = "hidden";
 
     fetch(`${BACKEND_URL}/settings`)
       .then((res) => res.json())
@@ -54,9 +53,9 @@ function App() {
 
   return (
     <Router>
-      <div style={{ minHeight: "100vh", width: "100%", background: pageBg }}>
+      <div style={{ minHeight: "100vh", width: "100vw", background: pageBg, overflowX: "hidden", margin: 0, padding: 0 }}>
         <Navbar />
-        <div style={{ width: "100%" }}>
+        <div style={{ width: "100%", margin: 0, padding: 0 }}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/register" element={<Register />} />
