@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 
@@ -12,12 +12,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    if (!userId) return;
-    fetchPhotos();
-  }, [userId]);
-
-  const fetchPhotos = async () => {
+  const fetchPhotos = useCallback(async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/photos/${userId}`);
       if (res.ok) {
@@ -29,7 +24,12 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetchPhotos();
+  }, [userId, fetchPhotos]);
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -74,7 +74,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
         const data = await updatedRes.json();
         const newPhotos = data.photos || [];
         setPhotos(newPhotos);
-        setActiveIndex(newPhotos.length - 1); // Focus the newly uploaded photo
+        setActiveIndex(newPhotos.length - 1);
         if (photos.length === 0 && onPrimaryChange) onPrimaryChange(publicUrl);
       }
       toast.success("Photo uploaded!");
@@ -97,7 +97,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
       if (res.ok) {
         const remaining = photos.filter((_, i) => i !== activeIndex);
         setPhotos(remaining);
-        setActiveIndex(0); // Reset to first photo
+        setActiveIndex(0);
         
         // If the deleted photo was the main one, update the parent
         if (photoToDelete.is_primary && onPrimaryChange) {
