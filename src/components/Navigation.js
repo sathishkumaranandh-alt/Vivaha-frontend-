@@ -167,6 +167,7 @@ function Navigation() {
     );
   }
 
+  // CHANGED: "Who Viewed Me" -> "Visitors" (Shorter for desktop)
   const links = [
     { to: "/", label: "Home" },
     { to: "/dashboard", label: "Dashboard" },
@@ -175,7 +176,7 @@ function Navigation() {
     { to: "/success-stories", label: "Success Stories" },
     { to: "/interests", label: "Interests", badge: interestCount },
     { to: "/messages", label: "Messages", badge: unreadCount },
-    { to: "/visitors", label: "👀 Who Viewed Me" },
+    { to: "/visitors", label: "👀 Visitors" },
     { to: "/subscription", label: "Pricing" },
     ...(role === "admin" ? [{ to: "/admin", label: "👑 Admin", color: "#D4A017" }] : []),
   ];
@@ -325,20 +326,21 @@ function Navigation() {
 }
 
 // STYLES
-const navStyle = { background: "white", borderBottom: "1px solid #f0e0e0", padding: "14px 24px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 12px rgba(139,10,46,0.04)" };
-const topRowStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "20px", flexWrap: "wrap", maxWidth: "1300px", margin: "0 auto" };
+const navStyle = { background: "white", borderBottom: "1px solid #f0e0e0", padding: "14px 24px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 12px rgba(139,10,46,0.04)", width: "100%", boxSizing: "border-box" };
+const topRowStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "20px", flexWrap: "wrap", maxWidth: "1300px", margin: "0 auto", width: "100%" };
 const logoCircleStyle = { width: "38px", height: "38px", borderRadius: "50%", background: "#8B0A2E", display: "flex", alignItems: "center", justifyContent: "center", color: "#D4A017", fontSize: "18px", fontWeight: "bold" };
 const logoTextStyle = { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 900, color: "#8B0A2E", letterSpacing: "-0.3px" };
 const logoSubStyle = { fontSize: "8px", color: "#D4A017", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginTop: "2px" };
-const desktopLinksStyle = { display: "flex", gap: "24px", alignItems: "center", fontSize: "13px", fontWeight: 500 };
-const navLinkStyle = { textDecoration: "none", position: "relative", padding: "4px 0", transition: "color 0.2s" };
+// CHANGED: Reduced gap, added whiteSpace: "nowrap" to prevent links from wrapping
+const desktopLinksStyle = { display: "flex", gap: "18px", alignItems: "center", fontSize: "13px", fontWeight: 500, flexWrap: "wrap", justifyContent: "center" };
+const navLinkStyle = { textDecoration: "none", position: "relative", padding: "4px 0", transition: "color 0.2s", whiteSpace: "nowrap" };
 const badgeStyle = { display: "inline-block", background: "#8B0A2E", color: "white", fontSize: "10px", fontWeight: "bold", borderRadius: "10px", padding: "2px 6px", marginLeft: "6px", minWidth: "18px", textAlign: "center", lineHeight: "14px", verticalAlign: "middle" };
 const userChipStyle = { display: "flex", alignItems: "center", gap: "8px", background: "#FFF9F5", border: "1px solid #f0e0e0", padding: "6px 14px", borderRadius: "24px", cursor: "pointer" };
 const userAvatarStyle = { width: "26px", height: "26px", borderRadius: "50%", background: "linear-gradient(135deg, #8B0A2E, #a01438)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "bold" };
 const userNameStyle = { fontSize: "13px", fontWeight: 600, color: "#2D1B1B" };
-const loginBtnStyle = { color: "#8B0A2E", textDecoration: "none", padding: "9px 20px", borderRadius: "8px", border: "1.5px solid #8B0A2E", fontWeight: 600, fontSize: "13px", background: "white" };
-const registerBtnStyle = { color: "white", background: "#8B0A2E", textDecoration: "none", padding: "9px 22px", borderRadius: "8px", fontWeight: 600, fontSize: "13px", boxShadow: "0 4px 12px rgba(139,10,46,0.25)" };
-const logoutBtnStyle = { background: "transparent", color: "#8a6b6b", border: "1px solid #f0e0e0", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontWeight: 600, fontSize: "12px" };
+const loginBtnStyle = { color: "#8B0A2E", textDecoration: "none", padding: "9px 20px", borderRadius: "8px", border: "1.5px solid #8B0A2E", fontWeight: 600, fontSize: "13px", background: "white", whiteSpace: "nowrap" };
+const registerBtnStyle = { color: "white", background: "#8B0A2E", textDecoration: "none", padding: "9px 22px", borderRadius: "8px", fontWeight: 600, fontSize: "13px", boxShadow: "0 4px 12px rgba(139,10,46,0.25)", whiteSpace: "nowrap" };
+const logoutBtnStyle = { background: "transparent", color: "#8a6b6b", border: "1px solid #f0e0e0", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontWeight: 600, fontSize: "12px", whiteSpace: "nowrap" };
 const hamburgerStyle = { background: "#FFF9F5", color: "#8B0A2E", border: "1px solid #f0e0e0", width: "42px", height: "42px", borderRadius: "10px", fontSize: "20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", flexShrink: 0 };
 const mobileMenuStyle = { marginTop: "14px", paddingTop: "14px", borderTop: "1px solid #f0e0e0", display: "flex", flexDirection: "column", gap: "4px" };
 const mobileCommunitySelectStyle = { width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #f0e0e0", background: "#FFF9F5", color: "#2D1B1B", fontSize: "14px", fontWeight: 600, marginBottom: "10px", fontFamily: "inherit" };
