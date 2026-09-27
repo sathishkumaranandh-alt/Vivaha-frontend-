@@ -146,7 +146,7 @@ function Home() {
   const showSearch = settings.home_show_search !== "false";
 
   const S = {
-        page: { background: settings.global_page_bg || "#FFF9F5", fontFamily: "'Inter', sans-serif" },
+          page: { background: "transparent", minHeight: "100vh", fontFamily: "'Inter', sans-serif" },
     hero: {
       position: "relative",
       minHeight: isMobile ? "auto" : `${settings.home_hero_height}px`,
