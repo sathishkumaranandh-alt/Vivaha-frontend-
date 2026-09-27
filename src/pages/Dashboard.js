@@ -60,27 +60,11 @@ function Dashboard() {
         if (matchRes.ok) newCounts.matches = (await matchRes.json()).total || 0;
         setCounts(newCounts);
 
-        // ⭐ SUGGESTED PROFILES — filtered by OPPOSITE gender + same community
-        const myGender = myProfile?.gender || null;
-        const oppositeGender =
-          myGender === "male" ? "female" : myGender === "female" ? "male" : "";
-
-        const params = new URLSearchParams();
-        if (oppositeGender) params.append("gender", oppositeGender);
-        if (myProfile?.community) params.append("community", myProfile.community);
-
-        const searchUrl = `${BACKEND_URL}/profile/search${
-          params.toString() ? "?" + params.toString() : ""
-        }`;
-
-        const recRes = await fetch(searchUrl);
+        // ⭐ SMART RECOMMENDATIONS (Using the new backend engine)
+        const recRes = await fetch(`${BACKEND_URL}/profile/recommendations/${user.id}`);
         if (recRes.ok) {
           const data = await recRes.json();
-          const filtered = (data.results || [])
-            .filter((u) => u.id !== user.id)
-            .filter((u) => !oppositeGender || u.gender === oppositeGender)
-            .slice(0, 3);
-          setRecent(filtered);
+          setRecent((data.recommendations || []).slice(0, 3));
         }
       } catch (err) {
         console.error("Dashboard load error:", err);
@@ -338,7 +322,7 @@ function Dashboard() {
               <span style={S.badgeDot}>{counts.messages}</span>
             )}
           </Link>
-                      <Link to="/visitors" style={S.navItem}>
+          <Link to="/visitors" style={S.navItem}>
             👀 Who Viewed Me
           </Link>
           <Link to="/settings" style={S.navItem}>
@@ -419,10 +403,10 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Suggested */}
+          {/* Recommendations */}
           <div style={S.sectionHead}>
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", color: "#8B0A2E", margin: 0 }}>
-              Suggested Profiles
+              Recommended for You
             </h2>
             <Link to="/search" style={{ color: "#8B0A2E", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
               View All →
