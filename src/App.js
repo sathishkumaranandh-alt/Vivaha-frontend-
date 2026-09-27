@@ -33,7 +33,6 @@ function App() {
   const [pageBg, setPageBg] = useState("#FFF9F5");
 
   useEffect(() => {
-    // Force body and html to zero margin (fixes the white strip on the right)
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.documentElement.style.margin = "0";
@@ -41,7 +40,6 @@ function App() {
     document.body.style.width = "100%";
     document.documentElement.style.width = "100%";
 
-    // Fetch the global theme setting and apply it
     fetch(`${BACKEND_URL}/settings`)
       .then((res) => res.json())
       .then((data) => {
@@ -56,17 +54,14 @@ function App() {
 
   return (
     <Router>
-      <div style={{ minHeight: "100vh", width: "100%", background: pageBg, display: "flex", flexDirection: "column" }}>
+      <div style={{ minHeight: "100vh", width: "100%", background: pageBg }}>
         <Navbar />
-        <div style={{ flex: 1, width: "100%" }}>
+        <div style={{ width: "100%" }}>
           <Routes>
-            {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/register" element={<Register />} />
             <Route path="/success-stories" element={<SuccessStories />} />
             <Route path="/login" element={<Login />} />
-
-            {/* Protected routes */}
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/search" element={<ProtectedRoute><ProfileSearch /></ProtectedRoute>} />
@@ -79,8 +74,6 @@ function App() {
             <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
             <Route path="/subscription-dashboard" element={<ProtectedRoute><SubscriptionDashboard /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
-
-            {/* Admin routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin-analytics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnalytics /></ProtectedRoute>} />
             <Route path="/admin-communities" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommunities /></ProtectedRoute>} />
