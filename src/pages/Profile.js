@@ -116,10 +116,21 @@ function Profile() {
           setError(isOwnProfile ? "Could not load your profile." : "This profile does not exist.");
         }
 
-        if (!isOwnProfile) {
+                if (!isOwnProfile) {
           await loadInterestStatus(user.id, targetId);
           await loadShortlistStatus(user.id, targetId);
-        }
+          
+          // Log the profile view
+          try {
+            await fetch(`${BACKEND_URL}/visitors/log`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ viewerId: user.id, viewedId: targetId })
+            });
+          } catch (e) {
+            console.log("View log failed silently");
+          }
+                }
       } catch (err) {
         console.error(err);
         setError("Network error. Try again.");
