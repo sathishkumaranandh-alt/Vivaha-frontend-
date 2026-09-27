@@ -10,11 +10,14 @@ const BACKEND_URL =
 
 const DEFAULT_SETTINGS = {
   site_name: "Vivaha Matrimony",
+  global_navbar_bg: "#ffffff",
+  global_navbar_text: "#2D1B1B",
+  global_navbar_size: "13",
 };
 
 function Navigation() {
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null); // <--- NEW: Track user role
+  const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [interestCount, setInterestCount] = useState(0);
@@ -52,7 +55,6 @@ function Navigation() {
     supabase.auth.getUser().then(async ({ data }) => {
       setUser(data?.user || null);
       
-      // NEW: Fetch the user's role from the database
       if (data?.user) {
         const { data: profile } = await supabase
           .from("users")
@@ -157,8 +159,8 @@ function Navigation() {
 
   if (loading) {
     return (
-      <nav style={navStyle}>
-        <h2 style={{ margin: 0, fontSize: "20px", color: "#8B0A2E", fontFamily: "'Playfair Display', serif" }}>
+      <nav style={{ ...navStyle, background: settings.global_navbar_bg || "white" }}>
+        <h2 style={{ margin: 0, fontSize: "20px", color: settings.global_navbar_text || "#8B0A2E", fontFamily: "'Playfair Display', serif" }}>
           {settings.site_name}
         </h2>
       </nav>
@@ -175,32 +177,31 @@ function Navigation() {
     { to: "/messages", label: "Messages", badge: unreadCount },
     { to: "/visitors", label: "👀 Who Viewed Me" },
     { to: "/subscription", label: "Pricing" },
-    // NEW: Show Admin link if the user's role is 'admin'
     ...(role === "admin" ? [{ to: "/admin", label: "👑 Admin", color: "#D4A017" }] : []),
   ];
 
   return (
-    <nav style={navStyle}>
+    <nav style={{ ...navStyle, background: settings.global_navbar_bg || "white" }}>
       <div style={topRowStyle}>
         {/* LOGO */}
         <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
           <div style={logoCircleStyle}>♥</div>
           <div style={{ lineHeight: 1.1 }}>
-            <div style={logoTextStyle}>{settings.site_name}</div>
+            <div style={{ ...logoTextStyle, color: settings.global_navbar_text || "#8B0A2E" }}>{settings.site_name}</div>
             <div style={logoSubStyle}>FIND YOUR SOULMATE</div>
           </div>
         </Link>
 
         {/* NAV LINKS — desktop */}
         {!isMobile && (
-          <div style={desktopLinksStyle}>
+          <div style={{ ...desktopLinksStyle, fontSize: `${settings.global_navbar_size || 13}px` }}>
             {links.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
                 style={{
                   ...navLinkStyle,
-                  color: link.color || "#2D1B1B",
+                  color: link.color || settings.global_navbar_text || "#2D1B1B",
                 }}
               >
                 {link.label}
@@ -224,10 +225,10 @@ function Navigation() {
                   <div style={userAvatarStyle}>
                     {user.email?.[0]?.toUpperCase() || "U"}
                   </div>
-                  <span style={userNameStyle}>
+                  <span style={{ ...userNameStyle, color: settings.global_navbar_text || "#2D1B1B" }}>
                     {user.email?.split("@")[0]}
                   </span>
-                  <span style={{ fontSize: "10px", color: "#8a6b6b" }}>▾</span>
+                  <span style={{ fontSize: "10px", color: settings.global_navbar_text || "#8a6b6b" }}>▾</span>
                 </div>
                 <button onClick={handleLogout} style={logoutBtnStyle}>
                   Logout
@@ -284,7 +285,7 @@ function Navigation() {
               onClick={closeMenu}
               style={{
                 ...mobileLinkStyle,
-                color: link.color || "#2D1B1B",
+                color: link.color || settings.global_navbar_text || "#2D1B1B",
               }}
             >
               {link.label}
@@ -323,7 +324,7 @@ function Navigation() {
   );
 }
 
-// STYLES (Kept as they were)
+// STYLES
 const navStyle = { background: "white", borderBottom: "1px solid #f0e0e0", padding: "14px 24px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 12px rgba(139,10,46,0.04)" };
 const topRowStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "20px", flexWrap: "wrap", maxWidth: "1300px", margin: "0 auto" };
 const logoCircleStyle = { width: "38px", height: "38px", borderRadius: "50%", background: "#8B0A2E", display: "flex", alignItems: "center", justifyContent: "center", color: "#D4A017", fontSize: "18px", fontWeight: "bold" };
