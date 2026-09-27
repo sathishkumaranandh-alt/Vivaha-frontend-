@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS = {
 
 function Navigation() {
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null); // <--- NEW: Track user role
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [interestCount, setInterestCount] = useState(0);
@@ -48,16 +49,35 @@ function Navigation() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       setUser(data?.user || null);
+      
+      // NEW: Fetch the user's role from the database
+      if (data?.user) {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+        if (profile) setRole(profile.role);
+      }
       setLoading(false);
     });
+
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setUser(session?.user || null);
-        if (!session?.user) {
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from("users")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+          if (profile) setRole(profile.role);
+        } else {
           setUnreadCount(0);
           setInterestCount(0);
+          setRole(null);
         }
       }
     );
@@ -118,6 +138,7 @@ function Navigation() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setRole(null);
     setUnreadCount(0);
     setInterestCount(0);
     setMenuOpen(false);
@@ -153,9 +174,8 @@ function Navigation() {
     { to: "/interests", label: "Interests", badge: interestCount },
     { to: "/messages", label: "Messages", badge: unreadCount },
     { to: "/subscription", label: "Pricing" },
-    ...(user?.email === "sathishkumaranandh@gmail.com"
-      ? [{ to: "/admin", label: "👑 Admin", color: "#D4A017" }]
-      : []),
+    // NEW: Show Admin link if the user's role is 'admin'
+    ...(role === "admin" ? [{ to: "/admin", label: "👑 Admin", color: "#D4A017" }] : []),
   ];
 
   return (
@@ -243,7 +263,6 @@ function Navigation() {
       {/* MOBILE MENU */}
       {isMobile && menuOpen && (
         <div style={mobileMenuStyle}>
-          {/* Community selector */}
           <select
             value={community}
             onChange={(e) => handleCommunityChange(e.target.value)}
@@ -303,250 +322,29 @@ function Navigation() {
   );
 }
 
-// ============================================================
-// STYLES
-// ============================================================
-const navStyle = {
-  background: "white",
-  borderBottom: "1px solid #f0e0e0",
-  padding: "14px 24px",
-  position: "sticky",
-  top: 0,
-  zIndex: 100,
-  boxShadow: "0 2px 12px rgba(139,10,46,0.04)",
-};
-
-const topRowStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "20px",
-  flexWrap: "wrap",
-  maxWidth: "1300px",
-  margin: "0 auto",
-};
-
-const logoCircleStyle = {
-  width: "38px",
-  height: "38px",
-  borderRadius: "50%",
-  background: "#8B0A2E",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: "#D4A017",
-  fontSize: "18px",
-  fontWeight: "bold",
-};
-
-const logoTextStyle = {
-  fontFamily: "'Playfair Display', serif",
-  fontSize: "18px",
-  fontWeight: 900,
-  color: "#8B0A2E",
-  letterSpacing: "-0.3px",
-};
-
-const logoSubStyle = {
-  fontSize: "8px",
-  color: "#D4A017",
-  fontWeight: 700,
-  letterSpacing: "2px",
-  textTransform: "uppercase",
-  marginTop: "2px",
-};
-
-const desktopLinksStyle = {
-  display: "flex",
-  gap: "24px",
-  alignItems: "center",
-  fontSize: "13px",
-  fontWeight: 500,
-};
-
-const navLinkStyle = {
-  textDecoration: "none",
-  position: "relative",
-  padding: "4px 0",
-  transition: "color 0.2s",
-};
-
-const badgeStyle = {
-  display: "inline-block",
-  background: "#8B0A2E",
-  color: "white",
-  fontSize: "10px",
-  fontWeight: "bold",
-  borderRadius: "10px",
-  padding: "2px 6px",
-  marginLeft: "6px",
-  minWidth: "18px",
-  textAlign: "center",
-  lineHeight: "14px",
-  verticalAlign: "middle",
-};
-
-const userChipStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  background: "#FFF9F5",
-  border: "1px solid #f0e0e0",
-  padding: "6px 14px",
-  borderRadius: "24px",
-  cursor: "pointer",
-};
-
-const userAvatarStyle = {
-  width: "26px",
-  height: "26px",
-  borderRadius: "50%",
-  background: "linear-gradient(135deg, #8B0A2E, #a01438)",
-  color: "white",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "12px",
-  fontWeight: "bold",
-};
-
-const userNameStyle = {
-  fontSize: "13px",
-  fontWeight: 600,
-  color: "#2D1B1B",
-};
-
-const loginBtnStyle = {
-  color: "#8B0A2E",
-  textDecoration: "none",
-  padding: "9px 20px",
-  borderRadius: "8px",
-  border: "1.5px solid #8B0A2E",
-  fontWeight: 600,
-  fontSize: "13px",
-  background: "white",
-};
-
-const registerBtnStyle = {
-  color: "white",
-  background: "#8B0A2E",
-  textDecoration: "none",
-  padding: "9px 22px",
-  borderRadius: "8px",
-  fontWeight: 600,
-  fontSize: "13px",
-  boxShadow: "0 4px 12px rgba(139,10,46,0.25)",
-};
-
-const logoutBtnStyle = {
-  background: "transparent",
-  color: "#8a6b6b",
-  border: "1px solid #f0e0e0",
-  padding: "7px 14px",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontWeight: 600,
-  fontSize: "12px",
-};
-
-const hamburgerStyle = {
-  background: "#FFF9F5",
-  color: "#8B0A2E",
-  border: "1px solid #f0e0e0",
-  width: "42px",
-  height: "42px",
-  borderRadius: "10px",
-  fontSize: "20px",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  position: "relative",
-  flexShrink: 0,
-};
-
-const mobileMenuStyle = {
-  marginTop: "14px",
-  paddingTop: "14px",
-  borderTop: "1px solid #f0e0e0",
-  display: "flex",
-  flexDirection: "column",
-  gap: "4px",
-};
-
-const mobileCommunitySelectStyle = {
-  width: "100%",
-  padding: "12px",
-  borderRadius: "10px",
-  border: "1px solid #f0e0e0",
-  background: "#FFF9F5",
-  color: "#2D1B1B",
-  fontSize: "14px",
-  fontWeight: 600,
-  marginBottom: "10px",
-  fontFamily: "inherit",
-};
-
-const mobileLinkStyle = {
-  textDecoration: "none",
-  padding: "14px 12px",
-  borderRadius: "10px",
-  fontWeight: 600,
-  fontSize: "15px",
-  display: "flex",
-  alignItems: "center",
-  background: "#FFF9F5",
-};
-
-const mobileDividerStyle = {
-  height: "1px",
-  background: "#f0e0e0",
-  margin: "10px 0",
-};
-
-const mobileUserStyle = {
-  padding: "10px 12px",
-  fontSize: "14px",
-  color: "#2D1B1B",
-  fontWeight: 600,
-};
-
-const mobileLogoutBtnStyle = {
-  background: "#8B0A2E",
-  color: "white",
-  border: "none",
-  padding: "14px",
-  borderRadius: "10px",
-  cursor: "pointer",
-  fontWeight: 600,
-  fontSize: "14px",
-  width: "100%",
-  fontFamily: "inherit",
-};
-
-const mobileLoginBtnStyle = {
-  flex: 1,
-  padding: "14px",
-  textAlign: "center",
-  borderRadius: "10px",
-  border: "1.5px solid #8B0A2E",
-  color: "#8B0A2E",
-  textDecoration: "none",
-  fontWeight: 600,
-  fontSize: "14px",
-  background: "white",
-};
-
-const mobileRegisterBtnStyle = {
-  flex: 1,
-  padding: "14px",
-  textAlign: "center",
-  borderRadius: "10px",
-  background: "#8B0A2E",
-  color: "white",
-  textDecoration: "none",
-  fontWeight: 600,
-  fontSize: "14px",
-};
+// STYLES (Kept as they were)
+const navStyle = { background: "white", borderBottom: "1px solid #f0e0e0", padding: "14px 24px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 12px rgba(139,10,46,0.04)" };
+const topRowStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "20px", flexWrap: "wrap", maxWidth: "1300px", margin: "0 auto" };
+const logoCircleStyle = { width: "38px", height: "38px", borderRadius: "50%", background: "#8B0A2E", display: "flex", alignItems: "center", justifyContent: "center", color: "#D4A017", fontSize: "18px", fontWeight: "bold" };
+const logoTextStyle = { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 900, color: "#8B0A2E", letterSpacing: "-0.3px" };
+const logoSubStyle = { fontSize: "8px", color: "#D4A017", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginTop: "2px" };
+const desktopLinksStyle = { display: "flex", gap: "24px", alignItems: "center", fontSize: "13px", fontWeight: 500 };
+const navLinkStyle = { textDecoration: "none", position: "relative", padding: "4px 0", transition: "color 0.2s" };
+const badgeStyle = { display: "inline-block", background: "#8B0A2E", color: "white", fontSize: "10px", fontWeight: "bold", borderRadius: "10px", padding: "2px 6px", marginLeft: "6px", minWidth: "18px", textAlign: "center", lineHeight: "14px", verticalAlign: "middle" };
+const userChipStyle = { display: "flex", alignItems: "center", gap: "8px", background: "#FFF9F5", border: "1px solid #f0e0e0", padding: "6px 14px", borderRadius: "24px", cursor: "pointer" };
+const userAvatarStyle = { width: "26px", height: "26px", borderRadius: "50%", background: "linear-gradient(135deg, #8B0A2E, #a01438)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "bold" };
+const userNameStyle = { fontSize: "13px", fontWeight: 600, color: "#2D1B1B" };
+const loginBtnStyle = { color: "#8B0A2E", textDecoration: "none", padding: "9px 20px", borderRadius: "8px", border: "1.5px solid #8B0A2E", fontWeight: 600, fontSize: "13px", background: "white" };
+const registerBtnStyle = { color: "white", background: "#8B0A2E", textDecoration: "none", padding: "9px 22px", borderRadius: "8px", fontWeight: 600, fontSize: "13px", boxShadow: "0 4px 12px rgba(139,10,46,0.25)" };
+const logoutBtnStyle = { background: "transparent", color: "#8a6b6b", border: "1px solid #f0e0e0", padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontWeight: 600, fontSize: "12px" };
+const hamburgerStyle = { background: "#FFF9F5", color: "#8B0A2E", border: "1px solid #f0e0e0", width: "42px", height: "42px", borderRadius: "10px", fontSize: "20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", flexShrink: 0 };
+const mobileMenuStyle = { marginTop: "14px", paddingTop: "14px", borderTop: "1px solid #f0e0e0", display: "flex", flexDirection: "column", gap: "4px" };
+const mobileCommunitySelectStyle = { width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #f0e0e0", background: "#FFF9F5", color: "#2D1B1B", fontSize: "14px", fontWeight: 600, marginBottom: "10px", fontFamily: "inherit" };
+const mobileLinkStyle = { textDecoration: "none", padding: "14px 12px", borderRadius: "10px", fontWeight: 600, fontSize: "15px", display: "flex", alignItems: "center", background: "#FFF9F5" };
+const mobileDividerStyle = { height: "1px", background: "#f0e0e0", margin: "10px 0" };
+const mobileUserStyle = { padding: "10px 12px", fontSize: "14px", color: "#2D1B1B", fontWeight: 600 };
+const mobileLogoutBtnStyle = { background: "#8B0A2E", color: "white", border: "none", padding: "14px", borderRadius: "10px", cursor: "pointer", fontWeight: 600, fontSize: "14px", width: "100%", fontFamily: "inherit" };
+const mobileLoginBtnStyle = { flex: 1, padding: "14px", textAlign: "center", borderRadius: "10px", border: "1.5px solid #8B0A2E", color: "#8B0A2E", textDecoration: "none", fontWeight: 600, fontSize: "14px", background: "white" };
+const mobileRegisterBtnStyle = { flex: 1, padding: "14px", textAlign: "center", borderRadius: "10px", background: "#8B0A2E", color: "white", textDecoration: "none", fontWeight: 600, fontSize: "14px" };
 
 export default Navigation;
