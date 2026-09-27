@@ -7,11 +7,11 @@ const MAX_PHOTOS = 7;
 
 function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhotoUrl }) {
   const [photos, setPhotos] = useState([]);
-  const [mainPhotoUrl, setMainPhotoUrl] = useState(fallbackPhotoUrl || "");
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [blurPrivate, setBlurPrivate] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [blurPrivate, setBlurPrivate] = useState(true);
   const fileInputRef = useRef(null);
 
   const fetchPhotos = useCallback(async () => {
@@ -19,12 +19,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
       const res = await fetch(`${BACKEND_URL}/photos/${userId}`);
       if (res.ok) {
         const data = await res.json();
-        const fetchedPhotos = data.photos || [];
-        setPhotos(fetchedPhotos);
-        
-        const primary = fetchedPhotos.find(p => p.is_primary);
-        if (primary) setMainPhotoUrl(primary.photo_url);
-        else if (fetchedPhotos.length > 0) setMainPhotoUrl(fetchedPhotos[0].photo_url);
+        setPhotos(data.photos || []);
       }
     } catch (err) {
       console.error(err);
@@ -75,6 +70,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
       }
       
       await fetchPhotos();
+      setActiveIndex(0); // Reset to first photo
       toast.success("Photo(s) uploaded!");
     } catch (err) {
       console.error(err);
@@ -85,12 +81,21 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
     }
   };
 
-  const handleDelete = async (photoId) => {
+  const handleDelete = async () => {
+    const photoToDelete = photos[activeIndex];
+    if (!photoToDelete || photoToDelete.id === "fallback") return;
     if (!window.confirm("Delete this photo?")) return;
+
     try {
-      const res = await fetch(`${BACKEND_URL}/photos/${photoId}`, { method: "DELETE" });
+      const res = await fetch(`${BACKEND_URL}/photos/${photoToDelete.id}`, { method: "DELETE" });
       if (res.ok) {
-        await fetchPhotos();
+        const remaining = photos.filter((_, i) => i !== activeIndex);
+        setPhotos(remaining);
+        setActiveIndex(0);
+        
+        if (photoToDelete.is_primary && onPrimaryChange) {
+          onPrimaryChange(remaining.length > 0 ? remaining[0].photo_url : "");
+        }
         toast.success("Photo deleted!");
       } else {
         throw new Error("Delete failed");
@@ -101,17 +106,22 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
     }
   };
 
-  const handleSetMain = async (photoId, url) => {
+  const handleSetPrimary = async () => {
+    const photoToSet = photos[activeIndex];
+    if (!photoToSet || photoToSet.is_primary || photoToSet.id === "fallback") return;
+
     try {
-      const res = await fetch(`${BACKEND_URL}/photos/${photoId}/primary`, { method: "PATCH" });
-      if (res.ok) {
-        setPhotos(photos.map(p => ({ ...p, is_primary: p.id === photoId })));
-        setMainPhotoUrl(url);
-        if (onPrimaryChange) onPrimaryChange(url);
-        toast.success("Main profile photo updated.");
-      }
+      const res = await fetch(`${BACKEND_URL}/photos/${photoToSet.id}/primary`, { method: "PATCH" });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || "Failed to set main photo");
+
+      setPhotos(photos.map((p, i) => ({ ...p, is_primary: i === activeIndex })));
+      if (onPrimaryChange) onPrimaryChange(photoToSet.photo_url);
+      toast.success("Main photo updated!");
     } catch (err) {
-      toast.error("Could not update main photo.");
+      console.error(err);
+      toast.error(err.message || "Could not update main photo.");
     }
   };
 
@@ -132,127 +142,144 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
     return <div style={{ padding: "20px", textAlign: "center", color: "#8a6b6b", fontSize: "13px" }}>Loading photos...</div>;
   }
 
+  const displayPhotos = photos.length > 0 ? photos : (fallbackPhotoUrl ? [{ id: "fallback", photo_url: fallbackPhotoUrl, is_primary: true }] : []);
+  const activePhoto = displayPhotos[activeIndex] || displayPhotos[0];
+
   return (
-    <div style={S.container}>
-      <div style={S.header}>
-        <h1 style={S.h1}>📸 My Photos</h1>
-        <p style={S.sub}>Add photos to make your matrimonial profile more attractive</p>
-      </div>
-
-      <div style={S.card}>
-        {/* Main Photo */}
-        <div style={S.mainPhotoSection}>
-          <div style={S.sectionTitle}>Profile Photo</div>
-          <div style={S.mainPhoto}>
-            {mainPhotoUrl ? (
-              <img src={mainPhotoUrl} alt="Profile" style={S.mainImg} />
-            ) : (
-              <div style={S.placeholderImg}>👤</div>
-            )}
-            {mainPhotoUrl && <div style={S.profileLabel}>⭐ Main Profile Photo</div>}
+    <div>
+      {/* === MAIN PHOTO VIEWER === */}
+      {activePhoto && (
+        <div style={{ position: "relative", marginBottom: "16px", borderRadius: "16px", overflow: "hidden", boxShadow: "0 8px 24px rgba(139,10,46,0.12)", background: "#f8f8f8" }}>
+          <div style={{ width: "100%", aspectRatio: "4 / 5", position: "relative" }}>
+            <img 
+              src={activePhoto.photo_url} 
+              alt="Profile" 
+              style={{ 
+                width: "100%", 
+                height: "100%", 
+                objectFit: "cover",
+                filter: (isPrivate && blurPrivate && activePhoto.is_private) ? "blur(13px)" : "none"
+              }} 
+            />
           </div>
+
+          {activePhoto.is_primary && (
+            <div style={{ position: "absolute", top: "12px", left: "12px", background: "#D4A017", color: "white", fontSize: "11px", fontWeight: 700, padding: "4px 10px", borderRadius: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>
+              ⭐ Main Profile Photo
+            </div>
+          )}
+
+          {!readOnly && activePhoto.id !== "fallback" && (
+            <div style={{ position: "absolute", bottom: "12px", right: "12px", display: "flex", gap: "8px" }}>
+              {!activePhoto.is_primary && (
+                <button onClick={handleSetPrimary} style={{ background: "white", color: "#8B0A2E", border: "none", padding: "8px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", display: "flex", alignItems: "center", gap: "4px" }}>
+                  ⭐ Set as Main
+                </button>
+              )}
+              <button onClick={handleDelete} style={{ background: "#dc2626", color: "white", border: "none", width: "36px", height: "36px", borderRadius: "50%", fontSize: "16px", cursor: "pointer", boxShadow: "0 4px 12px rgba(220,38,38,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                🗑️
+              </button>
+            </div>
+          )}
         </div>
+      )}
 
-        {/* Gallery */}
-        <div>
-          <div style={S.sectionTitle}>Photo Gallery ({photos.length}/{MAX_PHOTOS})</div>
-          <div style={S.gallery}>
-            {photos.map((photo) => (
-              <div key={photo.id} style={S.photoItem}>
-                <img 
-                  src={photo.photo_url} 
-                  alt="" 
-                  style={{
-                    ...S.photoImg,
-                    filter: (isPrivate && blurPrivate && photo.is_private) ? "blur(13px)" : "none"
-                  }} 
-                />
-                {photo.is_primary && <div style={S.mainBadge}>⭐ Main</div>}
-                {!readOnly && (
-                  <div style={S.photoActions}>
-                    {!photo.is_primary && (
-                      <button onClick={() => handleSetMain(photo.id, photo.photo_url)} style={{...S.actionBtn, ...S.setMainBtn}}>
-                        Set Main
-                      </button>
-                    )}
-                    <button onClick={() => handleDelete(photo.id)} style={{...S.actionBtn, ...S.deleteBtn}}>
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {/* Add Photo */}
-            {!readOnly && photos.length < MAX_PHOTOS && (
-              <div onClick={() => fileInputRef.current?.click()} style={S.addPhoto}>
-                <span style={{ fontSize: "32px", marginBottom: "5px" }}>{uploading ? "⏳" : "＋"}</span>
-                <strong>{uploading ? "Uploading..." : "Add Photo"}</strong>
+      {/* === THUMBNAILS === */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px" }}>
+        {displayPhotos.map((photo, index) => (
+          <div
+            key={photo.id}
+            onClick={() => setActiveIndex(index)}
+            style={{
+              position: "relative",
+              aspectRatio: "4 / 5",
+              borderRadius: "10px",
+              overflow: "hidden",
+              cursor: "pointer",
+              border: index === activeIndex ? "3px solid #8B0A2E" : "2px solid #f0e0e0",
+              transition: "border 0.2s, transform 0.2s",
+              transform: index === activeIndex ? "scale(1.05)" : "scale(1)",
+            }}
+          >
+            <img 
+              src={photo.photo_url} 
+              alt="" 
+              style={{ 
+                width: "100%", 
+                height: "100%", 
+                objectFit: "cover",
+                filter: (isPrivate && blurPrivate && photo.is_private) ? "blur(10px)" : "none"
+              }} 
+            />
+            {photo.is_primary && (
+              <div style={{ position: "absolute", top: 0, left: 0, background: "#D4A017", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 4px", borderBottomRight: "6px" }}>
+                MAIN
               </div>
             )}
           </div>
-        </div>
+        ))}
 
-        {/* Privacy Controls */}
-        {!readOnly && (
-          <div style={S.controls}>
-            <div style={S.controlRow}>
-              <div style={S.controlInfo}>
-                <strong>🔒 Private Gallery</strong>
-                <small>Only members you approve can see private photos</small>
-              </div>
-              <label style={S.switch}>
-                <input type="checkbox" checked={isPrivate} onChange={(e) => handleTogglePrivate(e.target.checked)} />
-                <span style={S.slider}></span>
-              </label>
-            </div>
-
-            <div style={S.controlRow}>
-              <div style={S.controlInfo}>
-                <strong>👁️ Blur Private Photos</strong>
-                <small>Hide photos until access is approved</small>
-              </div>
-              <label style={S.switch}>
-                <input type="checkbox" checked={blurPrivate} onChange={(e) => setBlurPrivate(e.target.checked)} />
-                <span style={S.slider}></span>
-              </label>
-            </div>
+        {/* Upload Button */}
+        {!readOnly && displayPhotos.length < MAX_PHOTOS && (
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              aspectRatio: "4 / 5",
+              borderRadius: "10px",
+              border: "2px dashed #d1d5db",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              background: "#FFF9F5",
+              color: "#8a6b6b",
+            }}
+          >
+            <span style={{ fontSize: "20px" }}>{uploading ? "⏳" : "➕"}</span>
+            <span style={{ fontSize: "9px", fontWeight: 600, marginTop: "2px" }}>{uploading ? "..." : "Add"}</span>
           </div>
         )}
       </div>
 
       <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleUpload} style={{ display: "none" }} />
+
+      {/* === PRIVACY CONTROLS === */}
+      {!readOnly && (
+        <div style={{ marginTop: "25px", borderTop: "1px solid #eee", paddingTop: "20px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 0", borderBottom: "1px solid #eee" }}>
+            <div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#2D1B1B" }}>🔒 Private Gallery</div>
+              <div style={{ fontSize: "12px", color: "#777" }}>Only approved members can see private photos</div>
+            </div>
+            <label style={{ position: "relative", width: "48px", height: "25px" }}>
+              <input type="checkbox" checked={isPrivate} onChange={(e) => handleTogglePrivate(e.target.checked)} style={{ display: "none" }} />
+              <span style={{ position: "absolute", inset: 0, background: isPrivate ? "#8B0A2E" : "#ccc", borderRadius: "20px", cursor: "pointer", transition: ".3s" }}>
+                <span style={{ position: "absolute", width: "19px", height: "19px", left: isPrivate ? "26px" : "3px", top: "3px", background: "white", borderRadius: "50%", transition: ".3s" }} />
+              </span>
+            </label>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 0", borderBottom: "1px solid #eee" }}>
+            <div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#2D1B1B" }}>👁️ Blur Private Photos</div>
+              <div style={{ fontSize: "12px", color: "#777" }}>Hide photos until access is approved</div>
+            </div>
+            <label style={{ position: "relative", width: "48px", height: "25px" }}>
+              <input type="checkbox" checked={blurPrivate} onChange={(e) => setBlurPrivate(e.target.checked)} style={{ display: "none" }} />
+              <span style={{ position: "absolute", inset: 0, background: blurPrivate ? "#8B0A2E" : "#ccc", borderRadius: "20px", cursor: "pointer", transition: ".3s" }}>
+                <span style={{ position: "absolute", width: "19px", height: "19px", left: blurPrivate ? "26px" : "3px", top: "3px", background: "white", borderRadius: "50%", transition: ".3s" }} />
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
+
+      <p style={{ fontSize: "11px", color: "#888", marginTop: "8px", textAlign: "center" }}>
+        {displayPhotos.length} / {MAX_PHOTOS} photos uploaded · Tap any photo to view full size
+      </p>
     </div>
   );
 }
-
-const S = {
-  container: { maxWidth: "900px", margin: "auto", padding: "0" },
-  header: { textAlign: "center", marginBottom: "22px" },
-  h1: { fontSize: "27px", marginBottom: "7px", color: "#8B0A2E", fontFamily: "'Playfair Display', serif" },
-  sub: { color: "#777", fontSize: "14px" },
-  card: { background: "white", borderRadius: "18px", padding: "20px", boxShadow: "0 5px 25px rgba(0,0,0,.08)" },
-  mainPhotoSection: { marginBottom: "25px" },
-  sectionTitle: { fontSize: "18px", fontWeight: "bold", marginBottom: "12px", color: "#2D1B1B" },
-  mainPhoto: { position: "relative", width: "100%", maxWidth: "330px", margin: "auto", aspectRatio: "4 / 5", borderRadius: "18px", overflow: "hidden", background: "#eee" },
-  mainImg: { width: "100%", height: "100%", objectFit: "cover" },
-  placeholderImg: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "60px", color: "#ccc" },
-  profileLabel: { position: "absolute", bottom: "12px", left: "12px", background: "rgba(0,0,0,.75)", color: "white", padding: "7px 12px", borderRadius: "20px", fontSize: "12px" },
-  gallery: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "12px" },
-  photoItem: { position: "relative", aspectRatio: "4 / 5", borderRadius: "12px", overflow: "hidden", background: "#eee" },
-  photoImg: { width: "100%", height: "100%", objectFit: "cover" },
-  mainBadge: { position: "absolute", top: "7px", left: "7px", background: "rgba(212,160,23,0.9)", color: "white", padding: "3px 6px", borderRadius: "15px", fontSize: "10px", fontWeight: "bold" },
-  photoActions: { position: "absolute", bottom: "6px", left: "6px", right: "6px", display: "flex", gap: "5px" },
-  actionBtn: { flex: 1, border: "none", padding: "6px 4px", borderRadius: "7px", fontSize: "10px", cursor: "pointer", fontWeight: "bold" },
-  setMainBtn: { background: "rgba(255,255,255,0.9)", color: "#8B0A2E" },
-  deleteBtn: { background: "rgba(220,38,38,0.9)", color: "white" },
-  addPhoto: { border: "2px dashed #ccc", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", cursor: "pointer", color: "#777", aspectRatio: "4 / 5", borderRadius: "12px" },
-  controls: { marginTop: "25px", borderTop: "1px solid #eee", paddingTop: "20px" },
-  controlRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 0", borderBottom: "1px solid #eee" },
-  controlInfo: { display: "flex", flexDirection: "column" },
-  controlInfoStrong: { fontSize: "15px", fontWeight: "bold" },
-  switch: { position: "relative", width: "48px", height: "25px", display: "inline-block" },
-  slider: { position: "absolute", inset: 0, background: "#ccc", borderRadius: "20px", cursor: "pointer", transition: ".3s" },
-};
 
 export default PhotoGallery;
