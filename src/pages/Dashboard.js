@@ -9,6 +9,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [plan, setPlan] = useState("free");
   const [counts, setCounts] = useState({
     matches: 0,
     interests: 0,
@@ -37,7 +38,7 @@ function Dashboard() {
         setUser(user);
 
         // Load my profile
-        const profileRes = await fetch(`${BACKEND_URL}/profile/${user.id}`);
+        const profileRes = await fetch(`${BACKEND_URL}/profile/${user.id}?viewerId=${user.id}`);
         let myProfile = null;
         if (profileRes.ok) {
           const data = await profileRes.json();
@@ -60,11 +61,12 @@ function Dashboard() {
         if (matchRes.ok) newCounts.matches = (await matchRes.json()).total || 0;
         setCounts(newCounts);
 
-        // ⭐ SMART RECOMMENDATIONS (Using the new backend engine)
-        const recRes = await fetch(`${BACKEND_URL}/profile/recommendations/${user.id}`);
+        // ⭐ SMART RECOMMENDATIONS (Using new premium endpoint)
+        const recRes = await fetch(`${BACKEND_URL}/premium/recommendations/${user.id}`);
         if (recRes.ok) {
           const data = await recRes.json();
           setRecent((data.recommendations || []).slice(0, 3));
+          setPlan(data.plan || "free");
         }
       } catch (err) {
         console.error("Dashboard load error:", err);
@@ -295,39 +297,28 @@ function Dashboard() {
     },
   };
 
+  const isFree = plan === "free";
+
   return (
     <div style={S.page}>
       <div style={S.layout}>
         {/* SIDEBAR */}
         <aside style={S.sidebar}>
           <div style={S.navItemActive}>🏠 Dashboard</div>
-          <Link to={`/profile`} style={S.navItem}>
-            👤 My Profile
-          </Link>
-          <Link to="/matches" style={S.navItem}>
-            💕 My Matches
-          </Link>
-          <Link to="/interests?tab=shortlisted" style={S.navItem}>
-            ♡ Shortlisted Profiles
-          </Link>
-          <Link to="/interests?tab=received" style={S.navItem}>
-            💌 Interests Received
-          </Link>
-          <Link to="/interests?tab=sent" style={S.navItem}>
-            📤 Interests Sent
-          </Link>
+          <Link to={`/profile`} style={S.navItem}>👤 My Profile</Link>
+          <Link to="/matches" style={S.navItem}>💕 My Matches</Link>
+          <Link to="/recommendations" style={S.navItem}>⭐ Recommended</Link>
+          <Link to="/advanced-search" style={S.navItem}>🔍 Advanced Search</Link>
+          <Link to="/interests?tab=shortlisted" style={S.navItem}>♡ Shortlisted</Link>
+          <Link to="/interests?tab=received" style={S.navItem}>💌 Interests Received</Link>
+          <Link to="/interests?tab=sent" style={S.navItem}>📤 Interests Sent</Link>
           <Link to="/messages" style={S.navItem}>
             💬 Messages
-            {counts.messages > 0 && (
-              <span style={S.badgeDot}>{counts.messages}</span>
-            )}
+            {counts.messages > 0 && (<span style={S.badgeDot}>{counts.messages}</span>)}
           </Link>
-          <Link to="/visitors" style={S.navItem}>
-            👀 Who Viewed Me
-          </Link>
-          <Link to="/settings" style={S.navItem}>
-            ⚙️ Settings
-          </Link>
+          <Link to="/visitors" style={S.navItem}>👀 Who Viewed Me</Link>
+          <Link to="/boost" style={S.navItem}>🚀 Boost</Link>
+          <Link to="/settings" style={S.navItem}>⚙️ Settings</Link>
         </aside>
 
         {/* MAIN */}
@@ -335,7 +326,14 @@ function Dashboard() {
           <div style={S.header}>
             <h1 style={S.h1}>My Dashboard</h1>
             <p style={S.sub}>
-              Welcome back, {profile?.name || user?.email?.split("@")[0] || "there"}! Here's what's happening with your profile.
+              Welcome back, {profile?.name || user?.email?.split("@")[0] || "there"}!{" "}
+              <span style={{
+                background: plan === "platinum" ? "#fce7f3" : plan === "gold" ? "#fef3c7" : "#f3f4f6",
+                color: plan === "platinum" ? "#9f1239" : plan === "gold" ? "#92400e" : "#4b5563",
+                padding: "2px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: 700, marginLeft: "6px", textTransform: "capitalize"
+              }}>
+                {plan === "platinum" ? "💎" : plan === "gold" ? "🥇" : "👤"} {plan}
+              </span>
             </p>
           </div>
 
@@ -345,13 +343,9 @@ function Dashboard() {
               <div style={S.completionRingInner}>{completion}%</div>
             </div>
             <div style={S.completionText}>
-              <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "4px" }}>
-                Profile Completion
-              </div>
+              <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "4px" }}>Profile Completion</div>
               <div style={{ fontSize: "12px", opacity: 0.85 }}>
-                {completion < 80
-                  ? "Complete your profile to get better matches"
-                  : "Great! Your profile is well-filled"}
+                {completion < 80 ? "Complete your profile to get better matches" : "Great! Your profile is well-filled"}
               </div>
             </div>
             <Link to="/profile" style={S.completeBtn}>
@@ -364,9 +358,7 @@ function Dashboard() {
             <div style={S.statCard}>
               <div style={S.statTop}>
                 <span style={{ fontSize: "20px" }}>💕</span>
-                <Link to="/matches" style={{ fontSize: "11px", color: "#8B0A2E", textDecoration: "none", fontWeight: 600 }}>
-                  View All →
-                </Link>
+                <Link to="/matches" style={{ fontSize: "11px", color: "#8B0A2E", textDecoration: "none", fontWeight: 600 }}>View All →</Link>
               </div>
               <div style={S.statValue}>{counts.matches}</div>
               <div style={S.statLabel}>New Matches</div>
@@ -374,9 +366,7 @@ function Dashboard() {
             <div style={S.statCard}>
               <div style={S.statTop}>
                 <span style={{ fontSize: "20px" }}>💌</span>
-                <Link to="/interests" style={{ fontSize: "11px", color: "#8B0A2E", textDecoration: "none", fontWeight: 600 }}>
-                  View All →
-                </Link>
+                <Link to="/interests" style={{ fontSize: "11px", color: "#8B0A2E", textDecoration: "none", fontWeight: 600 }}>View All →</Link>
               </div>
               <div style={S.statValue}>{counts.interests}</div>
               <div style={S.statLabel}>Interests Received</div>
@@ -384,9 +374,7 @@ function Dashboard() {
             <div style={S.statCard}>
               <div style={S.statTop}>
                 <span style={{ fontSize: "20px" }}>♡</span>
-                <Link to="/interests?tab=shortlisted" style={{ fontSize: "11px", color: "#8B0A2E", textDecoration: "none", fontWeight: 600 }}>
-                  View All →
-                </Link>
+                <Link to="/interests?tab=shortlisted" style={{ fontSize: "11px", color: "#8B0A2E", textDecoration: "none", fontWeight: 600 }}>View All →</Link>
               </div>
               <div style={S.statValue}>{counts.shortlisted}</div>
               <div style={S.statLabel}>Shortlisted Profiles</div>
@@ -394,9 +382,7 @@ function Dashboard() {
             <div style={S.statCard}>
               <div style={S.statTop}>
                 <span style={{ fontSize: "20px" }}>💬</span>
-                <Link to="/messages" style={{ fontSize: "11px", color: "#8B0A2E", textDecoration: "none", fontWeight: 600 }}>
-                  View All →
-                </Link>
+                <Link to="/messages" style={{ fontSize: "11px", color: "#8B0A2E", textDecoration: "none", fontWeight: 600 }}>View All →</Link>
               </div>
               <div style={S.statValue}>{counts.messages}</div>
               <div style={S.statLabel}>Unread Messages</div>
@@ -408,7 +394,7 @@ function Dashboard() {
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", color: "#8B0A2E", margin: 0 }}>
               Recommended for You
             </h2>
-            <Link to="/search" style={{ color: "#8B0A2E", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
+            <Link to="/recommendations" style={{ color: "#8B0A2E", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
               View All →
             </Link>
           </div>
@@ -419,9 +405,7 @@ function Dashboard() {
                 <div style={{ fontSize: "50px", marginBottom: "8px" }}>🔎</div>
                 <p style={{ color: "#8a6b6b", fontSize: "13px", margin: 0 }}>
                   No suggestions yet.{" "}
-                  <Link to="/profile" style={{ color: "#8B0A2E", fontWeight: "bold" }}>
-                    Complete your profile
-                  </Link>{" "}
+                  <Link to="/profile" style={{ color: "#8B0A2E", fontWeight: "bold" }}>Complete your profile</Link>{" "}
                   to see personalized matches.
                 </p>
               </div>
@@ -430,14 +414,8 @@ function Dashboard() {
                 <div key={u.id} style={S.rvCard}>
                   <div style={S.rvPhoto}>
                     {u.photo_url ? (
-                      <img
-                        src={u.photo_url}
-                        alt={u.name}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    ) : (
-                      "👤"
-                    )}
+                      <img src={u.photo_url} alt={u.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : ("👤")}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={S.rvName}>{u.name || "Anonymous"}</div>
@@ -446,21 +424,30 @@ function Dashboard() {
                       {u.age && u.location ? " • " : ""}
                       {u.location || ""}
                     </div>
-                    <Link to={`/profile/${u.id}`} style={S.rvBtn}>
-                      View Profile
-                    </Link>
+                    <Link to={`/profile/${u.id}`} style={S.rvBtn}>View Profile</Link>
                   </div>
                 </div>
               ))
             )}
           </div>
 
+          {/* Upgrade hint for free users */}
+          {isFree && recent.length > 0 && (
+            <div style={{ marginTop: "20px", background: "linear-gradient(135deg, #FDF2F6, #FFF9F5)", border: "1px solid #f0e0e0", borderRadius: "14px", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+              <div style={{ fontSize: "13px", color: "#8a6b6b" }}>
+                🔒 You are seeing <strong>3 of your 5</strong> daily recommendations. Upgrade for more!
+              </div>
+              <Link to="/subscription" style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "10px 20px", borderRadius: "10px", textDecoration: "none", fontWeight: 700, fontSize: "13px" }}>
+                ⭐ Upgrade
+              </Link>
+            </div>
+          )}
+
           {/* Quote */}
           <div style={S.quote}>
             <div style={{ fontSize: "32px" }}>💑</div>
             <p style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: isMobile ? "14px" : "16px", color: "#8B0A2E", lineHeight: 1.5, margin: 0 }}>
-              "A good marriage is not just about finding the right person, but
-              about building a beautiful future together."
+              "A good marriage is not just about finding the right person, but about building a beautiful future together."
             </p>
           </div>
         </main>
