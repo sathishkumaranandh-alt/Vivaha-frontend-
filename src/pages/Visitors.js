@@ -7,6 +7,8 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onr
 function Visitors() {
   const navigate = useNavigate();
   const [visitors, setVisitors] = useState([]);
+  const [isPremium, setIsPremium] = useState(true);
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
 
@@ -26,6 +28,8 @@ function Visitors() {
         if (res.ok) {
           const data = await res.json();
           setVisitors(data.visitors || []);
+          setIsPremium(data.isPremium);
+          setMessage(data.message || "");
         }
       } catch (err) {
         console.error("Failed to load visitors:", err);
@@ -49,7 +53,18 @@ function Visitors() {
         </p>
       </div>
 
-      {visitors.length === 0 ? (
+      {!isPremium ? (
+        <div style={{ background: "white", borderRadius: "20px", padding: "40px 24px", textAlign: "center", border: "1px solid #f0e0e0", boxShadow: "0 8px 24px rgba(139,10,46,0.08)" }}>
+          <div style={{ fontSize: "64px", marginBottom: "16px" }}>🔒</div>
+          <h2 style={{ color: "#8B0A2E", fontFamily: "'Playfair Display', serif", marginBottom: "12px" }}>Premium Feature</h2>
+          <p style={{ color: "#666", maxWidth: "400px", margin: "0 auto 24px auto", lineHeight: 1.6, fontSize: "14px" }}>
+            {message || "Upgrade to Gold or Platinum to see who viewed your profile."}
+          </p>
+          <Link to="/subscription" style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "#8B0A2E", padding: "14px 32px", borderRadius: "10px", textDecoration: "none", fontWeight: 700, fontSize: "15px", display: "inline-block", boxShadow: "0 4px 14px rgba(212,160,23,0.4)" }}>
+            ⭐ Upgrade Now
+          </Link>
+        </div>
+      ) : visitors.length === 0 ? (
         <div style={{ background: "white", borderRadius: "14px", padding: "60px 20px", textAlign: "center", border: "1px solid #f0e0e0" }}>
           <div style={{ fontSize: "50px", marginBottom: "12px" }}>👀</div>
           <h3 style={{ color: "#8B0A2E", marginBottom: "8px" }}>No visitors yet</h3>
