@@ -215,6 +215,20 @@ function AdminDashboard() {
             ⚙️ Settings
           </Link>
                         <Link
+            to="/admin-plans"
+            style={{
+              background: "#0891b2",
+              color: "white",
+              padding: "10px 20px",
+              borderRadius: 8,
+              textDecoration: "none",
+              fontWeight: "bold",
+              fontSize: 14,
+            }}
+          >
+            💎 Plans
+          </Link>
+                        <Link
             to="/admin-form-builder"
             style={{
               background: "#0284c7",
