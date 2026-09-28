@@ -2,16 +2,21 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
+import usePlan from "../utils/usePlan";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function Boost() {
   const navigate = useNavigate();
+  const { permissions, loading: planLoading } = usePlan();
   const [userId, setUserId] = useState(null);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+
+  // Check admin plan permission: does this plan include free boost?
+  const hasFreeBoost = permissions.profile_boost === true;
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 900);
@@ -41,6 +46,29 @@ function Boost() {
 
   const handleActivate = async () => {
     if (!userId) return;
+
+    // If plan includes free boost, use the admin grant endpoint
+    if (hasFreeBoost) {
+      if (!window.confirm("Activate free boost with your plan?")) return;
+      setActivating(true);
+      try {
+        const res = await fetch(`${BACKEND_URL}/boost/admin/grant/${userId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ days: 7 }),
+        });
+        if (res.ok) {
+          toast.success("🚀 Free boost activated!");
+          const refresh = await fetch(`${BACKEND_URL}/boost/status/${userId}`);
+          if (refresh.ok) setStatus(await refresh.json());
+        } else {
+          toast.error("Failed to activate boost");
+        }
+      } catch { toast.error("Network error"); } finally { setActivating(false); }
+      return;
+    }
+
+    // Otherwise, paid boost
     if (!window.confirm(`Activate Profile Boost for ₹${status?.price || 199}?`)) return;
 
     setActivating(true);
@@ -54,7 +82,6 @@ function Boost() {
 
       if (res.ok) {
         toast.success("🚀 Boost activated! Your profile is now at the top.");
-        // Refresh status
         const refresh = await fetch(`${BACKEND_URL}/boost/status/${userId}`);
         if (refresh.ok) setStatus(await refresh.json());
       } else {
@@ -68,7 +95,7 @@ function Boost() {
     }
   };
 
-  if (loading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading...</div>;
+  if (loading || planLoading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading...</div>;
 
   const S = {
     page: { maxWidth: "700px", margin: "0 auto", padding: isMobile ? "16px" : "32px" },
@@ -99,7 +126,6 @@ function Boost() {
 
       {status?.isActive ? (
         <>
-          {/* Active boost */}
           <div style={S.activeCard}>
             <div style={{ fontSize: "48px", marginBottom: "8px" }}>✅</div>
             <div style={S.activeTitle}>Boost is Active!</div>
@@ -111,13 +137,20 @@ function Boost() {
             </p>
           </div>
 
-          <button onClick={handleActivate} disabled={activating} style={{ ...S.heroBtn, width: "100%", opacity: activating ? 0.6 : 1 }}>
-            {activating ? "Extending..." : `➕ Extend for ₹${status.price} (add ${status.duration} more days)`}
+          <button
+            onClick={handleActivate}
+            disabled={activating}
+            style={{ ...S.heroBtn, width: "100%", opacity: activating ? 0.6 : 1 }}
+          >
+            {activating
+              ? "Extending..."
+              : hasFreeBoost
+              ? `➕ Extend Free Boost (7 more days)`
+              : `➕ Extend for ₹${status.price} (add ${status.duration} more days)`}
           </button>
         </>
       ) : (
         <>
-          {/* Boost Hero */}
           <div style={S.heroCard}>
             <div style={S.heroIcon}>🚀</div>
             <h2 style={S.heroTitle}>Boost Your Profile</h2>
@@ -125,15 +158,20 @@ function Boost() {
               Appear at the top of every search result and Featured Profiles section for {status?.duration || 7} days.
             </p>
             <div style={S.priceBox}>
-              Only ₹{status?.price || 199} for {status?.duration || 7} days
+              {hasFreeBoost
+                ? "✅ Free with your current plan!"
+                : `Only ₹${status?.price || 199} for ${status?.duration || 7} days`}
             </div>
             <br />
             <button onClick={handleActivate} disabled={activating} style={{ ...S.heroBtn, opacity: activating ? 0.6 : 1 }}>
-              {activating ? "Activating..." : "🚀 Activate Boost Now"}
+              {activating
+                ? "Activating..."
+                : hasFreeBoost
+                ? "🚀 Activate Free Boost"
+                : "🚀 Activate Boost Now"}
             </button>
           </div>
 
-          {/* Features */}
           <div style={S.featureCard}>
             <div style={S.featureIcon}>⬆️</div>
             <div>
@@ -161,8 +199,12 @@ function Boost() {
           <div style={S.featureCard}>
             <div style={S.featureIcon}>💰</div>
             <div>
-              <div style={S.featureTitle}>Best Value</div>
-              <p style={S.featureDesc}>Just ₹{status?.price || 199} for a week of premium visibility.</p>
+              <div style={S.featureTitle}>{hasFreeBoost ? "Included with your plan" : "Best Value"}</div>
+              <p style={S.featureDesc}>
+                {hasFreeBoost
+                  ? "Your plan includes free profile boosts."
+                  : `Just ₹${status?.price || 199} for a week of premium visibility.`}
+              </p>
             </div>
           </div>
         </>
