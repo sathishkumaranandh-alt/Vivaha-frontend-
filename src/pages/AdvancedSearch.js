@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import supabase from "../supabaseClient";
 import { useCommunities } from "../utils/communities";
 import { toast } from "../utils/toast";
+import usePlan from "../utils/usePlan";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function AdvancedSearch() {
   const navigate = useNavigate();
   const { communities } = useCommunities();
-  const [userId, setUserId] = useState(null);
-  const [plan, setPlan] = useState("free");
+  const { plan, permissions, loading: planLoading, userId } = usePlan();
+
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -31,35 +31,14 @@ function AdvancedSearch() {
     verified_only: false,
   });
 
-  const isPremium = plan === "gold" || plan === "platinum";
+  // READ FROM ADMIN PERMISSIONS
+  const canUseAdvanced = permissions.advanced_search === true;
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 900);
     window.addEventListener("resize", h);
     return () => window.removeEventListener("resize", h);
   }, []);
-
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/login"); return; }
-      setUserId(user.id);
-
-      // Check plan
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("plan, status, expires_at")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .gte("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (data?.plan) setPlan(data.plan);
-    }
-    load();
-  }, [navigate]);
 
   const handleSearch = async () => {
     if (!userId) return;
@@ -80,7 +59,6 @@ function AdvancedSearch() {
 
       if (res.ok) {
         setResults(data.results || []);
-        setPlan(data.plan || "free");
         setSearched(true);
       } else {
         toast.error(data.error || "Search failed");
@@ -120,20 +98,21 @@ function AdvancedSearch() {
     badge: { position: "absolute", top: "8px", left: "8px", fontSize: "10px", fontWeight: 700, padding: "3px 8px", borderRadius: "8px", color: "white" },
   };
 
+  if (planLoading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading...</div>;
+
   return (
     <div style={S.page}>
       <div style={S.header}>
         <h1 style={S.h1}>🔍 Advanced Search</h1>
         <p style={S.sub}>
-          Find your perfect match with detailed filters · Your plan:{" "}
-          <strong style={{ color: plan === "platinum" ? "#9f1239" : plan === "gold" ? "#92400e" : "#666", textTransform: "capitalize" }}>
+          Find your perfect match · Your plan:{" "}
+          <strong style={{ color: plan === "Platinum" ? "#9f1239" : plan === "Gold" ? "#92400e" : "#666", textTransform: "capitalize" }}>
             {plan}
           </strong>
         </p>
       </div>
 
       <div style={S.layout}>
-        {/* FILTERS */}
         <aside style={S.sidebar}>
           <div style={S.section}>
             <div style={S.sectionTitle}>Basic Filters</div>
@@ -145,14 +124,8 @@ function AdvancedSearch() {
             </select>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-              <div>
-                <label style={S.label}>Age From</label>
-                <input type="number" style={S.input} value={filters.age_min} onChange={(e) => setFilters({ ...filters, age_min: e.target.value })} />
-              </div>
-              <div>
-                <label style={S.label}>Age To</label>
-                <input type="number" style={S.input} value={filters.age_max} onChange={(e) => setFilters({ ...filters, age_max: e.target.value })} />
-              </div>
+              <div><label style={S.label}>Age From</label><input type="number" style={S.input} value={filters.age_min} onChange={(e) => setFilters({ ...filters, age_min: e.target.value })} /></div>
+              <div><label style={S.label}>Age To</label><input type="number" style={S.input} value={filters.age_max} onChange={(e) => setFilters({ ...filters, age_max: e.target.value })} /></div>
             </div>
 
             <label style={S.label}>Location</label>
@@ -167,13 +140,12 @@ function AdvancedSearch() {
             </select>
           </div>
 
-          {/* PREMIUM FILTERS */}
           <div style={S.section}>
             <div style={S.sectionTitle}>
-              Premium Filters {!isPremium && <span style={S.premiumBadge}>⭐ GOLD+</span>}
+              Premium Filters {!canUseAdvanced && <span style={S.premiumBadge}>⭐ UPGRADE</span>}
             </div>
 
-            {!isPremium && (
+            {!canUseAdvanced && (
               <div style={S.upgradeBanner}>
                 🔒 Advanced filters are available on <strong>Gold</strong> and <strong>Platinum</strong> plans.
                 <br />
@@ -182,21 +154,10 @@ function AdvancedSearch() {
             )}
 
             <label style={S.label}>Education</label>
-            <input
-              style={isPremium ? S.input : S.inputLocked}
-              placeholder={isPremium ? "e.g. B.Tech, MBA" : "Premium only"}
-              value={filters.education}
-              onChange={(e) => isPremium && setFilters({ ...filters, education: e.target.value })}
-              disabled={!isPremium}
-            />
+            <input style={canUseAdvanced ? S.input : S.inputLocked} placeholder={canUseAdvanced ? "e.g. B.Tech, MBA" : "Premium only"} value={filters.education} onChange={(e) => canUseAdvanced && setFilters({ ...filters, education: e.target.value })} disabled={!canUseAdvanced} />
 
             <label style={S.label}>Income Range</label>
-            <select
-              style={isPremium ? S.input : S.inputLocked}
-              value={filters.income}
-              onChange={(e) => isPremium && setFilters({ ...filters, income: e.target.value })}
-              disabled={!isPremium}
-            >
+            <select style={canUseAdvanced ? S.input : S.inputLocked} value={filters.income} onChange={(e) => canUseAdvanced && setFilters({ ...filters, income: e.target.value })} disabled={!canUseAdvanced}>
               <option value="">Any Income</option>
               <option value="Below ₹3 Lakh">Below ₹3 Lakh</option>
               <option value="₹3 - ₹5 Lakh">₹3 - ₹5 Lakh</option>
@@ -206,12 +167,7 @@ function AdvancedSearch() {
             </select>
 
             <label style={S.label}>Marital Status</label>
-            <select
-              style={isPremium ? S.input : S.inputLocked}
-              value={filters.marital_status}
-              onChange={(e) => isPremium && setFilters({ ...filters, marital_status: e.target.value })}
-              disabled={!isPremium}
-            >
+            <select style={canUseAdvanced ? S.input : S.inputLocked} value={filters.marital_status} onChange={(e) => canUseAdvanced && setFilters({ ...filters, marital_status: e.target.value })} disabled={!canUseAdvanced}>
               <option value="">Any</option>
               <option value="Never Married">Never Married</option>
               <option value="Divorced">Divorced</option>
@@ -220,37 +176,20 @@ function AdvancedSearch() {
             </select>
 
             <label style={S.label}>Food Preference</label>
-            <select
-              style={isPremium ? S.input : S.inputLocked}
-              value={filters.food_pref}
-              onChange={(e) => isPremium && setFilters({ ...filters, food_pref: e.target.value })}
-              disabled={!isPremium}
-            >
+            <select style={canUseAdvanced ? S.input : S.inputLocked} value={filters.food_pref} onChange={(e) => canUseAdvanced && setFilters({ ...filters, food_pref: e.target.value })} disabled={!canUseAdvanced}>
               <option value="">Any</option>
               <option value="Vegetarian">Vegetarian</option>
               <option value="Non-Vegetarian">Non-Vegetarian</option>
               <option value="Eggetarian">Eggetarian</option>
             </select>
 
-            <label style={{ ...S.label, display: "flex", alignItems: "center", gap: "8px", cursor: isPremium ? "pointer" : "not-allowed" }}>
-              <input
-                type="checkbox"
-                checked={filters.has_horoscope}
-                onChange={(e) => isPremium && setFilters({ ...filters, has_horoscope: e.target.checked })}
-                disabled={!isPremium}
-                style={{ accentColor: "#8B0A2E" }}
-              />
+            <label style={{ ...S.label, display: "flex", alignItems: "center", gap: "8px", cursor: canUseAdvanced ? "pointer" : "not-allowed" }}>
+              <input type="checkbox" checked={filters.has_horoscope} onChange={(e) => canUseAdvanced && setFilters({ ...filters, has_horoscope: e.target.checked })} disabled={!canUseAdvanced} style={{ accentColor: "#8B0A2E" }} />
               Has Horoscope Details
             </label>
 
-            <label style={{ ...S.label, display: "flex", alignItems: "center", gap: "8px", cursor: isPremium ? "pointer" : "not-allowed", marginTop: "10px" }}>
-              <input
-                type="checkbox"
-                checked={filters.verified_only}
-                onChange={(e) => isPremium && setFilters({ ...filters, verified_only: e.target.checked })}
-                disabled={!isPremium}
-                style={{ accentColor: "#8B0A2E" }}
-              />
+            <label style={{ ...S.label, display: "flex", alignItems: "center", gap: "8px", cursor: canUseAdvanced ? "pointer" : "not-allowed", marginTop: "10px" }}>
+              <input type="checkbox" checked={filters.verified_only} onChange={(e) => canUseAdvanced && setFilters({ ...filters, verified_only: e.target.checked })} disabled={!canUseAdvanced} style={{ accentColor: "#8B0A2E" }} />
               Verified Profiles Only
             </label>
           </div>
@@ -260,7 +199,6 @@ function AdvancedSearch() {
           </button>
         </aside>
 
-        {/* RESULTS */}
         <main>
           {!searched ? (
             <div style={{ ...S.card, textAlign: "center", padding: "60px 20px" }}>
@@ -283,19 +221,13 @@ function AdvancedSearch() {
                 {results.map((u) => (
                   <div key={u.id} style={S.card2}>
                     <div style={S.cardPhoto}>
-                      {u.photo_url ? (
-                        <img src={u.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : ("👤")}
+                      {u.photo_url ? <img src={u.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "👤"}
                       {u.is_boosted && <div style={{ ...S.badge, background: "#D4A017" }}>🚀 Boosted</div>}
                       {!u.is_boosted && u.is_verified && <div style={{ ...S.badge, background: "#10B981" }}>✓ Verified</div>}
                     </div>
                     <div style={S.cardBody}>
                       <div style={S.cardName}>{u.name || "Anonymous"}</div>
-                      <div style={S.cardMeta}>
-                        {u.age ? `${u.age} yrs` : ""}
-                        {u.age && u.location ? " • " : ""}
-                        {u.location || ""}
-                      </div>
+                      <div style={S.cardMeta}>{u.age ? `${u.age} yrs` : ""}{u.age && u.location ? " • " : ""}{u.location || ""}</div>
                       <div style={S.cardMeta}>{u.education || ""}</div>
                       <Link to={`/profile/${u.id}`} style={S.viewBtn}>View Profile</Link>
                     </div>
