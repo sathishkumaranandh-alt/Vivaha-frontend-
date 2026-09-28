@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Link } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
+import usePlan from "../utils/usePlan";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
-const MAX_PHOTOS = 7;
 
 function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhotoUrl, shouldBlur = false }) {
+  const { permissions } = usePlan();
+  const MAX_PHOTOS = permissions.max_photos || 3; // fallback to 3
+
   const [photos, setPhotos] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -38,7 +42,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
     if (files.length === 0) return;
 
     if (photos.length + files.length > MAX_PHOTOS) {
-      toast.error(`You can only upload up to ${MAX_PHOTOS} photos.`);
+      toast.error(`Your plan allows only ${MAX_PHOTOS} photo${MAX_PHOTOS !== 1 ? "s" : ""}. Upgrade to add more.`);
       return;
     }
 
@@ -57,7 +61,8 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
         const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(fileName);
         const publicUrl = urlData.publicUrl;
 
-        await fetch(`${BACKEND_URL}/photos/add`, {
+        // Backend will enforce plan limit and return 403 if exceeded
+        const res = await fetch(`${BACKEND_URL}/photos/add`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -67,14 +72,19 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             is_private: isPrivate,
           }),
         });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "Failed to save photo");
+        }
       }
-      
+
       await fetchPhotos();
       setActiveIndex(0);
       toast.success("Photo(s) uploaded!");
     } catch (err) {
       console.error(err);
-      toast.error("Upload failed. Try again.");
+      toast.error(err.message || "Upload failed. Try again.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -92,7 +102,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
         const remaining = photos.filter((_, i) => i !== activeIndex);
         setPhotos(remaining);
         setActiveIndex(0);
-        
+
         if (photoToDelete.is_primary && onPrimaryChange) {
           onPrimaryChange(remaining.length > 0 ? remaining[0].photo_url : "");
         }
@@ -113,7 +123,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
     try {
       const res = await fetch(`${BACKEND_URL}/photos/${photoToSet.id}/primary`, { method: "PATCH" });
       const data = await res.json();
-      
+
       if (!res.ok) throw new Error(data.error || "Failed to set main photo");
 
       setPhotos(photos.map((p, i) => ({ ...p, is_primary: i === activeIndex })));
@@ -144,6 +154,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
 
   const displayPhotos = photos.length > 0 ? photos : (fallbackPhotoUrl ? [{ id: "fallback", photo_url: fallbackPhotoUrl, is_primary: true }] : []);
   const activePhoto = displayPhotos[activeIndex] || displayPhotos[0];
+  const limitReached = displayPhotos.length >= MAX_PHOTOS;
 
   const nextLightbox = (e) => {
     e.stopPropagation();
@@ -158,28 +169,28 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
     <div>
       {/* === MAIN PHOTO VIEWER === */}
       {activePhoto && (
-        <div 
+        <div
           onClick={() => setLightboxIndex(activeIndex)}
-          style={{ 
-            position: "relative", 
-            marginBottom: "16px", 
-            borderRadius: "16px", 
-            overflow: "hidden", 
-            boxShadow: "0 8px 24px rgba(139,10,46,0.12)", 
+          style={{
+            position: "relative",
+            marginBottom: "16px",
+            borderRadius: "16px",
+            overflow: "hidden",
+            boxShadow: "0 8px 24px rgba(139,10,46,0.12)",
             background: "#f8f8f8",
             cursor: "pointer"
           }}
         >
           <div style={{ width: "100%", aspectRatio: "4 / 5", position: "relative" }}>
-            <img 
-              src={activePhoto.photo_url} 
-              alt="Profile" 
-              style={{ 
-                width: "100%", 
-                height: "100%", 
+            <img
+              src={activePhoto.photo_url}
+              alt="Profile"
+              style={{
+                width: "100%",
+                height: "100%",
                 objectFit: "cover",
                 filter: (shouldBlur || (isPrivate && activePhoto.is_private)) ? "blur(13px)" : "none"
-              }} 
+              }}
             />
           </div>
 
@@ -225,15 +236,15 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
               transform: index === activeIndex ? "scale(1.05)" : "scale(1)",
             }}
           >
-            <img 
-              src={photo.photo_url} 
-              alt="" 
-              style={{ 
-                width: "100%", 
-                height: "100%", 
+            <img
+              src={photo.photo_url}
+              alt=""
+              style={{
+                width: "100%",
+                height: "100%",
                 objectFit: "cover",
                 filter: (shouldBlur || (isPrivate && photo.is_private)) ? "blur(10px)" : "none"
-              }} 
+              }}
             />
             {photo.is_primary && (
               <div style={{ position: "absolute", top: 0, left: 0, background: "#D4A017", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 4px", borderBottomRight: "6px" }}>
@@ -243,7 +254,8 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
           </div>
         ))}
 
-        {!readOnly && displayPhotos.length < MAX_PHOTOS && (
+        {/* Upload button — only when under limit */}
+        {!readOnly && !limitReached && (
           <div
             onClick={() => fileInputRef.current?.click()}
             style={{
@@ -262,6 +274,31 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             <span style={{ fontSize: "20px" }}>{uploading ? "⏳" : "➕"}</span>
             <span style={{ fontSize: "9px", fontWeight: 600, marginTop: "2px" }}>{uploading ? "..." : "Add"}</span>
           </div>
+        )}
+
+        {/* Upgrade prompt when limit reached */}
+        {!readOnly && limitReached && (
+          <Link
+            to="/subscription"
+            style={{
+              aspectRatio: "4 / 5",
+              borderRadius: "10px",
+              border: "2px dashed #D4A017",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              background: "linear-gradient(135deg, #FDF2F6, #FFF9F5)",
+              color: "#8B0A2E",
+              textDecoration: "none",
+              padding: "6px",
+              textAlign: "center",
+            }}
+          >
+            <span style={{ fontSize: "18px" }}>⭐</span>
+            <span style={{ fontSize: "9px", fontWeight: 700, marginTop: "2px" }}>Upgrade</span>
+          </Link>
         )}
       </div>
 
@@ -285,12 +322,12 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
       )}
 
       <p style={{ fontSize: "11px", color: "#888", marginTop: "8px", textAlign: "center" }}>
-        {displayPhotos.length} / {MAX_PHOTOS} photos uploaded · Tap any photo to view full size
+        {displayPhotos.length} / {MAX_PHOTOS} photos uploaded {limitReached ? "· Limit reached" : ""}
       </p>
 
       {/* === FULLSCREEN LIGHTBOX === */}
       {lightboxIndex !== null && displayPhotos[lightboxIndex] && (
-        <div 
+        <div
           onClick={() => setLightboxIndex(null)}
           style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
@@ -300,7 +337,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             backdropFilter: "blur(8px)"
           }}
         >
-          <button 
+          <button
             onClick={() => setLightboxIndex(null)}
             style={{
               position: "absolute", top: "20px", right: "20px",
@@ -313,7 +350,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
           </button>
 
           {displayPhotos.length > 1 && (
-            <button 
+            <button
               onClick={prevLightbox}
               style={{
                 position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)",
@@ -326,10 +363,10 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             </button>
           )}
 
-          <img 
-            src={displayPhotos[lightboxIndex].photo_url} 
-            alt="" 
-            onClick={(e) => e.stopPropagation()} 
+          <img
+            src={displayPhotos[lightboxIndex].photo_url}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: "100%", maxHeight: "90vh",
               objectFit: "contain", borderRadius: "8px",
@@ -340,7 +377,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
           />
 
           {displayPhotos.length > 1 && (
-            <button 
+            <button
               onClick={nextLightbox}
               style={{
                 position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
