@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
+import usePlan from "../utils/usePlan";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function Visitors() {
   const navigate = useNavigate();
+  const { permissions, loading: planLoading } = usePlan();
   const [visitors, setVisitors] = useState([]);
-  const [isPremium, setIsPremium] = useState(true);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+
+  // Check admin plan permission
+  const canSeeVisitors = permissions.see_visitors === true;
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 900);
@@ -28,7 +32,6 @@ function Visitors() {
         if (res.ok) {
           const data = await res.json();
           setVisitors(data.visitors || []);
-          setIsPremium(data.isPremium);
           setMessage(data.message || "");
         }
       } catch (err) {
@@ -40,7 +43,7 @@ function Visitors() {
     load();
   }, [navigate]);
 
-  if (loading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading visitors... ⏳</div>;
+  if (loading || planLoading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading visitors... ⏳</div>;
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto", padding: isMobile ? "16px" : "32px" }}>
@@ -53,12 +56,12 @@ function Visitors() {
         </p>
       </div>
 
-      {!isPremium ? (
+      {!canSeeVisitors ? (
         <div style={{ background: "white", borderRadius: "20px", padding: "40px 24px", textAlign: "center", border: "1px solid #f0e0e0", boxShadow: "0 8px 24px rgba(139,10,46,0.08)" }}>
           <div style={{ fontSize: "64px", marginBottom: "16px" }}>🔒</div>
           <h2 style={{ color: "#8B0A2E", fontFamily: "'Playfair Display', serif", marginBottom: "12px" }}>Premium Feature</h2>
           <p style={{ color: "#666", maxWidth: "400px", margin: "0 auto 24px auto", lineHeight: 1.6, fontSize: "14px" }}>
-            {message || "Upgrade to Gold or Platinum to see who viewed your profile."}
+            {message || "Upgrade your plan to see who viewed your profile."}
           </p>
           <Link to="/subscription" style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "#8B0A2E", padding: "14px 32px", borderRadius: "10px", textDecoration: "none", fontWeight: 700, fontSize: "15px", display: "inline-block", boxShadow: "0 4px 14px rgba(212,160,23,0.4)" }}>
             ⭐ Upgrade Now
