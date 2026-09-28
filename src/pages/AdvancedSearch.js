@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useCommunities } from "../utils/communities";
 import { toast } from "../utils/toast";
 import usePlan from "../utils/usePlan";
@@ -7,7 +7,6 @@ import usePlan from "../utils/usePlan";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function AdvancedSearch() {
-  const navigate = useNavigate();
   const { communities } = useCommunities();
   const { plan, permissions, loading: planLoading, userId } = usePlan();
 
@@ -31,7 +30,6 @@ function AdvancedSearch() {
     verified_only: false,
   });
 
-  // READ FROM ADMIN PERMISSIONS
   const canUseAdvanced = permissions.advanced_search === true;
 
   useEffect(() => {
