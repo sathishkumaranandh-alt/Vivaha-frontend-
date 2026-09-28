@@ -177,7 +177,7 @@ function Navigation() {
     { to: "/interests", label: "Interests", badge: interestCount },
     { to: "/messages", label: "Messages", badge: unreadCount },
     { to: "/visitors", label: "👀 Visitors" },
-    { to: "/subscription", label: "Pricing" },
+    { to: "/subscription", label: "Pricing" },{ to: "/boost", label: "🚀 Boost" },
     ...(role === "admin" ? [{ to: "/admin", label: "👑 Admin", color: "#D4A017" }] : []),
   ];
 
