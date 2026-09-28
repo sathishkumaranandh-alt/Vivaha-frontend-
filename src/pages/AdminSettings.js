@@ -13,7 +13,6 @@ const COLOR_PRESETS = [
 ];
 
 function AdminSettings() {
-  const navigate = useNavigate();
   const [tab, setTab] = useState("site");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
