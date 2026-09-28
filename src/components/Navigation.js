@@ -173,6 +173,7 @@ function Navigation() {
     { to: "/dashboard", label: "Dashboard" },
     { to: "/search", label: "Search" },
     { to: "/matches", label: "Matches" },
+    { to: "/advanced-search", label: "🔍 Advanced" },
     { to: "/success-stories", label: "Success Stories" },
     { to: "/interests", label: "Interests", badge: interestCount },
     { to: "/messages", label: "Messages", badge: unreadCount },
