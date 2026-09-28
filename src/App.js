@@ -25,6 +25,7 @@ import Messages from "./pages/Messages";
 import Interests from "./pages/Interests";
 import Dashboard from "./pages/Dashboard";
 import Visitors from "./pages/Visitors";
+import Boost from "./pages/Boost";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
@@ -70,6 +71,7 @@ function App() {
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/interests" element={<ProtectedRoute><Interests /></ProtectedRoute>} />
             <Route path="/visitors" element={<ProtectedRoute><Visitors /></ProtectedRoute>} />
+  <Route path="/boost" element={<ProtectedRoute><Boost /></ProtectedRoute>} />
             <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
             <Route path="/subscription-dashboard" element={<ProtectedRoute><SubscriptionDashboard /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
