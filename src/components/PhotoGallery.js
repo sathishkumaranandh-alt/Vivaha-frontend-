@@ -42,7 +42,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
 
       if (userId) fetchPhotos();
 
-      // Check request status
       if (user && userId && user.id !== userId && readOnly) {
         try {
           const res = await fetch(`${BACKEND_URL}/photo-requests/status/${user.id}/${userId}`);
@@ -185,14 +184,12 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
   const displayPhotos = photos.length > 0 ? photos : (fallbackPhotoUrl ? [{ id: "fallback", photo_url: fallbackPhotoUrl, is_primary: true }] : []);
   const activePhoto = displayPhotos[activeIndex] || displayPhotos[0];
   const limitReached = displayPhotos.length >= MAX_PHOTOS;
-  const isBlurred = shouldBlur && !readOnly === false; // blur only when viewing others
 
   const nextLightbox = (e) => { e.stopPropagation(); setLightboxIndex((prev) => (prev + 1) % displayPhotos.length); };
   const prevLightbox = (e) => { e.stopPropagation(); setLightboxIndex((prev) => (prev - 1 + displayPhotos.length) % displayPhotos.length); };
 
   return (
     <div>
-      {/* === MAIN PHOTO VIEWER === */}
       {activePhoto && (
         <div
           onClick={() => !shouldBlur && setLightboxIndex(activeIndex)}
@@ -210,7 +207,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
               }}
             />
 
-            {/* Blur overlay */}
             {shouldBlur && (
               <div style={{
                 position: "absolute", inset: 0,
@@ -282,7 +278,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
         </div>
       )}
 
-      {/* === THUMBNAILS === */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px" }}>
         {displayPhotos.map((photo, index) => (
           <div
@@ -354,7 +349,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
         {displayPhotos.length} / {MAX_PHOTOS} photos uploaded
       </p>
 
-      {/* LIGHTBOX */}
       {lightboxIndex !== null && displayPhotos[lightboxIndex] && !shouldBlur && (
         <div onClick={() => setLightboxIndex(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999, padding: "20px" }}>
           <button onClick={() => setLightboxIndex(null)} style={{ position: "absolute", top: "20px", right: "20px", background: "rgba(255,255,255,0.2)", color: "white", border: "none", width: "40px", height: "40px", borderRadius: "50%", fontSize: "20px", cursor: "pointer" }}>✕</button>
