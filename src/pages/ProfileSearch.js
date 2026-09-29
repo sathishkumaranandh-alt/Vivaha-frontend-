@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { useCommunities } from "../utils/communities";
@@ -27,7 +27,7 @@ function ProfileSearch() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
-  const loadProfiles = async () => {
+  const loadProfiles = useCallback(async () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -52,9 +52,11 @@ function ProfileSearch() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
-  useEffect(() => { loadProfiles(); }, []);
+  useEffect(() => {
+    loadProfiles();
+  }, [loadProfiles]);
 
   const S = {
     page: { maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "16px" : "32px" },
