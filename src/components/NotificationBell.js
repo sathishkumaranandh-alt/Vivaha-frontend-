@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 import supabase from "../supabaseClient";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -152,9 +151,11 @@ function NotificationBell() {
                   <div style={{ fontSize: "13px", fontWeight: 600, color: "#2D1B1B", marginBottom: "2px", paddingRight: n.is_read ? 0 : "16px" }}>
                     {n.title || n.message || "New Notification"}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#8a6b6b", marginBottom: "4px" }}>
-                    {n.message || ""}
-                  </div>
+                  {n.message && n.title && (
+                    <div style={{ fontSize: "12px", color: "#8a6b6b", marginBottom: "4px" }}>
+                      {n.message}
+                    </div>
+                  )}
                   <div style={{ fontSize: "10px", color: "#aaa" }}>
                     {n.created_at ? new Date(n.created_at).toLocaleString("en-IN") : ""}
                   </div>
