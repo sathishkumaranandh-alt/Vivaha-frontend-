@@ -23,6 +23,7 @@ import AdminCommunities from "./pages/AdminCommunities";
 import AdminFormBuilder from "./pages/AdminFormBuilder";
 import Messages from "./pages/Messages";
 import Interests from "./pages/Interests";
+import PhotoRequests from "./pages/PhotoRequests";
 import Dashboard from "./pages/Dashboard";
 import Visitors from "./pages/Visitors";
 import Boost from "./pages/Boost";
@@ -73,6 +74,7 @@ function App() {
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/interests" element={<ProtectedRoute><Interests /></ProtectedRoute>} />
             <Route path="/visitors" element={<ProtectedRoute><Visitors /></ProtectedRoute>} />
+  <Route path="/photo-requests" element={<ProtectedRoute><PhotoRequests /></ProtectedRoute>} />
   <Route path="/boost" element={<ProtectedRoute><Boost /></ProtectedRoute>} />
   <Route path="/admin-plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
   <Route path="/advanced-search" element={<ProtectedRoute><AdvancedSearch /></ProtectedRoute>} />
