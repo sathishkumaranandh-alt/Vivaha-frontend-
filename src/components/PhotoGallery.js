@@ -19,7 +19,11 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
   const [requestStatus, setRequestStatus] = useState("none");
   const [requesting, setRequesting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [adminSettings, setAdminSettings] = useState({});
   const fileInputRef = useRef(null);
+
+  const showPrivateToggle = adminSettings.privacy_show_private_gallery !== "false";
+  const showPhotoRequest = adminSettings.privacy_show_photo_request !== "false";
 
   const fetchPhotos = useCallback(async () => {
     try {
@@ -41,6 +45,15 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
       if (user) setCurrentUserId(user.id);
 
       if (userId) fetchPhotos();
+
+      // Load admin privacy controls
+      try {
+        const r = await fetch(`${BACKEND_URL}/settings`);
+        if (r.ok) {
+          const d = await r.json();
+          setAdminSettings(d.settings || {});
+        }
+      } catch {}
 
       if (user && userId && user.id !== userId && readOnly) {
         try {
@@ -82,7 +95,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
     if (files.length === 0) return;
 
     if (photos.length + files.length > MAX_PHOTOS) {
-      toast.error(`Your plan allows only ${MAX_PHOTOS} photo${MAX_PHOTOS !== 1 ? "s" : ""}. Upgrade to add more.`);
+      toast.error(`Your plan allows only ${MAX_PHOTOS} photo${MAX_PHOTOS !== 1 ? "s" : ""}.`);
       return;
     }
 
@@ -200,58 +213,34 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
               src={activePhoto.photo_url}
               alt="Profile"
               style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
+                width: "100%", height: "100%", objectFit: "cover",
                 filter: shouldBlur ? "blur(20px)" : (isPrivate && activePhoto.is_private ? "blur(13px)" : "none")
               }}
             />
 
             {shouldBlur && (
-              <div style={{
-                position: "absolute", inset: 0,
-                display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                background: "rgba(0,0,0,0.15)",
-              }}>
-                <div style={{
-                  background: "white", padding: "12px 20px", borderRadius: "20px",
-                  fontSize: "13px", fontWeight: 700, color: "#2D1B1B",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)", marginBottom: "14px",
-                  textAlign: "center", maxWidth: "90%",
-                }}>
-                  🔒 Photo is protected. Request to view photo
+              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.15)" }}>
+                <div style={{ background: "white", padding: "12px 20px", borderRadius: "20px", fontSize: "13px", fontWeight: 700, color: "#2D1B1B", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", marginBottom: "14px", textAlign: "center", maxWidth: "90%" }}>
+                  🔒 Photo is protected
                 </div>
 
-                {requestStatus === "none" && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleRequestAccess(); }}
-                    disabled={requesting}
-                    style={{
-                      background: "#D4A017", color: "white", border: "none",
-                      padding: "12px 24px", borderRadius: "20px",
-                      fontWeight: 700, fontSize: "13px", cursor: "pointer",
-                      boxShadow: "0 4px 12px rgba(212,160,23,0.5)",
-                      fontFamily: "inherit", opacity: requesting ? 0.6 : 1,
-                    }}
-                  >
-                    {requesting ? "Sending..." : "📩 Request to View"}
-                  </button>
-                )}
-                {requestStatus === "pending" && (
-                  <div style={{ background: "#fef3c7", color: "#92400e", padding: "10px 20px", borderRadius: "20px", fontSize: "12px", fontWeight: 700 }}>
-                    ⏳ Request Pending
-                  </div>
-                )}
-                {requestStatus === "denied" && (
-                  <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 20px", borderRadius: "20px", fontSize: "12px", fontWeight: 700 }}>
-                    ❌ Request Denied
-                  </div>
-                )}
-                {requestStatus === "approved" && (
-                  <div style={{ background: "#dcfce7", color: "#166534", padding: "10px 20px", borderRadius: "20px", fontSize: "12px", fontWeight: 700 }}>
-                    ✅ Access Approved — Refresh
-                  </div>
+                {showPhotoRequest && (
+                  <>
+                    {requestStatus === "none" && (
+                      <button onClick={(e) => { e.stopPropagation(); handleRequestAccess(); }} disabled={requesting} style={{ background: "#D4A017", color: "white", border: "none", padding: "12px 24px", borderRadius: "20px", fontWeight: 700, fontSize: "13px", cursor: "pointer", fontFamily: "inherit", opacity: requesting ? 0.6 : 1 }}>
+                        {requesting ? "Sending..." : "📩 Request to View"}
+                      </button>
+                    )}
+                    {requestStatus === "pending" && (
+                      <div style={{ background: "#fef3c7", color: "#92400e", padding: "10px 20px", borderRadius: "20px", fontSize: "12px", fontWeight: 700 }}>⏳ Pending</div>
+                    )}
+                    {requestStatus === "denied" && (
+                      <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 20px", borderRadius: "20px", fontSize: "12px", fontWeight: 700 }}>❌ Denied</div>
+                    )}
+                    {requestStatus === "approved" && (
+                      <div style={{ background: "#dcfce7", color: "#166534", padding: "10px 20px", borderRadius: "20px", fontSize: "12px", fontWeight: 700 }}>✅ Approved</div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -259,7 +248,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
 
           {!shouldBlur && activePhoto.is_primary && (
             <div style={{ position: "absolute", top: "12px", left: "12px", background: "#D4A017", color: "white", fontSize: "11px", fontWeight: 700, padding: "4px 10px", borderRadius: "20px" }}>
-              ⭐ Main Profile Photo
+              ⭐ Main Photo
             </div>
           )}
 
@@ -284,10 +273,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             key={photo.id}
             onClick={() => { if (!shouldBlur) { setActiveIndex(index); setLightboxIndex(index); } }}
             style={{
-              position: "relative",
-              aspectRatio: "4 / 5",
-              borderRadius: "10px",
-              overflow: "hidden",
+              position: "relative", aspectRatio: "4 / 5", borderRadius: "10px", overflow: "hidden",
               cursor: shouldBlur ? "default" : "pointer",
               border: index === activeIndex ? "3px solid #8B0A2E" : "2px solid #f0e0e0",
             }}
@@ -301,18 +287,13 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
               }}
             />
             {photo.is_primary && !shouldBlur && (
-              <div style={{ position: "absolute", top: 0, left: 0, background: "#D4A017", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 4px" }}>
-                MAIN
-              </div>
+              <div style={{ position: "absolute", top: 0, left: 0, background: "#D4A017", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 4px" }}>MAIN</div>
             )}
           </div>
         ))}
 
         {!readOnly && !limitReached && (
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            style={{ aspectRatio: "4 / 5", borderRadius: "10px", border: "2px dashed #d1d5db", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "#FFF9F5", color: "#8a6b6b" }}
-          >
+          <div onClick={() => fileInputRef.current?.click()} style={{ aspectRatio: "4 / 5", borderRadius: "10px", border: "2px dashed #d1d5db", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "#FFF9F5", color: "#8a6b6b" }}>
             <span style={{ fontSize: "20px" }}>{uploading ? "⏳" : "➕"}</span>
             <span style={{ fontSize: "9px", fontWeight: 600, marginTop: "2px" }}>{uploading ? "..." : "Add"}</span>
           </div>
@@ -328,7 +309,8 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
 
       <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleUpload} style={{ display: "none" }} />
 
-      {!readOnly && (
+      {/* Private gallery toggle — only if admin enabled */}
+      {!readOnly && showPrivateToggle && (
         <div style={{ marginTop: "25px", borderTop: "1px solid #eee", paddingTop: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 0" }}>
             <div>
