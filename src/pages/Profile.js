@@ -616,7 +616,8 @@ function Profile() {
             <div>
               <h1 style={S.nameH1}>
                 {profile.name || "Anonymous"}
-                {profile.is_verified && <span style={S.badge}>✓ Verified</span>}
+                                {profile.is_verified && <span style={S.badge}>✓ Verified</span>}
+                {profile.owner_is_paid && <span style={{ ...S.badge, background: "linear-gradient(135deg, #D4A017, #b8860b)" }}>👑 Paid Member</span>}
               </h1>
               <div style={S.sub}>
                 {profile.dob ? `DOB: ${new Date(profile.dob).toLocaleDateString("en-IN")}` : ""}
