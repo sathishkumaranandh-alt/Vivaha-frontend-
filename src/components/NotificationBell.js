@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import supabase from "../supabaseClient";
-import { toast } from "../utils/toast";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
@@ -21,7 +21,7 @@ function NotificationBell() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const res = await fetch(`${BACKEND_URL}/notifications/${user.id}?limit=10`);
+      const res = await fetch(`${BACKEND_URL}/notifications/${user.id}?limit=15`);
       if (res.ok) {
         const data = await res.json();
         const notifs = data.notifications || [];
@@ -29,7 +29,7 @@ function NotificationBell() {
         setUnreadCount(notifs.filter(n => !n.is_read).length);
       }
     } catch (err) {
-      console.error("Failed to fetch notifications:", err);
+      console.error(err);
     }
   };
 
@@ -60,20 +60,14 @@ function NotificationBell() {
       await fetch(`${BACKEND_URL}/notifications/read-all/${user.id}`, { method: "PATCH" });
       setNotifications(notifications.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
-      toast.success("All marked as read");
-    } catch {
-      toast.error("Failed to mark all as read");
-    }
+    } catch {}
   };
 
   const markOneRead = async (id) => {
     try {
       await fetch(`${BACKEND_URL}/notifications/read/${id}`, { method: "PATCH" });
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-      setUnreadCount(prev => {
-        const newCount = Math.max(0, prev - 1);
-        return newCount;
-      });
+      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch {}
   };
 
@@ -96,21 +90,11 @@ function NotificationBell() {
         🔔
         {unreadCount > 0 && (
           <span style={{
-            position: "absolute",
-            top: "-2px",
-            right: "-4px",
-            background: "#dc2626",
-            color: "white",
-            fontSize: "10px",
-            fontWeight: "bold",
-            borderRadius: "50%",
-            width: "18px",
-            height: "18px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "2px solid white",
-            minWidth: "18px",
+            position: "absolute", top: "-2px", right: "-4px",
+            background: "#dc2626", color: "white", fontSize: "10px",
+            fontWeight: "bold", borderRadius: "50%", width: "18px", height: "18px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            border: "2px solid white", minWidth: "18px",
           }}>
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
@@ -129,7 +113,7 @@ function NotificationBell() {
           borderRadius: "16px",
           boxShadow: "0 10px 40px rgba(0,0,0,0.25)",
           border: "1px solid #f0e0e0",
-          zIndex: 99999,
+          zIndex: 999999,
           overflow: "hidden",
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid #f0e0e0", background: "#FFF9F5" }}>
@@ -146,7 +130,8 @@ function NotificationBell() {
           <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
             {notifications.length === 0 ? (
               <div style={{ padding: "40px 20px", textAlign: "center", color: "#8a6b6b", fontSize: "13px" }}>
-                🔔 No notifications yet
+                <div style={{ fontSize: "40px", marginBottom: "10px" }}>🔔</div>
+                No notifications yet
               </div>
             ) : (
               notifications.map((n) => (
@@ -165,7 +150,7 @@ function NotificationBell() {
                     <span style={{ position: "absolute", top: "18px", right: "12px", width: "8px", height: "8px", background: "#dc2626", borderRadius: "50%" }} />
                   )}
                   <div style={{ fontSize: "13px", fontWeight: 600, color: "#2D1B1B", marginBottom: "2px", paddingRight: n.is_read ? 0 : "16px" }}>
-                    {n.title || "New Notification"}
+                    {n.title || n.message || "New Notification"}
                   </div>
                   <div style={{ fontSize: "12px", color: "#8a6b6b", marginBottom: "4px" }}>
                     {n.message || ""}
