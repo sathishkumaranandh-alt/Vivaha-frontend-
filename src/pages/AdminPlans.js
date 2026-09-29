@@ -15,6 +15,13 @@ const PERMISSION_FIELDS = [
   { key: "profile_boost", label: "Profile Boost Included", type: "bool" },
   { key: "contact_access", label: "View Contact Info", type: "bool" },
   { key: "priority_support", label: "Priority Support", type: "bool" },
+  { key: "see_dob", label: "See Date of Birth", type: "bool" },
+  { key: "see_horoscope", label: "See Horoscope Details", type: "bool" },
+  { key: "see_income", label: "See Income Details", type: "bool" },
+  { key: "interest_to_anyone", label: "Send Interest to Any Community", type: "bool" },
+  { key: "see_full_photo", label: "See Full Photos (No Blur)", type: "bool" },
+  { key: "request_photo", label: "Can Request to View Photos", type: "bool" },
+  { key: "can_view_paid_profiles", label: "Can View Paid Member Profiles", type: "bool" },
 ];
 
 const DEFAULT_PERMISSIONS = {
@@ -27,6 +34,13 @@ const DEFAULT_PERMISSIONS = {
   profile_boost: false,
   contact_access: false,
   priority_support: false,
+  see_dob: false,
+  see_horoscope: false,
+  see_income: false,
+  interest_to_anyone: false,
+  see_full_photo: false,
+  request_photo: true,
+  can_view_paid_profiles: false,
 };
 
 function AdminPlans() {
@@ -213,7 +227,6 @@ function AdminPlans() {
         </div>
       </div>
 
-      {/* CREATE NEW PLAN */}
       {showCreate && (
         <div style={S.card}>
           <h3 style={{ color: "#8B0A2E", marginTop: 0, marginBottom: "16px" }}>➕ New Plan</h3>
@@ -245,7 +258,6 @@ function AdminPlans() {
         </div>
       )}
 
-      {/* EXISTING PLANS */}
       {plans.map((plan) => {
         const isEditing = editingPlan?.id === plan.id;
         const perms = isEditing ? editingPlan.permissions : (plan.permissions || {});
