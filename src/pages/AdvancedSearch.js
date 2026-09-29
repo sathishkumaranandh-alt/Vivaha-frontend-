@@ -77,7 +77,7 @@ function AdvancedSearch() {
     layout: { display: isMobile ? "block" : "grid", gridTemplateColumns: isMobile ? undefined : "280px 1fr", gap: "24px" },
     sidebar: { background: "white", borderRadius: "14px", padding: "20px", border: "1px solid #f0e0e0", height: "fit-content", position: isMobile ? "static" : "sticky", top: "90px", marginBottom: isMobile ? "16px" : 0 },
     card: { background: "white", borderRadius: "14px", padding: "20px", border: "1px solid #f0e0e0" },
-    label: { display: "block", fontSize: "11px", fontWeight: 700, color: "#555", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.3px" },
+    label: { display: "block", fontSize: "11px", fontWeight: 700, color: "#555", marginBottom: "6px", textTransform: "uppercase" },
     input: { width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "13px", fontFamily: "inherit", outline: "none", background: "#FFF9F5", boxSizing: "border-box", marginBottom: "12px" },
     inputLocked: { width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "13px", fontFamily: "inherit", outline: "none", background: "#f9fafb", color: "#9ca3af", boxSizing: "border-box", marginBottom: "12px", cursor: "not-allowed" },
     premiumBadge: { background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", fontSize: "9px", padding: "2px 6px", borderRadius: "6px", fontWeight: 700, marginLeft: "6px" },
@@ -88,12 +88,14 @@ function AdvancedSearch() {
     upgradeBtn: { display: "inline-block", marginTop: "8px", background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "8px 16px", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "12px" },
     grid: { display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)", gap: isMobile ? "12px" : "16px" },
     card2: { background: "white", borderRadius: "14px", overflow: "hidden", border: "1px solid #f0e0e0", boxShadow: "0 4px 20px rgba(139,10,46,0.06)" },
-    cardPhoto: { height: isMobile ? "140px" : "180px", background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "50px", position: "relative" },
+    cardPhoto: { height: isMobile ? "140px" : "180px", background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "50px", position: "relative", overflow: "hidden" },
     cardBody: { padding: "12px 14px 14px" },
     cardName: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#8B0A2E", marginBottom: "3px" },
     cardMeta: { fontSize: "11px", color: "#8a6b6b", marginBottom: "4px", lineHeight: 1.4 },
     viewBtn: { display: "block", textAlign: "center", marginTop: "10px", background: "#8B0A2E", color: "white", padding: "8px", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "11px" },
-    badge: { position: "absolute", top: "8px", left: "8px", fontSize: "10px", fontWeight: 700, padding: "3px 8px", borderRadius: "8px", color: "white" },
+    badge: { position: "absolute", top: "8px", left: "8px", fontSize: "10px", fontWeight: 700, padding: "3px 8px", borderRadius: "8px", color: "white", zIndex: 3 },
+    blurOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.15)", zIndex: 2 },
+    blurBadge: { background: "white", padding: "5px 12px", borderRadius: "12px", fontSize: "10px", fontWeight: 700, color: "#8B0A2E", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" },
   };
 
   if (planLoading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading...</div>;
@@ -219,15 +221,43 @@ function AdvancedSearch() {
                 {results.map((u) => (
                   <div key={u.id} style={S.card2}>
                     <div style={S.cardPhoto}>
-                      {u.photo_url ? <img src={u.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "👤"}
-                      {u.is_boosted && <div style={{ ...S.badge, background: "#D4A017" }}>🚀 Boosted</div>}
-                      {!u.is_boosted && u.is_verified && <div style={{ ...S.badge, background: "#10B981" }}>✓ Verified</div>}
+                      {u.photo_url ? (
+                        <img
+                          src={u.photo_url}
+                          alt=""
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            filter: u.should_blur_photo ? "blur(15px)" : "none"
+                          }}
+                        />
+                      ) : ("👤")}
+
+                      {u.should_blur_photo && (
+                        <div style={S.blurOverlay}>
+                          <div style={S.blurBadge}>🔒 Protected</div>
+                        </div>
+                      )}
+
+                      {!u.should_blur_photo && (
+                        <>
+                          {u.is_boosted && <div style={{ ...S.badge, background: "#D4A017" }}>🚀 Boosted</div>}
+                          {!u.is_boosted && u.is_verified && <div style={{ ...S.badge, background: "#10B981" }}>✓ Verified</div>}
+                        </>
+                      )}
                     </div>
                     <div style={S.cardBody}>
                       <div style={S.cardName}>{u.name || "Anonymous"}</div>
-                      <div style={S.cardMeta}>{u.age ? `${u.age} yrs` : ""}{u.age && u.location ? " • " : ""}{u.location || ""}</div>
+                      <div style={S.cardMeta}>
+                        {u.age ? `${u.age} yrs` : ""}
+                        {u.age && u.location ? " • " : ""}
+                        {u.location || ""}
+                      </div>
                       <div style={S.cardMeta}>{u.education || ""}</div>
-                      <Link to={`/profile/${u.id}`} style={S.viewBtn}>View Profile</Link>
+                      <Link to={`/profile/${u.id}`} style={S.viewBtn}>
+                        {u.should_blur_photo ? "🔒 View Profile" : "View Profile"}
+                      </Link>
                     </div>
                   </div>
                 ))}
