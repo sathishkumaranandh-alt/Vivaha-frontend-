@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 
@@ -17,7 +17,7 @@ function PhotoRequests() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
@@ -32,9 +32,9 @@ function PhotoRequests() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
-  useEffect(() => { load(); }, [navigate]);
+  useEffect(() => { load(); }, [load]);
 
   const handleRespond = async (id, status) => {
     try {
