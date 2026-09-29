@@ -309,6 +309,7 @@ function AdminDashboard() {
                     <td style={S.td}>
                       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                         <button onClick={() => viewUser(u.id)} style={{ ...S.btn, background: "#eff6ff", color: "#1e40af" }}>👁️</button>
+        <Link to={`/admin-user-permissions/${u.id}`} style={{ ...S.btn, background: "#fef3c7", color: "#92400e", textDecoration: "none" }}>🔐</Link>
                         <button onClick={() => verify(u.id, u.is_verified)} style={{ ...S.btn, background: u.is_verified ? "#fef3c7" : "#dcfce7", color: u.is_verified ? "#92400e" : "#166534" }}>{u.is_verified ? "✖️" : "✔️"}</button>
                         {u.is_suspended ? (
                           <button onClick={() => unsuspend(u.id)} style={{ ...S.btn, background: "#dcfce7", color: "#166534" }}>✅</button>
