@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { useCommunities } from "../utils/communities";
+import ProfileCard from "../components/ProfileCard";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -254,7 +255,7 @@ function Home() {
       boxShadow: "0 4px 14px rgba(139,10,46,0.3)",
       display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
     },
-    section: { maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "40px 16px" : "60px 32px", width: "100%", boxSizing: "border-box" },
+    section: { maxWidth: "1300px", margin: "0 auto", padding: isMobile ? "40px 16px" : "60px 32px", width: "100%", boxSizing: "border-box" },
     sectionHead: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "28px" },
     sectionTitle: {
       fontFamily: "'Playfair Display', serif",
@@ -263,64 +264,8 @@ function Home() {
     viewAll: { color: "#8B0A2E", fontSize: "13px", fontWeight: 600, textDecoration: "none" },
     grid: {
       display: "grid",
-      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
-      gap: isMobile ? "12px" : "20px",
-    },
-    fcard: {
-      background: "white", borderRadius: "16px", overflow: "hidden",
-      boxShadow: "0 4px 20px rgba(139,10,46,0.06)",
-      border: "1px solid #f0e0e0", position: "relative",
-    },
-    fcardPhoto: {
-      height: isMobile ? "150px" : "200px",
-      background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: isMobile ? "50px" : "60px", position: "relative", overflow: "hidden",
-    },
-    heartIcon: {
-      position: "absolute", top: "10px", right: "10px", background: "white",
-      borderRadius: "50%", width: "30px", height: "30px",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: "16px", color: "#8B0A2E", border: "none", cursor: "pointer",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.1)", zIndex: 2,
-    },
-    verifiedBadge: {
-      position: "absolute", top: "10px", left: "10px", background: "#10B981",
-      color: "white", fontSize: "10px", fontWeight: 700, padding: "3px 9px",
-      borderRadius: "10px", zIndex: 2,
-    },
-    boostedBadge: {
-      position: "absolute", top: "10px", left: "10px",
-      background: "linear-gradient(135deg, #D4A017, #b8860b)",
-      color: "white", fontSize: "10px", fontWeight: 700, padding: "3px 9px",
-      borderRadius: "10px", zIndex: 2,
-      boxShadow: "0 2px 8px rgba(212,160,23,0.4)",
-    },
-    blurOverlay: {
-      position: "absolute", inset: 0, display: "flex",
-      alignItems: "center", justifyContent: "center",
-      background: "rgba(0,0,0,0.15)", zIndex: 2,
-    },
-    blurBadge: {
-      background: "white", padding: "6px 12px", borderRadius: "14px",
-      fontSize: "10px", fontWeight: 700, color: "#8B0A2E",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-    },
-    fcardBody: { padding: "14px 16px 16px" },
-    fcardName: {
-      fontFamily: "'Playfair Display', serif", fontSize: "17px",
-      fontWeight: 700, color: "#8B0A2E", marginBottom: "4px",
-    },
-    fcardMeta: { fontSize: "11px", color: "#8a6b6b", marginBottom: "6px", lineHeight: 1.4 },
-    fcardTag: {
-      display: "inline-block", background: "#FDF2F6", color: "#8B0A2E",
-      padding: "3px 9px", borderRadius: "8px", fontSize: "10px",
-      fontWeight: 600, margin: "2px 2px 2px 0",
-    },
-    fcardBtn: {
-      display: "block", textAlign: "center", marginTop: "12px",
-      background: "#8B0A2E", color: "white", padding: "9px",
-      borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "12px",
+      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(240px, 1fr))",
+      gap: isMobile ? "14px" : "20px",
     },
     bannerSection: {
       background: "linear-gradient(135deg, #FDF2F6 0%, #FFF9F5 100%)",
@@ -342,6 +287,29 @@ function Home() {
       borderRadius: "10px", textDecoration: "none", fontWeight: 700,
       fontSize: "15px", display: "inline-block",
       boxShadow: "0 4px 14px rgba(139,10,46,0.3)",
+    },
+    storyCard: {
+      background: "white", borderRadius: "20px", overflow: "hidden",
+      border: "1px solid #f0e0e0", boxShadow: "0 8px 24px rgba(139,10,46,0.08)",
+    },
+    storyPhoto: {
+      width: "100%", aspectRatio: "4/5",
+      background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: "60px", overflow: "hidden",
+    },
+    storyBody: { padding: "14px 16px 16px" },
+    storyName: {
+      fontFamily: "'Playfair Display', serif", fontSize: "17px",
+      fontWeight: 700, color: "#8B0A2E", marginBottom: "6px",
+    },
+    storyText: { fontSize: "12px", color: "#8a6b6b", marginBottom: "12px", lineHeight: 1.6 },
+    storyBtn: {
+      display: "block", textAlign: "center",
+      background: "linear-gradient(135deg, #8B0A2E, #a01438)",
+      color: "white", padding: "10px", borderRadius: "10px",
+      textDecoration: "none", fontWeight: 700, fontSize: "12px",
+      boxShadow: "0 4px 14px rgba(139,10,46,0.28)",
     },
   };
 
@@ -432,61 +400,7 @@ function Home() {
         ) : (
           <div style={S.grid}>
             {featured.map((user) => (
-              <div key={user.id} style={S.fcard}>
-                <div style={S.fcardPhoto}>
-                  {user.photo_url ? (
-                    <img
-                      src={user.photo_url}
-                      alt=""
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        filter: user.should_blur_photo ? "blur(15px)" : "none"
-                      }}
-                    />
-                  ) : ("👤")}
-
-                  {user.should_blur_photo && (
-                    <div style={S.blurOverlay}>
-                      <div style={S.blurBadge}>🔒 Protected</div>
-                    </div>
-                  )}
-
-                  {!user.should_blur_photo && (
-                    <>
-                      {user.is_boosted ? (
-                        <div style={S.boostedBadge}>🚀 Boosted</div>
-                      ) : (
-                        user.is_verified && <div style={S.verifiedBadge}>✓ Verified</div>
-                      )}
-                      {user.is_boosted && user.is_verified && (
-                        <div style={{ ...S.verifiedBadge, top: "36px" }}>✓ Verified</div>
-                      )}
-                    </>
-                  )}
-
-                  <button style={S.heartIcon} title="Shortlist">♡</button>
-                </div>
-                <div style={S.fcardBody}>
-                  <div style={S.fcardName}>{user.name || "Anonymous"}</div>
-                  <div style={S.fcardMeta}>
-                    {user.age ? `${user.age} yrs` : ""}
-                    {user.age && user.height ? " • " : ""}
-                    {user.height || ""}
-                  </div>
-                  <div style={S.fcardMeta}>{user.education || ""}</div>
-                  <div style={S.fcardMeta}>{user.location || ""}</div>
-                  {user.community && (
-                    <span style={S.fcardTag}>
-                      {user.community.charAt(0).toUpperCase() + user.community.slice(1)}
-                    </span>
-                  )}
-                  <Link to={`/profile/${user.id}`} style={S.fcardBtn}>
-                    {user.should_blur_photo ? "🔒 View Profile" : "View Profile"}
-                  </Link>
-                </div>
-              </div>
+              <ProfileCard key={user.id} user={user} isMobile={isMobile} />
             ))}
           </div>
         )}
@@ -501,18 +415,18 @@ function Home() {
           </div>
           <div style={S.grid}>
             {stories.map((story) => (
-              <div key={story.id} style={S.fcard}>
-                <div style={S.fcardPhoto}>
+              <div key={story.id} style={S.storyCard}>
+                <div style={S.storyPhoto}>
                   {story.photo_url ? (
                     <img src={story.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : ("💑")}
                 </div>
-                <div style={S.fcardBody}>
-                  <div style={S.fcardName}>{story.couple_names || "Happy Couple"}</div>
-                  <div style={{ fontSize: "12px", color: "#8a6b6b", marginBottom: "10px", lineHeight: 1.5 }}>
+                <div style={S.storyBody}>
+                  <div style={S.storyName}>{story.couple_names || "Happy Couple"}</div>
+                  <div style={S.storyText}>
                     {story.story ? (story.story.length > 100 ? story.story.substring(0, 100) + "..." : story.story) : "Found their perfect match!"}
                   </div>
-                  <Link to="/success-stories" style={S.fcardBtn}>Read More</Link>
+                  <Link to="/success-stories" style={S.storyBtn}>Read More</Link>
                 </div>
               </div>
             ))}
