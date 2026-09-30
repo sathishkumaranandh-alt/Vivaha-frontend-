@@ -10,12 +10,7 @@ function Dashboard() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [plan, setPlan] = useState("free");
-  const [counts, setCounts] = useState({
-    matches: 0,
-    interests: 0,
-    shortlisted: 0,
-    messages: 0,
-  });
+  const [counts, setCounts] = useState({ matches: 0, interests: 0, shortlisted: 0, messages: 0 });
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
@@ -31,22 +26,15 @@ function Dashboard() {
       try {
         setLoading(true);
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          navigate("/login");
-          return;
-        }
+        if (!user) { navigate("/login"); return; }
         setUser(user);
 
-        // Load my profile
         const profileRes = await fetch(`${BACKEND_URL}/profile/${user.id}?viewerId=${user.id}`);
-        let myProfile = null;
         if (profileRes.ok) {
           const data = await profileRes.json();
-          myProfile = data.profile;
-          setProfile(myProfile);
+          setProfile(data.profile);
         }
 
-        // Load counts in parallel
         const [intRes, shortRes, msgRes, matchRes] = await Promise.all([
           fetch(`${BACKEND_URL}/interests/received/${user.id}?status=pending`),
           fetch(`${BACKEND_URL}/interests/shortlisted/${user.id}`),
@@ -61,12 +49,18 @@ function Dashboard() {
         if (matchRes.ok) newCounts.matches = (await matchRes.json()).total || 0;
         setCounts(newCounts);
 
-        // ⭐ SMART RECOMMENDATIONS (Using new premium endpoint)
-        const recRes = await fetch(`${BACKEND_URL}/premium/recommendations/${user.id}`);
+        // Smart recommendations
+        const recRes = await fetch(`${BACKEND_URL}/profile/recommendations/${user.id}`);
         if (recRes.ok) {
           const data = await recRes.json();
           setRecent((data.recommendations || []).slice(0, 3));
-          setPlan(data.plan || "free");
+        }
+
+        // Plan
+        const planRes = await fetch(`${BACKEND_URL}/plans/user-plan/${user.id}`);
+        if (planRes.ok) {
+          const data = await planRes.json();
+          setPlan((data.plan || "Free").toLowerCase());
         }
       } catch (err) {
         console.error("Dashboard load error:", err);
@@ -96,248 +90,71 @@ function Dashboard() {
   const S = {
     page: { background: "#FFF9F5", minHeight: "calc(100vh - 70px)" },
     layout: {
-      maxWidth: "1200px",
-      margin: "0 auto",
+      maxWidth: "1200px", margin: "0 auto",
       padding: isMobile ? "16px" : "28px 32px 60px",
       display: isMobile ? "block" : "grid",
-      gridTemplateColumns: isMobile ? undefined : "240px 1fr",
-      gap: "24px",
-      alignItems: "start",
+      gridTemplateColumns: isMobile ? undefined : "240px 1fr", gap: "24px", alignItems: "start",
     },
     sidebar: {
-      background: "white",
-      borderRadius: "14px",
-      padding: "16px",
-      boxShadow: "0 2px 12px rgba(139,10,46,0.05)",
-      border: "1px solid #f0e0e0",
-      position: isMobile ? "static" : "sticky",
-      top: "90px",
-      marginBottom: isMobile ? "16px" : 0,
+      background: "white", borderRadius: "14px", padding: "16px",
+      boxShadow: "0 2px 12px rgba(139,10,46,0.05)", border: "1px solid #f0e0e0",
+      position: isMobile ? "static" : "sticky", top: "90px", marginBottom: isMobile ? "16px" : 0,
     },
-    navItem: {
-      display: "flex",
-      alignItems: "center",
-      gap: "12px",
-      padding: "11px 14px",
-      borderRadius: "10px",
-      color: "#8a6b6b",
-      textDecoration: "none",
-      fontSize: "13px",
-      fontWeight: 600,
-      marginBottom: "2px",
-      cursor: "pointer",
-    },
-    navItemActive: {
-      display: "flex",
-      alignItems: "center",
-      gap: "12px",
-      padding: "11px 14px",
-      borderRadius: "10px",
-      background: "#8B0A2E",
-      color: "white",
-      fontSize: "13px",
-      fontWeight: 600,
-      marginBottom: "2px",
-      cursor: "pointer",
-    },
-    badgeDot: {
-      marginLeft: "auto",
-      background: "#D4A017",
-      color: "#8B0A2E",
-      fontSize: "10px",
-      padding: "2px 7px",
-      borderRadius: "10px",
-      fontWeight: 700,
-    },
+    navItem: { display: "flex", alignItems: "center", gap: "12px", padding: "11px 14px", borderRadius: "10px", color: "#8a6b6b", textDecoration: "none", fontSize: "13px", fontWeight: 600, marginBottom: "2px", cursor: "pointer" },
+    navItemActive: { display: "flex", alignItems: "center", gap: "12px", padding: "11px 14px", borderRadius: "10px", background: "#8B0A2E", color: "white", fontSize: "13px", fontWeight: 600, marginBottom: "2px", cursor: "pointer" },
+    badgeDot: { marginLeft: "auto", background: "#D4A017", color: "#8B0A2E", fontSize: "10px", padding: "2px 7px", borderRadius: "10px", fontWeight: 700 },
     header: { marginBottom: "20px" },
-    h1: {
-      fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "22px" : "26px",
-      fontWeight: 700,
-      color: "#8B0A2E",
-      marginBottom: "4px",
-    },
+    h1: { fontFamily: "'Playfair Display', serif", fontSize: isMobile ? "22px" : "26px", fontWeight: 700, color: "#8B0A2E", marginBottom: "4px" },
     sub: { color: "#8a6b6b", fontSize: "13px", margin: 0 },
-    completionCard: {
-      background: "linear-gradient(135deg, #8B0A2E, #a01438)",
-      color: "white",
-      borderRadius: "16px",
-      padding: isMobile ? "16px" : "20px 24px",
-      display: "flex",
-      alignItems: "center",
-      gap: "20px",
-      marginBottom: "24px",
-      flexWrap: "wrap",
-    },
-    completionRing: {
-      width: "70px",
-      height: "70px",
-      borderRadius: "50%",
-      background: `conic-gradient(#D4A017 0% ${completion}%, rgba(255,255,255,0.15) ${completion}% 100%)`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      position: "relative",
-      flexShrink: 0,
-    },
-    completionRingInner: {
-      position: "absolute",
-      inset: "6px",
-      background: "#8B0A2E",
-      borderRadius: "50%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "white",
-      fontWeight: 800,
-      fontSize: "16px",
-    },
+    completionCard: { background: "linear-gradient(135deg, #8B0A2E, #a01438)", color: "white", borderRadius: "16px", padding: isMobile ? "16px" : "20px 24px", display: "flex", alignItems: "center", gap: "20px", marginBottom: "24px", flexWrap: "wrap" },
+    completionRing: { width: "70px", height: "70px", borderRadius: "50%", background: `conic-gradient(#D4A017 0% ${completion}%, rgba(255,255,255,0.15) ${completion}% 100%)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", flexShrink: 0 },
+    completionRingInner: { position: "absolute", inset: "6px", background: "#8B0A2E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 800, fontSize: "16px" },
     completionText: { flex: 1, minWidth: "160px" },
-    completeBtn: {
-      background: "#D4A017",
-      color: "#8B0A2E",
-      padding: "10px 20px",
-      borderRadius: "8px",
-      border: "none",
-      fontWeight: 700,
-      fontSize: "12px",
-      cursor: "pointer",
-      fontFamily: "inherit",
-      textDecoration: "none",
-      display: "inline-block",
-    },
-    statsGrid: {
-      display: "grid",
-      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
-      gap: isMobile ? "10px" : "16px",
-      marginBottom: "24px",
-    },
-    statCard: {
-      background: "white",
-      borderRadius: "12px",
-      padding: isMobile ? "14px" : "18px",
-      border: "1px solid #f0e0e0",
-    },
-    statTop: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-      marginBottom: "10px",
-    },
-    statValue: {
-      fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "26px" : "32px",
-      fontWeight: 700,
-      color: "#8B0A2E",
-      lineHeight: 1,
-      marginBottom: "4px",
-    },
+    completeBtn: { background: "#D4A017", color: "#8B0A2E", padding: "10px 20px", borderRadius: "8px", border: "none", fontWeight: 700, fontSize: "12px", cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-block" },
+    statsGrid: { display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: isMobile ? "10px" : "16px", marginBottom: "24px" },
+    statCard: { background: "white", borderRadius: "12px", padding: isMobile ? "14px" : "18px", border: "1px solid #f0e0e0" },
+    statTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" },
+    statValue: { fontFamily: "'Playfair Display', serif", fontSize: isMobile ? "26px" : "32px", fontWeight: 700, color: "#8B0A2E", lineHeight: 1, marginBottom: "4px" },
     statLabel: { fontSize: "11px", color: "#8a6b6b", fontWeight: 500 },
-    sectionHead: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "baseline",
-      marginBottom: "14px",
-    },
-    rvGrid: {
-      display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
-      gap: "16px",
-    },
-    rvCard: {
-      background: "white",
-      borderRadius: "14px",
-      padding: "16px",
-      border: "1px solid #f0e0e0",
-      display: "flex",
-      gap: "12px",
-      alignItems: "center",
-    },
-    rvPhoto: {
-      width: "60px",
-      height: "60px",
-      borderRadius: "50%",
-      background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "26px",
-      flexShrink: 0,
-      overflow: "hidden",
-    },
-    rvName: {
-      fontSize: "14px",
-      fontWeight: 700,
-      color: "#8B0A2E",
-      marginBottom: "2px",
-    },
+    sectionHead: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "14px" },
+    rvGrid: { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: "16px" },
+    rvCard: { background: "white", borderRadius: "14px", padding: "16px", border: "1px solid #f0e0e0", display: "flex", gap: "12px", alignItems: "center" },
+    rvPhoto: { width: "60px", height: "60px", borderRadius: "50%", background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", flexShrink: 0, overflow: "hidden" },
+    rvName: { fontSize: "14px", fontWeight: 700, color: "#8B0A2E", marginBottom: "2px" },
     rvMeta: { fontSize: "11px", color: "#8a6b6b", marginBottom: "8px" },
-    rvBtn: {
-      background: "#8B0A2E",
-      color: "white",
-      border: "none",
-      padding: "5px 12px",
-      borderRadius: "6px",
-      fontSize: "10px",
-      fontWeight: 600,
-      cursor: "pointer",
-      textDecoration: "none",
-      display: "inline-block",
-      fontFamily: "inherit",
-    },
-    quote: {
-      background: "linear-gradient(135deg, #FDF2F6, #FFF9F5)",
-      border: "1px solid #f0e0e0",
-      borderRadius: "14px",
-      padding: isMobile ? "20px" : "28px 32px",
-      marginTop: "24px",
-      display: "flex",
-      alignItems: "center",
-      gap: "20px",
-    },
+    rvBtn: { background: "#8B0A2E", color: "white", border: "none", padding: "5px 12px", borderRadius: "6px", fontSize: "10px", fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-block", fontFamily: "inherit" },
+    quote: { background: "linear-gradient(135deg, #FDF2F6, #FFF9F5)", border: "1px solid #f0e0e0", borderRadius: "14px", padding: isMobile ? "20px" : "28px 32px", marginTop: "24px", display: "flex", alignItems: "center", gap: "20px" },
   };
-
-  const isFree = plan === "free";
 
   return (
     <div style={S.page}>
       <div style={S.layout}>
-        {/* SIDEBAR */}
         <aside style={S.sidebar}>
           <div style={S.navItemActive}>🏠 Dashboard</div>
           <Link to={`/profile`} style={S.navItem}>👤 My Profile</Link>
           <Link to="/matches" style={S.navItem}>💕 My Matches</Link>
-          <Link to="/recommendations" style={S.navItem}>⭐ Recommended</Link>
-          <Link to="/advanced-search" style={S.navItem}>🔍 Advanced Search</Link>
-          <Link to="/interests?tab=shortlisted" style={S.navItem}>♡ Shortlisted</Link>
+          <Link to="/interests?tab=shortlisted" style={S.navItem}>♡ Shortlisted Profiles</Link>
           <Link to="/interests?tab=received" style={S.navItem}>💌 Interests Received</Link>
           <Link to="/interests?tab=sent" style={S.navItem}>📤 Interests Sent</Link>
           <Link to="/messages" style={S.navItem}>
             💬 Messages
-            {counts.messages > 0 && (<span style={S.badgeDot}>{counts.messages}</span>)}
+            {counts.messages > 0 && <span style={S.badgeDot}>{counts.messages}</span>}
           </Link>
           <Link to="/visitors" style={S.navItem}>👀 Who Viewed Me</Link>
-          <Link to="/boost" style={S.navItem}>🚀 Boost</Link>
           <Link to="/settings" style={S.navItem}>⚙️ Settings</Link>
         </aside>
 
-        {/* MAIN */}
         <main>
           <div style={S.header}>
             <h1 style={S.h1}>My Dashboard</h1>
             <p style={S.sub}>
               Welcome back, {profile?.name || user?.email?.split("@")[0] || "there"}!{" "}
-              <span style={{
-                background: plan === "platinum" ? "#fce7f3" : plan === "gold" ? "#fef3c7" : "#f3f4f6",
-                color: plan === "platinum" ? "#9f1239" : plan === "gold" ? "#92400e" : "#4b5563",
-                padding: "2px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: 700, marginLeft: "6px", textTransform: "capitalize"
-              }}>
+              <span style={{ background: plan === "platinum" ? "#fce7f3" : plan === "gold" ? "#fef3c7" : "#f3f4f6", color: plan === "platinum" ? "#9f1239" : plan === "gold" ? "#92400e" : "#4b5563", padding: "2px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: 700, marginLeft: "6px", textTransform: "capitalize" }}>
                 {plan === "platinum" ? "💎" : plan === "gold" ? "🥇" : "👤"} {plan}
               </span>
             </p>
           </div>
 
-          {/* Completion */}
           <div style={S.completionCard}>
             <div style={S.completionRing}>
               <div style={S.completionRingInner}>{completion}%</div>
@@ -353,7 +170,6 @@ function Dashboard() {
             </Link>
           </div>
 
-          {/* Stats */}
           <div style={S.statsGrid}>
             <div style={S.statCard}>
               <div style={S.statTop}>
@@ -389,14 +205,9 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Recommendations */}
           <div style={S.sectionHead}>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", color: "#8B0A2E", margin: 0 }}>
-              Recommended for You
-            </h2>
-            <Link to="/recommendations" style={{ color: "#8B0A2E", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
-              View All →
-            </Link>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", color: "#8B0A2E", margin: 0 }}>Recommended for You</h2>
+            <Link to="/recommendations" style={{ color: "#8B0A2E", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>View All →</Link>
           </div>
 
           <div style={S.rvGrid}>
@@ -412,38 +223,32 @@ function Dashboard() {
             ) : (
               recent.map((u) => (
                 <div key={u.id} style={S.rvCard}>
-                  <div style={S.rvPhoto}>
+                  <div style={{ ...S.rvPhoto, position: "relative" }}>
                     {u.photo_url ? (
-                      <img src={u.photo_url} alt={u.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img
+                        src={u.photo_url}
+                        alt={u.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", filter: u.should_blur_photo ? "blur(12px)" : "none" }}
+                      />
                     ) : ("👤")}
+                    {u.should_blur_photo && (
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", fontSize: "16px" }}>🔒</div>
+                    )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={S.rvName}>{u.name || "Anonymous"}</div>
                     <div style={S.rvMeta}>
-                      {u.age ? `${u.age} yrs` : ""}
-                      {u.age && u.location ? " • " : ""}
-                      {u.location || ""}
+                      {u.age ? `${u.age} yrs` : ""}{u.age && u.location ? " • " : ""}{u.location || ""}
                     </div>
-                    <Link to={`/profile/${u.id}`} style={S.rvBtn}>View Profile</Link>
+                    <Link to={`/profile/${u.id}`} style={S.rvBtn}>
+                      {u.should_blur_photo ? "🔒 View Profile" : "View Profile"}
+                    </Link>
                   </div>
                 </div>
               ))
             )}
           </div>
 
-          {/* Upgrade hint for free users */}
-          {isFree && recent.length > 0 && (
-            <div style={{ marginTop: "20px", background: "linear-gradient(135deg, #FDF2F6, #FFF9F5)", border: "1px solid #f0e0e0", borderRadius: "14px", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-              <div style={{ fontSize: "13px", color: "#8a6b6b" }}>
-                🔒 You are seeing <strong>3 of your 5</strong> daily recommendations. Upgrade for more!
-              </div>
-              <Link to="/subscription" style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "10px 20px", borderRadius: "10px", textDecoration: "none", fontWeight: 700, fontSize: "13px" }}>
-                ⭐ Upgrade
-              </Link>
-            </div>
-          )}
-
-          {/* Quote */}
           <div style={S.quote}>
             <div style={{ fontSize: "32px" }}>💑</div>
             <p style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: isMobile ? "14px" : "16px", color: "#8B0A2E", lineHeight: 1.5, margin: 0 }}>
@@ -457,13 +262,9 @@ function Dashboard() {
 }
 
 const spinnerStyle = {
-  width: "40px",
-  height: "40px",
-  border: "4px solid #f0e0e0",
-  borderTop: "4px solid #8B0A2E",
-  borderRadius: "50%",
-  animation: "spin 1s linear infinite",
-  margin: "0 auto",
+  width: "40px", height: "40px", border: "4px solid #f0e0e0",
+  borderTop: "4px solid #8B0A2E", borderRadius: "50%",
+  animation: "spin 1s linear infinite", margin: "0 auto",
 };
 
 export default Dashboard;
