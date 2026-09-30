@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useCommunities } from "../utils/communities";
 import { toast } from "../utils/toast";
 import usePlan from "../utils/usePlan";
+import ProfileCard from "../components/ProfileCard";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
@@ -70,7 +71,7 @@ function AdvancedSearch() {
   };
 
   const S = {
-    page: { maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "16px" : "32px" },
+    page: { maxWidth: "1300px", margin: "0 auto", padding: isMobile ? "16px" : "32px" },
     header: { marginBottom: "20px" },
     h1: { fontFamily: "'Playfair Display', serif", fontSize: isMobile ? "22px" : "28px", color: "#8B0A2E", marginBottom: "4px" },
     sub: { color: "#8a6b6b", fontSize: "13px", margin: 0 },
@@ -86,16 +87,11 @@ function AdvancedSearch() {
     searchBtn: { width: "100%", background: "#8B0A2E", color: "white", border: "none", padding: "14px", borderRadius: "10px", fontWeight: 700, fontSize: "14px", cursor: "pointer", fontFamily: "inherit", marginTop: "8px" },
     upgradeBanner: { background: "linear-gradient(135deg, #FDF2F6, #FFF9F5)", border: "1px solid #f0e0e0", borderRadius: "12px", padding: "14px", marginBottom: "16px", fontSize: "12px", color: "#8a6b6b", lineHeight: 1.5 },
     upgradeBtn: { display: "inline-block", marginTop: "8px", background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "8px 16px", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "12px" },
-    grid: { display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)", gap: isMobile ? "12px" : "16px" },
-    card2: { background: "white", borderRadius: "14px", overflow: "hidden", border: "1px solid #f0e0e0", boxShadow: "0 4px 20px rgba(139,10,46,0.06)" },
-    cardPhoto: { height: isMobile ? "140px" : "180px", background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "50px", position: "relative", overflow: "hidden" },
-    cardBody: { padding: "12px 14px 14px" },
-    cardName: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#8B0A2E", marginBottom: "3px" },
-    cardMeta: { fontSize: "11px", color: "#8a6b6b", marginBottom: "4px", lineHeight: 1.4 },
-    viewBtn: { display: "block", textAlign: "center", marginTop: "10px", background: "#8B0A2E", color: "white", padding: "8px", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "11px" },
-    badge: { position: "absolute", top: "8px", left: "8px", fontSize: "10px", fontWeight: 700, padding: "3px 8px", borderRadius: "8px", color: "white", zIndex: 3 },
-    blurOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.15)", zIndex: 2 },
-    blurBadge: { background: "white", padding: "5px 12px", borderRadius: "12px", fontSize: "10px", fontWeight: 700, color: "#8B0A2E", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" },
+    grid: {
+      display: "grid",
+      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(240px, 1fr))",
+      gap: isMobile ? "14px" : "20px",
+    },
   };
 
   if (planLoading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading...</div>;
@@ -219,47 +215,7 @@ function AdvancedSearch() {
               </div>
               <div style={S.grid}>
                 {results.map((u) => (
-                  <div key={u.id} style={S.card2}>
-                    <div style={S.cardPhoto}>
-                      {u.photo_url ? (
-                        <img
-                          src={u.photo_url}
-                          alt=""
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            filter: u.should_blur_photo ? "blur(15px)" : "none"
-                          }}
-                        />
-                      ) : ("👤")}
-
-                      {u.should_blur_photo && (
-                        <div style={S.blurOverlay}>
-                          <div style={S.blurBadge}>🔒 Protected</div>
-                        </div>
-                      )}
-
-                      {!u.should_blur_photo && (
-                        <>
-                          {u.is_boosted && <div style={{ ...S.badge, background: "#D4A017" }}>🚀 Boosted</div>}
-                          {!u.is_boosted && u.is_verified && <div style={{ ...S.badge, background: "#10B981" }}>✓ Verified</div>}
-                        </>
-                      )}
-                    </div>
-                    <div style={S.cardBody}>
-                      <div style={S.cardName}>{u.name || "Anonymous"}</div>
-                      <div style={S.cardMeta}>
-                        {u.age ? `${u.age} yrs` : ""}
-                        {u.age && u.location ? " • " : ""}
-                        {u.location || ""}
-                      </div>
-                      <div style={S.cardMeta}>{u.education || ""}</div>
-                      <Link to={`/profile/${u.id}`} style={S.viewBtn}>
-                        {u.should_blur_photo ? "🔒 View Profile" : "View Profile"}
-                      </Link>
-                    </div>
-                  </div>
+                  <ProfileCard key={u.id} user={u} isMobile={isMobile} />
                 ))}
               </div>
             </>
