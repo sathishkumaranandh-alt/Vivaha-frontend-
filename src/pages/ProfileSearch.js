@@ -29,21 +29,13 @@ function ProfileSearch() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
-  // Load user's own community to use as default
   useEffect(() => {
     async function loadMyCommunity() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      const { data } = await supabase
-        .from("users")
-        .select("community")
-        .eq("id", user.id)
-        .single();
-
+      const { data } = await supabase.from("users").select("community").eq("id", user.id).single();
       if (data?.community) {
         setMyCommunity(data.community);
-        // If no community was passed in URL, default to user's community
         if (!searchParams.get("community")) {
           setFilters((prev) => ({ ...prev, community: data.community }));
         }
@@ -81,9 +73,7 @@ function ProfileSearch() {
     }
   }, [filters, showAllCommunities]);
 
-  useEffect(() => {
-    loadProfiles();
-  }, [loadProfiles]);
+  useEffect(() => { loadProfiles(); }, [loadProfiles]);
 
   const handleCommunityChange = (value) => {
     setFilters({ ...filters, community: value });
@@ -93,11 +83,8 @@ function ProfileSearch() {
   const toggleAllCommunities = () => {
     const newVal = !showAllCommunities;
     setShowAllCommunities(newVal);
-    if (newVal) {
-      setFilters({ ...filters, community: "" });
-    } else if (myCommunity) {
-      setFilters({ ...filters, community: myCommunity });
-    }
+    if (newVal) setFilters({ ...filters, community: "" });
+    else if (myCommunity) setFilters({ ...filters, community: myCommunity });
   };
 
   const S = {
@@ -122,6 +109,7 @@ function ProfileSearch() {
     blurOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.15)", zIndex: 2 },
     blurBadge: { background: "white", padding: "5px 12px", borderRadius: "12px", fontSize: "10px", fontWeight: 700, color: "#8B0A2E", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" },
     notice: { background: "#FDF2F6", border: "1px solid #f0e0e0", borderRadius: "10px", padding: "10px 12px", fontSize: "11px", color: "#8a6b6b", marginBottom: "12px", lineHeight: 1.5 },
+    upgradeLink: { display: "inline-block", background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "3px 8px", borderRadius: "6px", textDecoration: "none", fontWeight: 700, fontSize: "10px", marginTop: "2px" },
   };
 
   return (
@@ -154,9 +142,7 @@ function ProfileSearch() {
           <input style={S.input} placeholder="City" value={filters.location} onChange={(e) => setFilters({ ...filters, location: e.target.value })} />
 
           {myCommunity && (
-            <div style={S.notice}>
-              🏷️ Your community: <strong style={{ textTransform: "capitalize" }}>{myCommunity}</strong>
-            </div>
+            <div style={S.notice}>🏷️ Your community: <strong style={{ textTransform: "capitalize" }}>{myCommunity}</strong></div>
           )}
 
           <label style={S.label}>Community</label>
@@ -168,12 +154,7 @@ function ProfileSearch() {
           </select>
 
           <label style={S.checkboxRow}>
-            <input
-              type="checkbox"
-              checked={showAllCommunities}
-              onChange={toggleAllCommunities}
-              style={{ width: 16, height: 16, accentColor: "#8B0A2E" }}
-            />
+            <input type="checkbox" checked={showAllCommunities} onChange={toggleAllCommunities} style={{ width: 16, height: 16, accentColor: "#8B0A2E" }} />
             Show all communities
           </label>
 
@@ -242,6 +223,11 @@ function ProfileSearch() {
                           <span style={{ background: "#FDF2F6", color: "#8B0A2E", padding: "2px 8px", borderRadius: "8px", fontWeight: 600, textTransform: "capitalize", fontSize: "10px" }}>
                             {u.community}
                           </span>
+                        </div>
+                      )}
+                      {u.contact_masked && (
+                        <div style={{ marginTop: "6px" }}>
+                          <Link to="/subscription" style={S.upgradeLink}>⭐ Upgrade to view contact</Link>
                         </div>
                       )}
                       <Link to={`/profile/${u.id}`} style={S.viewBtn}>
