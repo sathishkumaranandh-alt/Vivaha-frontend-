@@ -110,6 +110,7 @@ function ProfileSearch() {
     blurBadge: { background: "white", padding: "5px 12px", borderRadius: "12px", fontSize: "10px", fontWeight: 700, color: "#8B0A2E", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" },
     notice: { background: "#FDF2F6", border: "1px solid #f0e0e0", borderRadius: "10px", padding: "10px 12px", fontSize: "11px", color: "#8a6b6b", marginBottom: "12px", lineHeight: 1.5 },
     upgradeLink: { display: "inline-block", background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "3px 8px", borderRadius: "6px", textDecoration: "none", fontWeight: 700, fontSize: "10px", marginTop: "2px" },
+    contactHidden: { display: "inline-block", color: "#8a6b6b", fontSize: "10px", fontWeight: 600, marginTop: "2px" },
   };
 
   return (
@@ -227,7 +228,11 @@ function ProfileSearch() {
                       )}
                       {u.contact_masked && (
                         <div style={{ marginTop: "6px" }}>
-                          <Link to="/subscription" style={S.upgradeLink}>⭐ Upgrade to view contact</Link>
+                          {u.contact_locked_reason === "owner_privacy" ? (
+                            <span style={S.contactHidden}>🔒 Contact hidden by user</span>
+                          ) : (
+                            <Link to="/subscription" style={S.upgradeLink}>⭐ Upgrade to view contact</Link>
+                          )}
                         </div>
                       )}
                       <Link to={`/profile/${u.id}`} style={S.viewBtn}>
