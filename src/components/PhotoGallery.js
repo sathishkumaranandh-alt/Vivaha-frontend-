@@ -6,7 +6,7 @@ import usePlan from "../utils/usePlan";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
-function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhotoUrl, shouldBlur = false }) {
+function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhotoUrl, shouldBlur = false, hideRequest = false }) {
   const { permissions } = usePlan();
   const MAX_PHOTOS = permissions.max_photos || 3;
 
@@ -46,7 +46,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
 
       if (userId) fetchPhotos();
 
-      // Load admin privacy controls
       try {
         const r = await fetch(`${BACKEND_URL}/settings`);
         if (r.ok) {
@@ -104,11 +103,8 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
       for (const file of files) {
         const fileExt = file.name.split(".").pop();
         const fileName = `${userId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-
         const { error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(fileName, file, { cacheControl: "3600", upsert: true });
-
+          .from("avatars").upload(fileName, file, { cacheControl: "3600", upsert: true });
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(fileName);
@@ -124,13 +120,11 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
             is_private: isPrivate,
           }),
         });
-
         if (!res.ok) {
           const errData = await res.json();
           throw new Error(errData.error || "Failed to save photo");
         }
       }
-
       await fetchPhotos();
       setActiveIndex(0);
       toast.success("Photo(s) uploaded!");
@@ -159,9 +153,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
         }
         toast.success("Photo deleted!");
       }
-    } catch {
-      toast.error("Could not delete photo.");
-    }
+    } catch { toast.error("Could not delete photo."); }
   };
 
   const handleSetPrimary = async () => {
@@ -172,7 +164,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
       const res = await fetch(`${BACKEND_URL}/photos/${photoToSet.id}/primary`, { method: "PATCH" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to set main photo");
-
       setPhotos(photos.map((p, i) => ({ ...p, is_primary: i === activeIndex })));
       if (onPrimaryChange) onPrimaryChange(photoToSet.photo_url);
       toast.success("Main photo updated!");
@@ -224,7 +215,7 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
                   🔒 Photo is protected
                 </div>
 
-                {showPhotoRequest && (
+                {showPhotoRequest && !hideRequest && (
                   <>
                     {requestStatus === "none" && (
                       <button onClick={(e) => { e.stopPropagation(); handleRequestAccess(); }} disabled={requesting} style={{ background: "#D4A017", color: "white", border: "none", padding: "12px 24px", borderRadius: "20px", fontWeight: 700, fontSize: "13px", cursor: "pointer", fontFamily: "inherit", opacity: requesting ? 0.6 : 1 }}>
@@ -241,6 +232,12 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
                       <div style={{ background: "#dcfce7", color: "#166534", padding: "10px 20px", borderRadius: "20px", fontSize: "12px", fontWeight: 700 }}>✅ Approved</div>
                     )}
                   </>
+                )}
+
+                {hideRequest && (
+                  <Link to="/subscription" style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "12px 24px", borderRadius: "20px", fontWeight: 700, fontSize: "13px", textDecoration: "none", boxShadow: "0 4px 12px rgba(212,160,23,0.5)" }}>
+                    ⭐ Upgrade to View
+                  </Link>
                 )}
               </div>
             )}
@@ -309,7 +306,6 @@ function PhotoGallery({ userId, readOnly = false, onPrimaryChange, fallbackPhoto
 
       <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleUpload} style={{ display: "none" }} />
 
-      {/* Private gallery toggle — only if admin enabled */}
       {!readOnly && showPrivateToggle && (
         <div style={{ marginTop: "25px", borderTop: "1px solid #eee", paddingTop: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 0" }}>
