@@ -77,7 +77,7 @@ function App() {
             <Route path="/interests" element={<ProtectedRoute><Interests /></ProtectedRoute>} />
             <Route path="/visitors" element={<ProtectedRoute><Visitors /></ProtectedRoute>} />
   <Route path="/photo-requests" element={<ProtectedRoute><PhotoRequests /></ProtectedRoute>} />
-  <Route path="/photo-requests" element={<ProtectedRoute><PhotoRequests /></ProtectedRoute>} />
+  <Route path="/contact-requests" element={<ProtectedRoute><ContactRequests /></ProtectedRoute>} />
   <Route path="/boost" element={<ProtectedRoute><Boost /></ProtectedRoute>} />
   <Route path="/admin-plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
   <Route path="/admin-user-permissions/:userId" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUserPermissions /></ProtectedRoute>} />
