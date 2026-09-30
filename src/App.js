@@ -25,7 +25,7 @@ import AdminFormBuilder from "./pages/AdminFormBuilder";
 import Messages from "./pages/Messages";
 import Interests from "./pages/Interests";
 import PhotoRequests from "./pages/PhotoRequests";
-import contactRequests from "./pages/contactRequests";
+import ContactRequests from "./pages/ContactRequests";
 import Dashboard from "./pages/Dashboard";
 import Visitors from "./pages/Visitors";
 import Boost from "./pages/Boost";
