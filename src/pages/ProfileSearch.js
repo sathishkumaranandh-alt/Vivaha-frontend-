@@ -14,9 +14,10 @@ function ProfileSearch() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [myCommunity, setMyCommunity] = useState("");
   const [showAllCommunities, setShowAllCommunities] = useState(false);
+  const [myGender, setMyGender] = useState("");
 
   const [filters, setFilters] = useState({
-    gender: searchParams.get("gender") || "female",
+    gender: searchParams.get("gender") || "",
     age_min: searchParams.get("age_min") || "21",
     age_max: searchParams.get("age_max") || "35",
     location: searchParams.get("location") || "",
@@ -31,18 +32,22 @@ function ProfileSearch() {
   }, []);
 
   useEffect(() => {
-    async function loadMyCommunity() {
+    async function loadMyProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from("users").select("community").eq("id", user.id).single();
-      if (data?.community) {
-        setMyCommunity(data.community);
-        if (!searchParams.get("community")) {
-          setFilters((prev) => ({ ...prev, community: data.community }));
+      const { data } = await supabase.from("users").select("community, gender").eq("id", user.id).single();
+      if (data) {
+        setMyCommunity(data.community || "");
+        setMyGender(data.gender || "");
+        // Auto-set default "looking for" if not specified in URL
+        const urlGender = searchParams.get("gender");
+        if (!urlGender && data.gender) {
+          const defaultLookFor = data.gender === "male" ? "female" : "male";
+          setFilters((prev) => ({ ...prev, gender: defaultLookFor }));
         }
       }
     }
-    loadMyCommunity();
+    loadMyProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -74,7 +79,9 @@ function ProfileSearch() {
     }
   }, [filters, showAllCommunities]);
 
-  useEffect(() => { loadProfiles(); }, [loadProfiles]);
+  useEffect(() => {
+    if (filters.gender) loadProfiles();
+  }, [loadProfiles, filters.gender]);
 
   const handleCommunityChange = (value) => {
     setFilters({ ...filters, community: value });
@@ -114,9 +121,15 @@ function ProfileSearch() {
         <aside style={S.sidebar}>
           <label style={S.label}>Looking For</label>
           <select style={S.input} value={filters.gender} onChange={(e) => setFilters({ ...filters, gender: e.target.value })}>
-            <option value="female">Bride</option>
-            <option value="male">Groom</option>
+            <option value="female">Bride (Female)</option>
+            <option value="male">Groom (Male)</option>
           </select>
+
+          {myGender && (
+            <div style={{ fontSize: "11px", color: "#8a6b6b", marginTop: "-8px", marginBottom: "12px", fontStyle: "italic" }}>
+              Based on your profile ({myGender === "male" ? "Male" : myGender === "female" ? "Female" : "—"})
+            </div>
+          )}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <div>
