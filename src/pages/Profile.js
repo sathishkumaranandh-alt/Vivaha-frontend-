@@ -807,16 +807,35 @@ function Profile() {
           )}
         </div>
 
-        <div style={S.quickInfo}>
+                <div style={S.quickInfo}>
           <h3 style={S.qiTitle}>Quick Info</h3>
           <div style={S.qiRow}><span style={S.qiLabel}>🎓 Education</span><span style={S.qiValue}>{profile.education || "—"}</span></div>
           <div style={S.qiRow}><span style={S.qiLabel}>💼 Occupation</span><span style={S.qiValue}>{profile.occupation || "—"}</span></div>
           <div style={S.qiRow}><span style={S.qiLabel}>💰 Income</span><span style={S.qiValue}>{profile.income ? `₹ ${profile.income} LPA` : "—"}</span></div>
           <div style={S.qiRow}><span style={S.qiLabel}>🏷️ Community</span><span style={S.qiValue}>{myCommunity?.name || profile.community || "—"}</span></div>
           <div style={S.qiRow}><span style={S.qiLabel}>📍 Location</span><span style={S.qiValue}>{profile.location || "—"}</span></div>
-          {profile.mobile && (
+
+          {profile.mobile ? (
             <div style={S.qiRow}><span style={S.qiLabel}>📱 Mobile</span><span style={S.qiValue}>{profile.mobile}</span></div>
-          )}
+          ) : !isOwnProfile ? (
+            <div style={S.qiRow}>
+              <span style={S.qiLabel}>📱 Mobile</span>
+              <span style={S.qiValue}>
+                <Link to="/subscription" style={{ color: "#D4A017", fontWeight: 700, textDecoration: "none" }}>🔒 Upgrade to view mobile</Link>
+              </span>
+            </div>
+          ) : null}
+
+          {profile.email ? (
+            <div style={S.qiRow}><span style={S.qiLabel}>📧 Email</span><span style={S.qiValue}>{profile.email}</span></div>
+          ) : !isOwnProfile ? (
+            <div style={S.qiRow}>
+              <span style={S.qiLabel}>📧 Email</span>
+              <span style={S.qiValue}>
+                <Link to="/subscription" style={{ color: "#D4A017", fontWeight: 700, textDecoration: "none" }}>🔒 Upgrade to view email</Link>
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
 
