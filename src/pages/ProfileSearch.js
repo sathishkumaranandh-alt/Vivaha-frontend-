@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { useCommunities } from "../utils/communities";
+import ProfileCard from "../components/ProfileCard";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
@@ -88,7 +89,7 @@ function ProfileSearch() {
   };
 
   const S = {
-    page: { maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "16px" : "32px" },
+    page: { maxWidth: "1300px", margin: "0 auto", padding: isMobile ? "16px" : "32px" },
     header: { marginBottom: "20px" },
     h1: { fontFamily: "'Playfair Display', serif", fontSize: isMobile ? "22px" : "28px", color: "#8B0A2E", marginBottom: "4px" },
     sub: { color: "#8a6b6b", fontSize: "13px", margin: 0 },
@@ -98,19 +99,8 @@ function ProfileSearch() {
     input: { width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "13px", fontFamily: "inherit", outline: "none", background: "#FFF9F5", boxSizing: "border-box", marginBottom: "12px" },
     btn: { width: "100%", background: "#8B0A2E", color: "white", border: "none", padding: "14px", borderRadius: "10px", fontWeight: 700, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" },
     checkboxRow: { display: "flex", alignItems: "center", gap: "8px", marginTop: "8px", marginBottom: "12px", fontSize: "12px", color: "#555", cursor: "pointer" },
-    grid: { display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)", gap: isMobile ? "12px" : "16px" },
-    card: { background: "white", borderRadius: "14px", overflow: "hidden", border: "1px solid #f0e0e0", boxShadow: "0 4px 20px rgba(139,10,46,0.06)" },
-    cardPhoto: { height: isMobile ? "140px" : "180px", background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "50px", position: "relative", overflow: "hidden" },
-    cardBody: { padding: "12px 14px 14px" },
-    cardName: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#8B0A2E", marginBottom: "3px" },
-    cardMeta: { fontSize: "11px", color: "#8a6b6b", marginBottom: "4px", lineHeight: 1.4 },
-    viewBtn: { display: "block", textAlign: "center", marginTop: "10px", background: "#8B0A2E", color: "white", padding: "8px", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "11px" },
-    badge: { position: "absolute", top: "8px", left: "8px", fontSize: "10px", fontWeight: 700, padding: "3px 8px", borderRadius: "8px", color: "white", zIndex: 3 },
-    blurOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.15)", zIndex: 2 },
-    blurBadge: { background: "white", padding: "5px 12px", borderRadius: "12px", fontSize: "10px", fontWeight: 700, color: "#8B0A2E", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" },
+    grid: { display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(240px, 1fr))", gap: isMobile ? "14px" : "20px" },
     notice: { background: "#FDF2F6", border: "1px solid #f0e0e0", borderRadius: "10px", padding: "10px 12px", fontSize: "11px", color: "#8a6b6b", marginBottom: "12px", lineHeight: 1.5 },
-    upgradeLink: { display: "inline-block", background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "3px 8px", borderRadius: "6px", textDecoration: "none", fontWeight: 700, fontSize: "10px", marginTop: "2px" },
-    contactHidden: { display: "inline-block", color: "#8a6b6b", fontSize: "10px", fontWeight: 600, marginTop: "2px" },
   };
 
   return (
@@ -185,61 +175,7 @@ function ProfileSearch() {
               </div>
               <div style={S.grid}>
                 {results.map((u) => (
-                  <div key={u.id} style={S.card}>
-                    <div style={S.cardPhoto}>
-                      {u.photo_url ? (
-                        <img
-                          src={u.photo_url}
-                          alt=""
-                          style={{
-                            width: "100%", height: "100%", objectFit: "cover",
-                            filter: u.should_blur_photo ? "blur(15px)" : "none"
-                          }}
-                        />
-                      ) : ("👤")}
-
-                      {u.should_blur_photo && (
-                        <div style={S.blurOverlay}>
-                          <div style={S.blurBadge}>🔒 Protected</div>
-                        </div>
-                      )}
-
-                      {!u.should_blur_photo && (
-                        <>
-                          {u.is_boosted && <div style={{ ...S.badge, background: "#D4A017" }}>🚀 Boosted</div>}
-                          {!u.is_boosted && u.is_verified && <div style={{ ...S.badge, background: "#10B981" }}>✓ Verified</div>}
-                        </>
-                      )}
-                    </div>
-                    <div style={S.cardBody}>
-                      <div style={S.cardName}>{u.name || "Anonymous"}</div>
-                      <div style={S.cardMeta}>
-                        {u.age ? `${u.age} yrs` : ""}
-                        {u.age && u.location ? " • " : ""}
-                        {u.location || ""}
-                      </div>
-                      <div style={S.cardMeta}>{u.education || ""}</div>
-                      {u.community && (
-                        <div style={S.cardMeta}>
-                          <span style={{ background: "#FDF2F6", color: "#8B0A2E", padding: "2px 8px", borderRadius: "8px", fontWeight: 600, textTransform: "capitalize", fontSize: "10px" }}>
-                            {u.community}
-                          </span>
-                        </div>
-                      )}
-                      {u.contact_masked && (
-                        <div style={{ marginTop: "6px" }}>
-                          {u.contact_locked_reason === "owner_privacy" ? (
-                            <span style={S.contactHidden}>🔒 Contact hidden by user</span>
-                          ) : (
-                            <Link to="/subscription" style={S.upgradeLink}>⭐ Upgrade to view contact</Link>
-                          )}
-                        </div>
-                      )}
-                      <Link to={`/profile/${u.id}`} style={S.viewBtn}>
-                        {u.should_blur_photo ? "🔒 View Profile" : "View Profile"}
-                      </Link>
-                    </div>
-                  </div>
+                  <ProfileCard key={u.id} user={u} isMobile={isMobile} />
                 ))}
               </div>
             </>
