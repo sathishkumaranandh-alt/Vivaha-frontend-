@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useCommunities } from "../utils/communities";
+import BackButton from "../components/BackButton";
 import { toast } from "../utils/toast";
 import usePlan from "../utils/usePlan";
 import ProfileCard from "../components/ProfileCard";
@@ -97,7 +98,8 @@ function AdvancedSearch() {
   if (planLoading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading...</div>;
 
   return (
-    <div style={S.page}>
+        <div style={S.page}>
+      <BackButton />
       <div style={S.header}>
         <h1 style={S.h1}>🔍 Advanced Search</h1>
         <p style={S.sub}>
