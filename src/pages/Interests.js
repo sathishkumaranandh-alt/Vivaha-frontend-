@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
+import BackButton from "../components/BackButton";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -132,6 +133,7 @@ function Interests() {
 
   return (
     <div style={pageStyle}>
+   <BackButton />
       {/* HEADER */}
       <div style={{ textAlign: "center", marginBottom: "24px" }}>
         <h1 style={{ color: "#1e3a8a", fontSize: isMobile ? "22px" : "28px", margin: "0 0 8px 0" }}>
