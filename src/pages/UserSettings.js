@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
-
-const API = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import BackButton from "../components/BackButton";
 
 function UserSettings() {
   const navigate = useNavigate();
@@ -34,7 +33,6 @@ function UserSettings() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
 
-  // Helper: is a given privacy feature enabled by admin?
   const isEnabled = (key) => adminSettings[key] !== "false";
 
   useEffect(() => {
@@ -53,14 +51,12 @@ function UserSettings() {
         const saved = localStorage.getItem(`prefs_${user.id}`);
         if (saved) setPrefs(JSON.parse(saved));
 
-        // Load admin's privacy controls
-        const settingsRes = await fetch(`${API}/settings`);
+        const settingsRes = await fetch(`${process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com"}/settings`);
         if (settingsRes.ok) {
           const data = await settingsRes.json();
           setAdminSettings(data.settings || {});
         }
 
-        // Load user's current privacy settings
         const { data: userData } = await supabase
           .from("users")
           .select("photo_privacy, contact_privacy, profile_visibility")
@@ -107,7 +103,6 @@ function UserSettings() {
     setSavingPrivacy(true);
     try {
       const updates = { updated_at: new Date().toISOString() };
-      // Only save fields that admin has enabled
       if (isEnabled("privacy_show_profile_visibility")) updates.profile_visibility = privacy.profile_visibility;
       if (isEnabled("privacy_show_photo_privacy")) updates.photo_privacy = privacy.photo_privacy;
       if (isEnabled("privacy_show_contact_privacy")) updates.contact_privacy = privacy.contact_privacy;
@@ -152,7 +147,6 @@ function UserSettings() {
     );
   }
 
-  // Count enabled privacy features
   const hasAnyPrivacyFeature =
     isEnabled("privacy_show_profile_visibility") ||
     isEnabled("privacy_show_photo_privacy") ||
@@ -167,13 +161,7 @@ function UserSettings() {
     h1: { fontFamily: "'Playfair Display', serif", fontSize: isMobile ? "22px" : "26px", fontWeight: 700, color: "#8B0A2E", marginBottom: "4px" },
     sub: { color: "#8a6b6b", fontSize: "13px", margin: 0 },
     tabs: { display: "flex", gap: "8px", marginBottom: "20px", overflowX: "auto", paddingBottom: "4px" },
-    tab: (active) => ({
-      background: active ? "#8B0A2E" : "white",
-      color: active ? "white" : "#8B0A2E",
-      border: active ? "1.5px solid #8B0A2E" : "1.5px solid #f0e0e0",
-      padding: "10px 18px", borderRadius: "10px", fontSize: "13px", fontWeight: 700,
-      cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
-    }),
+    tab: (active) => ({ background: active ? "#8B0A2E" : "white", color: active ? "white" : "#8B0A2E", border: active ? "1.5px solid #8B0A2E" : "1.5px solid #f0e0e0", padding: "10px 18px", borderRadius: "10px", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }),
     card: { background: "white", borderRadius: "14px", padding: isMobile ? "20px" : "28px", border: "1px solid #f0e0e0", boxShadow: "0 2px 12px rgba(139,10,46,0.04)" },
     cardTitle: { fontFamily: "'Playfair Display', serif", color: "#8B0A2E", fontSize: "18px", fontWeight: 700, marginBottom: "6px" },
     cardDesc: { color: "#8a6b6b", fontSize: "13px", marginBottom: "20px" },
@@ -199,6 +187,8 @@ function UserSettings() {
   return (
     <div style={S.page}>
       <div style={S.layout}>
+        <BackButton />
+
         <div style={S.header}>
           <h1 style={S.h1}>⚙️ Settings</h1>
           <p style={S.sub}>Manage your account, preferences, and privacy</p>
@@ -211,7 +201,6 @@ function UserSettings() {
           <button style={S.tab(activeTab === "danger")} onClick={() => setActiveTab("danger")}>⚠️ Danger</button>
         </div>
 
-        {/* ACCOUNT */}
         {activeTab === "account" && (
           <div style={S.card}>
             <h3 style={S.cardTitle}>Account Information</h3>
@@ -238,7 +227,6 @@ function UserSettings() {
           </div>
         )}
 
-        {/* NOTIFICATIONS */}
         {activeTab === "notifications" && (
           <div style={S.card}>
             <h3 style={S.cardTitle}>Email Notifications</h3>
@@ -258,7 +246,6 @@ function UserSettings() {
           </div>
         )}
 
-        {/* PRIVACY */}
         {activeTab === "privacy" && (
           <div style={S.card}>
             <h3 style={S.cardTitle}>Privacy Settings</h3>
@@ -303,7 +290,7 @@ function UserSettings() {
                       <option value="matches">💕 Matches Only</option>
                       <option value="private">🔒 Private - Hidden</option>
                     </select>
-                    <p style={S.privacyHint}>Hides your mobile number and email from other members.</p>
+                    <p style={S.privacyHint}>Hides your mobile number from other members.</p>
                   </>
                 )}
 
@@ -336,7 +323,6 @@ function UserSettings() {
           </div>
         )}
 
-        {/* DANGER */}
         {activeTab === "danger" && (
           <div style={{ ...S.card, borderColor: "#fecaca" }}>
             <h3 style={{ ...S.cardTitle, color: "#dc2626" }}>⚠️ Danger Zone</h3>
@@ -354,10 +340,6 @@ function UserSettings() {
             </button>
           </div>
         )}
-
-        <div style={{ textAlign: "center", marginTop: "24px" }}>
-          <Link to="/dashboard" style={{ color: "#8B0A2E", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>← Back to Dashboard</Link>
-        </div>
       </div>
     </div>
   );
