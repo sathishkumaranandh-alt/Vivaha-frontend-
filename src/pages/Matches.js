@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import supabase from "../supabaseClient";
+import BackButton from "../components/BackButton";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -96,6 +97,7 @@ function Matches() {
 
   return (
     <div style={pageStyle}>
+    <BackButton />
       <div style={{ textAlign: "center", marginBottom: "24px" }}>
         <h1 style={{ color: "#1e3a8a", fontSize: isMobile ? "22px" : "28px", margin: "0 0 8px 0" }}>
           💕 Your Matches
