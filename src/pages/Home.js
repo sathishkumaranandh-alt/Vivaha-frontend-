@@ -7,6 +7,8 @@ import ProfileCard from "../components/ProfileCard";
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
+const CACHE_KEY = "vivaha_home_settings_v1";
+
 const DEFAULT_HERO_IMAGE =
   "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1600&q=80";
 
@@ -53,13 +55,26 @@ const DEFAULTS = {
   home_trust_4_desc: "We are always here",
 };
 
+// Load cached settings synchronously (before first render)
+function getCachedSettings() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return DEFAULTS;
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULTS, ...parsed };
+  } catch {
+    return DEFAULTS;
+  }
+}
+
 function Home() {
   const navigate = useNavigate();
   const { communities } = useCommunities();
   const [featured, setFeatured] = useState([]);
   const [stories, setStories] = useState([]);
-  const [settings, setSettings] = useState(DEFAULTS);
+  const [settings, setSettings] = useState(getCachedSettings);
   const [loading, setLoading] = useState(true);
+  const [settingsReady, setSettingsReady] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
 
   const [heroSearch, setHeroSearch] = useState({
@@ -89,8 +104,16 @@ function Home() {
 
         if (settingsRes.ok) {
           const data = await settingsRes.json();
-          setSettings({ ...DEFAULTS, ...(data.settings || {}) });
+          const freshSettings = data.settings || {};
+          // Merge with DEFAULTS so missing keys still have values
+          const merged = { ...DEFAULTS, ...freshSettings };
+          setSettings(merged);
+          // Save to cache for instant load next time
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(freshSettings));
+          } catch {}
         }
+        setSettingsReady(true);
 
         if (featuredRes.ok) {
           const data = await featuredRes.json();
@@ -111,6 +134,7 @@ function Home() {
         }
       } catch (err) {
         console.error("Home load error:", err);
+        setSettingsReady(true);
       } finally {
         setLoading(false);
       }
@@ -315,72 +339,74 @@ function Home() {
 
   return (
     <div style={S.page}>
-      {/* HERO */}
+      {/* HERO — only render after settings ready to avoid flash */}
       <section style={S.hero}>
         <div style={S.heroOverlay} />
 
-        <div style={S.mobileContentWrapper}>
-          <div style={!isMobile ? blockPos("home_text_x", "home_text_y", "home_text_width") : {}}>
-            {showEyebrow && (
-              <div style={S.eyebrow}>
-                <span style={S.eyebrowIcon}>❁</span>
-                {settings.home_eyebrow}
+        {settingsReady && (
+          <div style={S.mobileContentWrapper}>
+            <div style={!isMobile ? blockPos("home_text_x", "home_text_y", "home_text_width") : {}}>
+              {showEyebrow && (
+                <div style={S.eyebrow}>
+                  <span style={S.eyebrowIcon}>❁</span>
+                  {settings.home_eyebrow}
+                </div>
+              )}
+              <h1 style={S.h1}>{settings.home_title}</h1>
+              {showTamil && <div style={S.tamilSubtitle}>{settings.home_tamil_subtitle}</div>}
+              {showSubtitle && <p style={S.subtitle}>{settings.home_subtitle}</p>}
+            </div>
+
+            {showSearch && (
+              <div style={!isMobile ? blockPos("home_search_x", "home_search_y", "home_search_width") : {}}>
+                <form onSubmit={handleHeroSearch} style={S.searchBox}>
+                  <div style={S.searchGrid}>
+                    <div style={S.searchField}>
+                      <span>👤</span>
+                      <select value={heroSearch.lookingFor} onChange={(e) => setHeroSearch({ ...heroSearch, lookingFor: e.target.value })} style={S.select}>
+                        <option value="female">Looking for Bride</option>
+                        <option value="male">Looking for Groom</option>
+                      </select>
+                    </div>
+                    <div style={S.searchField}>
+                      <span>🎂</span>
+                      <select value={heroSearch.age} onChange={(e) => setHeroSearch({ ...heroSearch, age: e.target.value })} style={S.select}>
+                        <option value="21-30">Age 21 - 30</option>
+                        <option value="25-35">Age 25 - 35</option>
+                        <option value="30-40">Age 30 - 40</option>
+                      </select>
+                    </div>
+                    <div style={S.searchField}>
+                      <span>📍</span>
+                      <input type="text" placeholder="Location" value={heroSearch.location} onChange={(e) => setHeroSearch({ ...heroSearch, location: e.target.value })} style={S.select} />
+                    </div>
+                    <div style={S.searchField}>
+                      <span>🏷️</span>
+                      <select value={heroSearch.community} onChange={(e) => setHeroSearch({ ...heroSearch, community: e.target.value })} style={S.select}>
+                        <option value="">Any Community</option>
+                        {communities.map((c) => (
+                          <option key={c.slug} value={c.slug}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <button type="submit" style={S.searchBtn}>🔍 Search Profiles</button>
+                </form>
               </div>
             )}
-            <h1 style={S.h1}>{settings.home_title}</h1>
-            {showTamil && <div style={S.tamilSubtitle}>{settings.home_tamil_subtitle}</div>}
-            {showSubtitle && <p style={S.subtitle}>{settings.home_subtitle}</p>}
-          </div>
 
-          {showSearch && (
-            <div style={!isMobile ? blockPos("home_search_x", "home_search_y", "home_search_width") : {}}>
-              <form onSubmit={handleHeroSearch} style={S.searchBox}>
-                <div style={S.searchGrid}>
-                  <div style={S.searchField}>
-                    <span>👤</span>
-                    <select value={heroSearch.lookingFor} onChange={(e) => setHeroSearch({ ...heroSearch, lookingFor: e.target.value })} style={S.select}>
-                      <option value="female">Looking for Bride</option>
-                      <option value="male">Looking for Groom</option>
-                    </select>
-                  </div>
-                  <div style={S.searchField}>
-                    <span>🎂</span>
-                    <select value={heroSearch.age} onChange={(e) => setHeroSearch({ ...heroSearch, age: e.target.value })} style={S.select}>
-                      <option value="21-30">Age 21 - 30</option>
-                      <option value="25-35">Age 25 - 35</option>
-                      <option value="30-40">Age 30 - 40</option>
-                    </select>
-                  </div>
-                  <div style={S.searchField}>
-                    <span>📍</span>
-                    <input type="text" placeholder="Location" value={heroSearch.location} onChange={(e) => setHeroSearch({ ...heroSearch, location: e.target.value })} style={S.select} />
-                  </div>
-                  <div style={S.searchField}>
-                    <span>🏷️</span>
-                    <select value={heroSearch.community} onChange={(e) => setHeroSearch({ ...heroSearch, community: e.target.value })} style={S.select}>
-                      <option value="">Any Community</option>
-                      {communities.map((c) => (
-                        <option key={c.slug} value={c.slug}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
+            {showTrust && (
+              <div style={!isMobile ? blockPos("home_trust_x", "home_trust_y", "home_trust_width") : {}}>
+                <div style={S.trustRow}>
+                  <TrustBadge icon="🛡️" title={settings.home_trust_1_title} desc={settings.home_trust_1_desc} styles={S} />
+                  <TrustBadge icon="🔍" title={settings.home_trust_2_title} desc={settings.home_trust_2_desc} styles={S} />
+                  <TrustBadge icon="🔒" title={settings.home_trust_3_title} desc={settings.home_trust_3_desc} styles={S} />
+                  <TrustBadge icon="❤️" title={settings.home_trust_4_title} desc={settings.home_trust_4_desc} styles={S} />
                 </div>
-                <button type="submit" style={S.searchBtn}>🔍 Search Profiles</button>
-              </form>
-            </div>
-          )}
-
-          {showTrust && (
-            <div style={!isMobile ? blockPos("home_trust_x", "home_trust_y", "home_trust_width") : {}}>
-              <div style={S.trustRow}>
-                <TrustBadge icon="🛡️" title={settings.home_trust_1_title} desc={settings.home_trust_1_desc} styles={S} />
-                <TrustBadge icon="🔍" title={settings.home_trust_2_title} desc={settings.home_trust_2_desc} styles={S} />
-                <TrustBadge icon="🔒" title={settings.home_trust_3_title} desc={settings.home_trust_3_desc} styles={S} />
-                <TrustBadge icon="❤️" title={settings.home_trust_4_title} desc={settings.home_trust_4_desc} styles={S} />
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* FEATURED PROFILES */}
