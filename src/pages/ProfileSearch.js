@@ -3,27 +3,44 @@ import { useSearchParams } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { useCommunities } from "../utils/communities";
 import ProfileCard from "../components/ProfileCard";
+import BackButton from "../components/BackButton";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function ProfileSearch() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { communities } = useCommunities();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [myCommunity, setMyCommunity] = useState("");
-  const [showAllCommunities, setShowAllCommunities] = useState(false);
   const [myGender, setMyGender] = useState("");
 
+  // Read ALL state from URL
   const [filters, setFilters] = useState({
     gender: searchParams.get("gender") || "",
     age_min: searchParams.get("age_min") || "21",
     age_max: searchParams.get("age_max") || "35",
     location: searchParams.get("location") || "",
     community: searchParams.get("community") || "",
-    religion: "",
+    religion: searchParams.get("religion") || "",
   });
+  const [showAllCommunities, setShowAllCommunities] = useState(
+    searchParams.get("allCommunities") === "true"
+  );
+
+  // Sync filters to URL (so back button works)
+  const syncURL = (f, allComm) => {
+    const params = new URLSearchParams();
+    if (f.gender) params.append("gender", f.gender);
+    if (f.age_min) params.append("age_min", f.age_min);
+    if (f.age_max) params.append("age_max", f.age_max);
+    if (f.location) params.append("location", f.location);
+    if (f.community) params.append("community", f.community);
+    if (f.religion) params.append("religion", f.religion);
+    if (allComm) params.append("allCommunities", "true");
+    setSearchParams(params, { replace: true });
+  };
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 900);
@@ -39,11 +56,18 @@ function ProfileSearch() {
       if (data) {
         setMyCommunity(data.community || "");
         setMyGender(data.gender || "");
-        // Auto-set default "looking for" if not specified in URL
-        const urlGender = searchParams.get("gender");
-        if (!urlGender && data.gender) {
+
+        // If no URL params at all, apply default (user's community + opposite gender)
+        const hasURLParams = searchParams.toString().length > 0;
+        if (!hasURLParams) {
           const defaultLookFor = data.gender === "male" ? "female" : "male";
-          setFilters((prev) => ({ ...prev, gender: defaultLookFor }));
+          const newFilters = {
+            ...filters,
+            gender: defaultLookFor,
+            community: data.community || "",
+          };
+          setFilters(newFilters);
+          syncURL(newFilters, false);
         }
       }
     }
@@ -83,16 +107,31 @@ function ProfileSearch() {
     if (filters.gender) loadProfiles();
   }, [loadProfiles, filters.gender]);
 
+  const handleFilterChange = (key, value) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    syncURL(newFilters, showAllCommunities);
+  };
+
   const handleCommunityChange = (value) => {
-    setFilters({ ...filters, community: value });
-    setShowAllCommunities(value === "" && !myCommunity);
+    const newFilters = { ...filters, community: value };
+    setFilters(newFilters);
+    const newAllComm = value === "" && !myCommunity;
+    setShowAllCommunities(newAllComm);
+    syncURL(newFilters, newAllComm);
   };
 
   const toggleAllCommunities = () => {
     const newVal = !showAllCommunities;
+    let newFilters = { ...filters };
+    if (newVal) {
+      newFilters.community = "";
+    } else if (myCommunity) {
+      newFilters.community = myCommunity;
+    }
     setShowAllCommunities(newVal);
-    if (newVal) setFilters({ ...filters, community: "" });
-    else if (myCommunity) setFilters({ ...filters, community: myCommunity });
+    setFilters(newFilters);
+    syncURL(newFilters, newVal);
   };
 
   const S = {
@@ -112,6 +151,8 @@ function ProfileSearch() {
 
   return (
     <div style={S.page}>
+      <BackButton />
+
       <div style={S.header}>
         <h1 style={S.h1}>🔍 Search Profiles</h1>
         <p style={S.sub}>Find your perfect match</p>
@@ -120,30 +161,30 @@ function ProfileSearch() {
       <div style={S.layout}>
         <aside style={S.sidebar}>
           <label style={S.label}>Looking For</label>
-          <select style={S.input} value={filters.gender} onChange={(e) => setFilters({ ...filters, gender: e.target.value })}>
+          <select style={S.input} value={filters.gender} onChange={(e) => handleFilterChange("gender", e.target.value)}>
             <option value="female">Bride (Female)</option>
             <option value="male">Groom (Male)</option>
           </select>
 
           {myGender && (
             <div style={{ fontSize: "11px", color: "#8a6b6b", marginTop: "-8px", marginBottom: "12px", fontStyle: "italic" }}>
-              Based on your profile ({myGender === "male" ? "Male" : myGender === "female" ? "Female" : "—"})
+              Based on your profile ({myGender})
             </div>
           )}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <div>
               <label style={S.label}>Age From</label>
-              <input type="number" style={S.input} value={filters.age_min} onChange={(e) => setFilters({ ...filters, age_min: e.target.value })} />
+              <input type="number" style={S.input} value={filters.age_min} onChange={(e) => setFilters({ ...filters, age_min: e.target.value })} onBlur={() => syncURL(filters, showAllCommunities)} />
             </div>
             <div>
               <label style={S.label}>Age To</label>
-              <input type="number" style={S.input} value={filters.age_max} onChange={(e) => setFilters({ ...filters, age_max: e.target.value })} />
+              <input type="number" style={S.input} value={filters.age_max} onChange={(e) => setFilters({ ...filters, age_max: e.target.value })} onBlur={() => syncURL(filters, showAllCommunities)} />
             </div>
           </div>
 
           <label style={S.label}>Location</label>
-          <input style={S.input} placeholder="City" value={filters.location} onChange={(e) => setFilters({ ...filters, location: e.target.value })} />
+          <input style={S.input} placeholder="City" value={filters.location} onChange={(e) => setFilters({ ...filters, location: e.target.value })} onBlur={() => syncURL(filters, showAllCommunities)} />
 
           {myCommunity && (
             <div style={S.notice}>🏷️ Your community: <strong style={{ textTransform: "capitalize" }}>{myCommunity}</strong></div>
