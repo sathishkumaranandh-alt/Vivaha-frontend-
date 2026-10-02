@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
+import BackButton from "../components/BackButton";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
@@ -21,7 +22,6 @@ function ContactRequests() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
-
       const res = await fetch(`${BACKEND_URL}/contact-requests/incoming/${user.id}`);
       if (res.ok) {
         const data = await res.json();
@@ -47,15 +47,15 @@ function ContactRequests() {
         toast.success(status === "approved" ? "Contact access granted ✅" : "Request denied ❌");
         setRequests(requests.filter(r => r.id !== id));
       }
-    } catch {
-      toast.error("Failed to respond");
-    }
+    } catch { toast.error("Failed to respond"); }
   };
 
   if (loading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading contact requests... ⏳</div>;
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto", padding: isMobile ? "16px" : "32px" }}>
+      <BackButton />
+
       <div style={{ marginBottom: "24px" }}>
         <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? "22px" : "28px", color: "#8B0A2E", marginBottom: "4px" }}>
           📞 Contact Access Requests
@@ -78,18 +78,12 @@ function ContactRequests() {
           {requests.map((r) => (
             <div key={r.id} style={{ background: "white", borderRadius: "14px", padding: "16px", border: "1px solid #f0e0e0", display: "flex", gap: "14px", alignItems: "center", flexWrap: "wrap" }}>
               <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", flexShrink: 0, overflow: "hidden" }}>
-                {r.requester?.photo_url ? (
-                  <img src={r.requester.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : "👤"}
+                {r.requester?.photo_url ? <img src={r.requester.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "👤"}
               </div>
               <div style={{ flex: 1, minWidth: "180px" }}>
-                <div style={{ fontSize: "15px", fontWeight: 700, color: "#8B0A2E", marginBottom: "2px" }}>
-                  {r.requester?.name || "Someone"}
-                </div>
+                <div style={{ fontSize: "15px", fontWeight: 700, color: "#8B0A2E", marginBottom: "2px" }}>{r.requester?.name || "Someone"}</div>
                 <div style={{ fontSize: "12px", color: "#8a6b6b" }}>
-                  {r.requester?.age ? `${r.requester.age} yrs` : ""}
-                  {r.requester?.age && r.requester?.location ? " • " : ""}
-                  {r.requester?.location || ""}
+                  {r.requester?.age ? `${r.requester.age} yrs` : ""}{r.requester?.age && r.requester?.location ? " • " : ""}{r.requester?.location || ""}
                 </div>
                 <div style={{ fontSize: "10px", color: "#aaa", marginTop: "4px" }}>
                   Requested {new Date(r.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
