@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
+import BackButton from "../components/BackButton";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -104,6 +105,7 @@ function Subscription() {
 
   return (
     <div style={pageStyle}>
+    <BackButton />
       {/* HEADER */}
       <div style={headerStyle}>
         <h1 style={titleStyle}>⭐ Choose Your Plan</h1>
