@@ -66,6 +66,7 @@ function App() {
         <div style={{ width: "100%", margin: 0, padding: 0 }}>
           <Routes>
             <Route path="/" element={<Home />} />
+  <Route path="/sample-form" element={<SampleForm />} />
             <Route path="/register" element={<Register />} />
             <Route path="/success-stories" element={<SuccessStories />} />
             <Route path="/login" element={<Login />} />
@@ -92,7 +93,7 @@ function App() {
             <Route path="/admin-communities" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommunities /></ProtectedRoute>} />
             <Route path="/admin-settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin-form-builder" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFormBuilder /></ProtectedRoute>} />
-<Route path="/sample-form" element={<SampleForm />} />
+
           </Routes>
         </div>
         <Footer />
