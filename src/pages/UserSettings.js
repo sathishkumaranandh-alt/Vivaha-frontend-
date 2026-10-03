@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 import BackButton from "../components/BackButton";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+const BOT_USERNAME = "Vivah12_bot"; // Your Telegram bot username
 
 function UserSettings() {
   const navigate = useNavigate();
@@ -30,6 +33,10 @@ function UserSettings() {
   });
   const [savingPrivacy, setSavingPrivacy] = useState(false);
 
+  // NEW: Telegram State
+  const [telegramConnected, setTelegramConnected] = useState(false);
+  const [telegramLoading, setTelegramLoading] = useState(false);
+
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
 
@@ -51,7 +58,7 @@ function UserSettings() {
         const saved = localStorage.getItem(`prefs_${user.id}`);
         if (saved) setPrefs(JSON.parse(saved));
 
-        const settingsRes = await fetch(`${process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com"}/settings`);
+        const settingsRes = await fetch(`${BACKEND_URL}/settings`);
         if (settingsRes.ok) {
           const data = await settingsRes.json();
           setAdminSettings(data.settings || {});
@@ -59,7 +66,7 @@ function UserSettings() {
 
         const { data: userData } = await supabase
           .from("users")
-          .select("photo_privacy, contact_privacy, profile_visibility")
+          .select("photo_privacy, contact_privacy, profile_visibility, telegram_chat_id")
           .eq("id", user.id)
           .single();
 
@@ -69,6 +76,8 @@ function UserSettings() {
             contact_privacy: userData.contact_privacy || "matches",
             profile_visibility: userData.profile_visibility || "everyone",
           });
+          // NEW: Check if Telegram is linked
+          setTelegramConnected(!!userData.telegram_chat_id);
         }
       } catch (err) {
         console.error(err);
@@ -78,6 +87,21 @@ function UserSettings() {
     }
     load();
   }, [navigate]);
+
+  // NEW: Auto-check Telegram status when user returns to the tab
+  useEffect(() => {
+    const checkStatus = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("users")
+        .select("telegram_chat_id")
+        .eq("id", user.id)
+        .single();
+      if (data) setTelegramConnected(!!data.telegram_chat_id);
+    };
+    window.addEventListener("focus", checkStatus);
+    return () => window.removeEventListener("focus", checkStatus);
+  }, [user]);
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -115,6 +139,36 @@ function UserSettings() {
       toast.error("Failed to save privacy settings");
     } finally {
       setSavingPrivacy(false);
+    }
+  };
+
+  // NEW: Telegram Handlers
+  const handleConnectTelegram = () => {
+    if (!user) return;
+    // Open Telegram with the user's ID as the start parameter
+    window.open(`https://t.me/${BOT_USERNAME}?start=${user.id}`, "_blank");
+  };
+
+  const handleDisconnectTelegram = async () => {
+    if (!user) return;
+    setTelegramLoading(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/telegram/unlink`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id })
+      });
+      if (res.ok) {
+        setTelegramConnected(false);
+        toast.success("Telegram disconnected");
+      } else {
+        toast.error("Failed to disconnect Telegram");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error");
+    } finally {
+      setTelegramLoading(false);
     }
   };
 
@@ -243,6 +297,35 @@ function UserSettings() {
               <div><div style={S.toggleLabel}>New Match</div><div style={S.toggleHint}>When you get a new mutual match</div></div>
               <ToggleSwitch value={prefs.email_on_match} onChange={() => togglePref("email_on_match")} />
             </div>
+
+            {/* NEW: Telegram Notifications Section */}
+            <hr style={{ border: "none", borderTop: "1px solid #f0e0e0", margin: "28px 0" }} />
+            <h3 style={S.cardTitle}>Telegram Notifications</h3>
+            <p style={S.cardDesc}>Get instant alerts for new matches and profile views directly on Telegram.</p>
+            <div style={S.toggleRow}>
+              <div>
+                <div style={S.toggleLabel}>{telegramConnected ? "✅ Telegram Connected" : "🔗 Connect Telegram"}</div>
+                <div style={S.toggleHint}>
+                  {telegramConnected ? "You are receiving instant Telegram alerts." : `Click to link your account with @${BOT_USERNAME}`}
+                </div>
+              </div>
+              {telegramConnected ? (
+                <button 
+                  onClick={handleDisconnectTelegram} 
+                  disabled={telegramLoading}
+                  style={{...S.dangerBtn, marginTop: 0, padding: "8px 16px", fontSize: "13px", opacity: telegramLoading ? 0.6 : 1}}
+                >
+                  {telegramLoading ? "..." : "Disconnect"}
+                </button>
+              ) : (
+                <button 
+                  onClick={handleConnectTelegram} 
+                  style={{...S.primaryBtn, marginTop: 0, padding: "8px 16px", fontSize: "13px"}}
+                >
+                  Connect
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -305,50 +388,4 @@ function UserSettings() {
 
                     {isEnabled("privacy_show_profile_visible_toggle") && (
                       <div style={S.toggleRow}>
-                        <div><div style={S.toggleLabel}>Profile Visible to All</div><div style={S.toggleHint}>When OFF, only connected users see your profile</div></div>
-                        <ToggleSwitch value={prefs.profile_visible} onChange={() => togglePref("profile_visible")} />
-                      </div>
-                    )}
-
-                    {isEnabled("privacy_show_online_status_toggle") && (
-                      <div style={S.toggleRow}>
-                        <div><div style={S.toggleLabel}>Show Online Status</div><div style={S.toggleHint}>Show a green dot when you're active</div></div>
-                        <ToggleSwitch value={prefs.show_online_status} onChange={() => togglePref("show_online_status")} />
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {activeTab === "danger" && (
-          <div style={{ ...S.card, borderColor: "#fecaca" }}>
-            <h3 style={{ ...S.cardTitle, color: "#dc2626" }}>⚠️ Danger Zone</h3>
-            <p style={S.cardDesc}>These actions are permanent and cannot be undone.</p>
-            <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "10px", padding: "16px", marginBottom: "20px" }}>
-              <h4 style={{ margin: "0 0 6px 0", color: "#991b1b", fontSize: "14px", fontWeight: 700 }}>Delete Account</h4>
-              <p style={{ margin: 0, fontSize: "12px", color: "#991b1b", lineHeight: 1.6 }}>
-                This will permanently delete your profile, photos, messages, and all data.
-              </p>
-            </div>
-            <label style={S.label}>Type "DELETE" to confirm</label>
-            <input style={S.input} type="text" placeholder="DELETE" value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} />
-            <button onClick={handleDeleteAccount} disabled={deleting || deleteConfirm !== "DELETE"} style={{ ...S.dangerBtn, opacity: deleting || deleteConfirm !== "DELETE" ? 0.5 : 1, cursor: deleting || deleteConfirm !== "DELETE" ? "not-allowed" : "pointer" }}>
-              {deleting ? "Deleting..." : "🗑️ Permanently Delete My Account"}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-const spinnerStyle = {
-  width: "40px", height: "40px", border: "4px solid #f0e0e0",
-  borderTop: "4px solid #8B0A2E", borderRadius: "50%",
-  animation: "spin 1s linear infinite", margin: "0 auto",
-};
-
-export default UserSettings;
+                        <div><div style={S.toggleLabel}>Profile Visible to All</div><div style={S.toggleHint}>When OFF, 
