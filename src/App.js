@@ -31,7 +31,7 @@ import Visitors from "./pages/Visitors";
 import Boost from "./pages/Boost";
 import AdminPlans from "./pages/AdminPlans";
 import AdvancedSearch from "./pages/AdvancedSearch";
-import SampleForm from "./pages/SampleForm";
+
 
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -66,7 +66,6 @@ function App() {
         <div style={{ width: "100%", margin: 0, padding: 0 }}>
           <Routes>
             <Route path="/" element={<Home />} />
-  <Route path="/sample-form" element={<SampleForm />} />
             <Route path="/register" element={<Register />} />
             <Route path="/success-stories" element={<SuccessStories />} />
             <Route path="/login" element={<Login />} />
