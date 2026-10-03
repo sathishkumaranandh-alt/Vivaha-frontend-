@@ -6,6 +6,13 @@ import { useCommunities } from "../utils/communities";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
+// Helper: Calculate age from DOB
+function getAge(dobString) {
+  if (!dobString) return 0;
+  const diff = Date.now() - new Date(dobString).getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+}
+
 function Register() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -15,7 +22,6 @@ function Register() {
   const [registrationAllowed, setRegistrationAllowed] = useState(true);
   const [checkingSettings, setCheckingSettings] = useState(true);
 
-  // Quick Registration - Only essential fields
   const [form, setForm] = useState({
     name: "",
     gender: "",
@@ -26,7 +32,6 @@ function Register() {
     password: "",
     confirmPassword: "",
     terms: false,
-    // Empty defaults for fields we will fill later in Profile Edit
     profile_for: "Myself",
     marital_status: "Never Married",
     religion: "Hindu",
@@ -65,6 +70,12 @@ function Register() {
     if (!form.name.trim()) return toast.error("Full Name is required");
     if (!form.gender) return toast.error("Gender is required");
     if (!form.dob) return toast.error("Date of Birth is required");
+
+    // AGE VALIDATION (Minimum 21)
+    const age = getAge(form.dob);
+    if (age < 21) return toast.error("You must be at least 21 years old to register.");
+    if (age > 80) return toast.error("Please enter a valid Date of Birth.");
+
     if (!form.community) return toast.error("Community is required for matching");
     if (!form.mobile || form.mobile.length !== 10) return toast.error("Valid 10-digit mobile number is required");
     if (!form.email.trim()) return toast.error("Email is required");
@@ -74,7 +85,6 @@ function Register() {
 
     setSaving(true);
     try {
-      // Send minimal payload to backend. Other fields will be NULL.
       const res = await fetch(`${BACKEND_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,7 +96,6 @@ function Register() {
           gender: form.gender,
           dob: form.dob,
           mobile: form.mobile,
-          // Setting default values for the rest
           profile_for: form.profile_for,
           marital_status: form.marital_status,
           religion: form.religion,
@@ -99,17 +108,16 @@ function Register() {
       if (!res.ok) throw new Error(data.error || "Registration failed");
 
       toast.success("🎉 Account Created! Let's complete your profile.");
-      
+
       const { error: loginError } = await supabase.auth.signInWithPassword({
         email: form.email.trim(), password: form.password,
       });
-      
-      if (loginError) { 
-        toast.error("Please log in."); 
-        navigate("/login"); 
+
+      if (loginError) {
+        toast.error("Please log in.");
+        navigate("/login");
       } else {
-        // Redirect to profile edit page so they can fill the rest
-        navigate("/profile"); 
+        navigate("/profile");
       }
     } catch (err) {
       console.error(err);
