@@ -31,6 +31,8 @@ import Visitors from "./pages/Visitors";
 import Boost from "./pages/Boost";
 import AdminPlans from "./pages/AdminPlans";
 import AdvancedSearch from "./pages/AdvancedSearch";
+import SampleForm from "./pages/SampleForm";
+
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
@@ -90,6 +92,7 @@ function App() {
             <Route path="/admin-communities" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommunities /></ProtectedRoute>} />
             <Route path="/admin-settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin-form-builder" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFormBuilder /></ProtectedRoute>} />
+<Route path="/sample-form" element={<SampleForm />} />
           </Routes>
         </div>
         <Footer />
