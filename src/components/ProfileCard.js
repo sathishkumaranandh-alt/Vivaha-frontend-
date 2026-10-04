@@ -1,28 +1,49 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
 function ProfileCard({ user, isMobile = false }) {
+  const [hovered, setHovered] = useState(false);
+  const [shortlisted, setShortlisted] = useState(false);
+
   const {
     id, name, age, location, education, occupation, community,
     photo_url, is_verified, is_boosted, should_blur_photo,
     contact_masked, contact_locked_reason, match_score,
   } = user;
 
+  // Match score color coding
+  const getScoreColor = (score) => {
+    if (!score) return "#8a6b6b";
+    if (score >= 80) return "#16a34a";
+    if (score >= 60) return "#22c55e";
+    if (score >= 40) return "#f59e0b";
+    return "#dc2626";
+  };
+
+  const scoreColor = getScoreColor(match_score);
+
   return (
     <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         background: "white",
         borderRadius: "20px",
         overflow: "hidden",
         border: "1px solid #f0e0e0",
-        boxShadow: "0 8px 24px rgba(139,10,46,0.08)",
+        boxShadow: hovered
+          ? "0 16px 40px rgba(139,10,46,0.18)"
+          : "0 8px 24px rgba(139,10,46,0.08)",
+        transform: hovered ? "translateY(-6px)" : "translateY(0)",
+        transition: "transform 0.3s ease, box-shadow 0.3s ease",
         position: "relative",
         display: "flex",
         flexDirection: "column",
         height: "100%",
+        cursor: "pointer",
       }}
     >
-      {/* PHOTO */}
+      {/* ============ PHOTO SECTION ============ */}
       <div
         style={{
           position: "relative",
@@ -41,7 +62,12 @@ function ProfileCard({ user, isMobile = false }) {
               height: "100%",
               objectFit: "cover",
               filter: should_blur_photo ? "blur(22px)" : "none",
-              transform: should_blur_photo ? "scale(1.15)" : "scale(1)",
+              transform: should_blur_photo
+                ? "scale(1.15)"
+                : hovered
+                ? "scale(1.05)"
+                : "scale(1)",
+              transition: "transform 0.5s ease",
             }}
           />
         ) : (
@@ -54,6 +80,7 @@ function ProfileCard({ user, isMobile = false }) {
               justifyContent: "center",
               fontSize: "60px",
               color: "#D4A017",
+              background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
             }}
           >
             👤
@@ -66,7 +93,7 @@ function ProfileCard({ user, isMobile = false }) {
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.75) 100%)",
+              "linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.82) 100%)",
             pointerEvents: "none",
           }}
         />
@@ -75,8 +102,8 @@ function ProfileCard({ user, isMobile = false }) {
         <div
           style={{
             position: "absolute",
-            top: "12px",
-            left: "12px",
+            top: "10px",
+            left: "10px",
             display: "flex",
             flexDirection: "column",
             gap: "6px",
@@ -112,39 +139,49 @@ function ProfileCard({ user, isMobile = false }) {
                 boxShadow: "0 3px 10px rgba(16,185,129,0.45)",
                 letterSpacing: "0.5px",
                 width: "fit-content",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
               }}
             >
-              ✓ VERIFIED
+              <span style={{ fontSize: "10px" }}>✓</span> VERIFIED
             </div>
           )}
         </div>
 
-        {/* MATCH SCORE (if present) */}
-        {match_score && !is_boosted && (
+        {/* MATCH SCORE BADGE (Top-Right, below heart) */}
+        {match_score && (
           <div
             style={{
               position: "absolute",
-              top: "12px",
-              left: "12px",
-              background: "rgba(139,10,46,0.9)",
-              color: "white",
-              fontSize: "10px",
+              top: "58px",
+              right: "12px",
+              background: "rgba(255,255,255,0.98)",
+              color: scoreColor,
+              fontSize: "11px",
               fontWeight: 800,
-              padding: "4px 10px",
+              padding: "5px 10px",
               borderRadius: "20px",
+              border: `1.5px solid ${scoreColor}`,
+              boxShadow: `0 4px 12px ${scoreColor}40`,
               backdropFilter: "blur(6px)",
               zIndex: 3,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
             }}
           >
-            {Math.round(match_score)}% Match
+            <span style={{ fontSize: "10px" }}>💯</span>
+            {Math.round(match_score)}%
           </div>
         )}
 
-        {/* HEART BUTTON */}
+        {/* SHORTLIST HEART BUTTON */}
         <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
+            setShortlisted((s) => !s);
           }}
           style={{
             position: "absolute",
@@ -153,20 +190,24 @@ function ProfileCard({ user, isMobile = false }) {
             width: "38px",
             height: "38px",
             borderRadius: "50%",
-            background: "rgba(255,255,255,0.96)",
+            background: shortlisted
+              ? "#8B0A2E"
+              : "rgba(255,255,255,0.96)",
             border: "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: "18px",
-            color: "#8B0A2E",
+            color: shortlisted ? "white" : "#8B0A2E",
             cursor: "pointer",
             boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
             zIndex: 3,
+            transition: "all 0.2s ease",
+            transform: hovered ? "scale(1.08)" : "scale(1)",
           }}
           title="Shortlist"
         >
-          ♡
+          {shortlisted ? "♥" : "♡"}
         </button>
 
         {/* BLUR OVERLAY */}
@@ -178,14 +219,14 @@ function ProfileCard({ user, isMobile = false }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "rgba(0,0,0,0.3)",
+              background: "rgba(0,0,0,0.35)",
               zIndex: 2,
             }}
           >
             <div
               style={{
                 background: "rgba(255,255,255,0.98)",
-                padding: "10px 18px",
+                padding: "12px 20px",
                 borderRadius: "24px",
                 fontSize: "11px",
                 fontWeight: 800,
@@ -194,11 +235,21 @@ function ProfileCard({ user, isMobile = false }) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: "2px",
+                gap: "4px",
               }}
             >
-              <span style={{ fontSize: "20px" }}>🔒</span>
-              <span>Protected</span>
+              <span style={{ fontSize: "22px" }}>🔒</span>
+              <span>Photo Protected</span>
+              <span
+                style={{
+                  fontSize: "9px",
+                  fontWeight: 600,
+                  color: "#8a6b6b",
+                  marginTop: "2px",
+                }}
+              >
+                Tap to view
+              </span>
             </div>
           </div>
         )}
@@ -210,19 +261,22 @@ function ProfileCard({ user, isMobile = false }) {
             bottom: 0,
             left: 0,
             right: 0,
-            padding: "14px 16px",
+            padding: "16px 16px 14px",
             zIndex: 3,
           }}
         >
           <div
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: isMobile ? "17px" : "19px",
+              fontSize: isMobile ? "17px" : "20px",
               fontWeight: 700,
               color: "white",
-              textShadow: "0 2px 6px rgba(0,0,0,0.55)",
-              marginBottom: "3px",
+              textShadow: "0 2px 8px rgba(0,0,0,0.6)",
+              marginBottom: "6px",
               lineHeight: 1.15,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {name || "Anonymous"}
@@ -231,40 +285,61 @@ function ProfileCard({ user, isMobile = false }) {
             style={{
               fontSize: "11px",
               color: "rgba(255,255,255,0.95)",
-              textShadow: "0 1px 3px rgba(0,0,0,0.55)",
+              textShadow: "0 1px 3px rgba(0,0,0,0.6)",
               display: "flex",
               alignItems: "center",
-              gap: "10px",
+              gap: "8px",
               flexWrap: "wrap",
+              fontWeight: 500,
             }}
           >
-            {age ? <span>🎂 {age} yrs</span> : null}
-            {location ? <span>📍 {location}</span> : null}
+            {age ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                🎂 {age} yrs
+              </span>
+            ) : null}
+            {location ? (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "3px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  maxWidth: "120px",
+                }}
+              >
+                📍 {location}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
 
-      {/* BODY */}
+      {/* ============ BODY SECTION ============ */}
       <div
         style={{
           padding: "14px 16px 16px",
           display: "flex",
           flexDirection: "column",
           flex: 1,
+          gap: "6px",
         }}
       >
+        {/* Education */}
         {education && (
           <div
             style={{
               fontSize: "11px",
-              color: "#8a6b6b",
-              marginBottom: "5px",
+              color: "#5c3030",
               display: "flex",
               alignItems: "center",
               gap: "6px",
+              fontWeight: 500,
             }}
           >
-            <span>🎓</span>
+            <span style={{ fontSize: "12px" }}>🎓</span>
             <span
               style={{
                 overflow: "hidden",
@@ -276,18 +351,20 @@ function ProfileCard({ user, isMobile = false }) {
             </span>
           </div>
         )}
+
+        {/* Occupation */}
         {occupation && (
           <div
             style={{
               fontSize: "11px",
-              color: "#8a6b6b",
-              marginBottom: "5px",
+              color: "#5c3030",
               display: "flex",
               alignItems: "center",
               gap: "6px",
+              fontWeight: 500,
             }}
           >
-            <span>💼</span>
+            <span style={{ fontSize: "12px" }}>💼</span>
             <span
               style={{
                 overflow: "hidden",
@@ -300,8 +377,9 @@ function ProfileCard({ user, isMobile = false }) {
           </div>
         )}
 
+        {/* Community Chip */}
         {community && (
-          <div style={{ marginTop: "6px", marginBottom: "10px" }}>
+          <div style={{ marginTop: "4px" }}>
             <span
               style={{
                 background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
@@ -320,8 +398,9 @@ function ProfileCard({ user, isMobile = false }) {
           </div>
         )}
 
+        {/* Contact masked badge */}
         {contact_masked && (
-          <div style={{ marginBottom: "10px" }}>
+          <div style={{ marginTop: "4px" }}>
             {contact_locked_reason === "owner_privacy" ? (
               <div
                 style={{
@@ -333,7 +412,7 @@ function ProfileCard({ user, isMobile = false }) {
                   gap: "4px",
                 }}
               >
-                🔒 Contact hidden by user
+                🔒 Contact hidden
               </div>
             ) : (
               <Link
@@ -350,26 +429,33 @@ function ProfileCard({ user, isMobile = false }) {
                   boxShadow: "0 3px 10px rgba(212,160,23,0.35)",
                 }}
               >
-                ⭐ Upgrade for contact
+                ⭐ Upgrade to unlock
               </Link>
             )}
           </div>
         )}
 
+        {/* View Profile Button */}
         <Link
           to={`/profile/${id}`}
           style={{
             display: "block",
             textAlign: "center",
-            background: "linear-gradient(135deg, #8B0A2E, #a01438)",
+            background: should_blur_photo
+              ? "linear-gradient(135deg, #8a6b6b, #5c3030)"
+              : "linear-gradient(135deg, #8B0A2E, #a01438)",
             color: "white",
-            padding: "10px",
+            padding: "11px",
             borderRadius: "10px",
             textDecoration: "none",
             fontWeight: 700,
             fontSize: "12px",
-            boxShadow: "0 4px 14px rgba(139,10,46,0.28)",
+            boxShadow: hovered
+              ? "0 6px 18px rgba(139,10,46,0.4)"
+              : "0 4px 14px rgba(139,10,46,0.28)",
             marginTop: "auto",
+            transition: "box-shadow 0.3s ease",
+            letterSpacing: "0.3px",
           }}
         >
           {should_blur_photo ? "🔒 View Profile" : "View Profile →"}
