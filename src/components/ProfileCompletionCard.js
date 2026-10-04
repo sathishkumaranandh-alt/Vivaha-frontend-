@@ -101,7 +101,6 @@ function ProfileCompletionCard({ profile, isMobile }) {
 
 const styles = {
   card: {
-    background: "white",
     borderRadius: "16px",
     padding: "20px",
     border: "2px dashed #f0c8d4",
