@@ -6,13 +6,12 @@ function ProfileCard({ user, isMobile = false }) {
   const [shortlisted, setShortlisted] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
 
-  const {
+    const {
     id, name, age, location, education, occupation, community,
     photo_url, is_verified, is_boosted, should_blur_photo,
     contact_masked, contact_locked_reason, match_score,
     // Optional fields (won't break if undefined)
-    company, work_location, mother_tongue, is_online,
-    last_active, photo_count, height,
+    company, mother_tongue, is_online, photo_count, height,
   } = user;
 
   const getScoreColor = (score) => {
