@@ -44,9 +44,7 @@ function ProfileCard({ user, isMobile = false }) {
         cursor: "pointer",
       }}
     >
-      {/* ============================================
-          ELEGANT TOP GOLD LINE (Accent)
-      ============================================ */}
+      {/* TOP GOLD LINE */}
       <div
         style={{
           position: "absolute",
@@ -62,9 +60,7 @@ function ProfileCard({ user, isMobile = false }) {
         }}
       />
 
-      {/* ============================================
-          PHOTO SECTION (3:4 ratio - Classic portrait)
-      ============================================ */}
+      {/* PHOTO SECTION */}
       <div
         style={{
           position: "relative",
@@ -74,7 +70,6 @@ function ProfileCard({ user, isMobile = false }) {
           overflow: "hidden",
         }}
       >
-        {/* Photo */}
         {photo_url ? (
           <>
             <img
@@ -97,7 +92,6 @@ function ProfileCard({ user, isMobile = false }) {
                 opacity: imgLoaded ? 1 : 0,
               }}
             />
-            {/* Elegant bottom vignette */}
             <div
               style={{
                 position: "absolute",
@@ -108,7 +102,6 @@ function ProfileCard({ user, isMobile = false }) {
                 zIndex: 1,
               }}
             />
-            {/* Top subtle vignette for badges */}
             <div
               style={{
                 position: "absolute",
@@ -168,9 +161,7 @@ function ProfileCard({ user, isMobile = false }) {
           </div>
         )}
 
-        {/* ============================================
-            TOP-LEFT: MINIMAL BADGES
-        ============================================ */}
+        {/* TOP-LEFT BADGES */}
         <div
           style={{
             position: "absolute",
@@ -226,9 +217,7 @@ function ProfileCard({ user, isMobile = false }) {
           )}
         </div>
 
-        {/* ============================================
-            TOP-RIGHT: HEART (Minimal)
-        ============================================ */}
+        {/* SHORTLIST HEART */}
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -262,9 +251,7 @@ function ProfileCard({ user, isMobile = false }) {
           {shortlisted ? "♥" : "♡"}
         </button>
 
-        {/* ============================================
-            BLUR OVERLAY (Refined)
-        ============================================ */}
+        {/* BLUR OVERLAY */}
         {should_blur_photo && (
           <div
             style={{
@@ -316,9 +303,7 @@ function ProfileCard({ user, isMobile = false }) {
           </div>
         )}
 
-        {/* ============================================
-            NAME OVERLAY (Elegant Typography)
-        ============================================ */}
+        {/* NAME OVERLAY */}
         <div
           style={{
             position: "absolute",
@@ -329,7 +314,6 @@ function ProfileCard({ user, isMobile = false }) {
             zIndex: 3,
           }}
         >
-          {/* Elegant gold divider */}
           <div
             style={{
               width: hovered ? "40px" : "24px",
@@ -399,9 +383,7 @@ function ProfileCard({ user, isMobile = false }) {
         </div>
       </div>
 
-      {/* ============================================
-          BODY SECTION (Elegant, Restrained)
-      ============================================ */}
+      {/* BODY SECTION */}
       <div
         style={{
           padding: "16px 16px 16px",
@@ -411,15 +393,8 @@ function ProfileCard({ user, isMobile = false }) {
           gap: "10px",
         }}
       >
-        {/* Info section with elegant separators */}
         {(education || occupation) && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "7px",
-            }}
-          >
+          <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
             {education && (
               <div
                 style={{
@@ -489,7 +464,6 @@ function ProfileCard({ user, isMobile = false }) {
           </div>
         )}
 
-        {/* Elegant divider */}
         {(education || occupation) && (
           <div
             style={{
@@ -500,7 +474,6 @@ function ProfileCard({ user, isMobile = false }) {
           />
         )}
 
-        {/* Community + Match Row */}
         <div
           style={{
             display: "flex",
@@ -552,7 +525,6 @@ function ProfileCard({ user, isMobile = false }) {
           )}
         </div>
 
-        {/* Contact row */}
         {contact_masked && (
           <div style={{ marginTop: "-2px" }}>
             {contact_locked_reason === "owner_privacy" ? (
@@ -588,9 +560,7 @@ function ProfileCard({ user, isMobile = false }) {
           </div>
         )}
 
-        {/* ============================================
-            ELEGANT CTA BUTTON
-        ============================================ */}
+        {/* CTA BUTTON - FIXED: removed duplicate color property */}
         <Link
           to={`/profile/${id}`}
           style={{
@@ -598,8 +568,6 @@ function ProfileCard({ user, isMobile = false }) {
             alignItems: "center",
             justifyContent: "center",
             gap: "8px",
-            background: should_blur_photo ? "white" : "white",
-            color: should_blur_photo ? "#8B0A2E" : "#8B0A2E",
             border: "1.5px solid #8B0A2E",
             padding: "11px 16px",
             borderRadius: "4px",
