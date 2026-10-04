@@ -80,13 +80,51 @@ function Visitors() {
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "16px" }}>
           {visitors.map((v) => (
             <div key={v.id} style={{ background: "white", borderRadius: "14px", padding: "16px", border: "1px solid #f0e0e0", display: "flex", gap: "14px", alignItems: "center" }}>
-              <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", flexShrink: 0, overflow: "hidden" }}>
-                {v.photo_url ? <img src={v.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "👤"}
+              
+              {/* PHOTO with blur logic */}
+              <div style={{ position: "relative", width: "64px", height: "64px", borderRadius: "50%", background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", flexShrink: 0, overflow: "hidden" }}>
+                {v.photo_url ? (
+                  <img 
+                    src={v.photo_url} 
+                    alt={v.name || "Visitor"} 
+                    style={{ 
+                      width: "100%", 
+                      height: "100%", 
+                      objectFit: "cover",
+                      filter: v.should_blur_photo ? "blur(12px)" : "none",
+                      transition: "filter 0.3s ease"
+                    }} 
+                  />
+                ) : ("👤")}
+                
+                {/* Lock overlay when blurred */}
+                {v.should_blur_photo && (
+                  <div style={{ 
+                    position: "absolute", inset: 0, 
+                    background: "rgba(0,0,0,0.30)", 
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    borderRadius: "50%", fontSize: "22px"
+                  }}>
+                    🔒
+                  </div>
+                )}
               </div>
+
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
-                  <div style={{ fontSize: "15px", fontWeight: 700, color: "#8B0A2E" }}>{v.name || "Anonymous"}</div>
-                  {v.is_verified && <span style={{ background: "#10B981", color: "white", fontSize: "9px", padding: "2px 6px", borderRadius: "8px", fontWeight: 700 }}>✓ Verified</span>}
+                  <div style={{ fontSize: "15px", fontWeight: 700, color: "#8B0A2E" }}>
+                    {v.name || "Anonymous"}
+                  </div>
+                  {v.is_verified && (
+                    <span style={{ background: "#10B981", color: "white", fontSize: "9px", padding: "2px 6px", borderRadius: "8px", fontWeight: 700 }}>
+                      ✓ Verified
+                    </span>
+                  )}
+                  {v.owner_is_paid && (
+                    <span style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", fontSize: "9px", padding: "2px 6px", borderRadius: "8px", fontWeight: 700 }}>
+                      👑 Paid
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: "12px", color: "#8a6b6b", marginBottom: "8px" }}>
                   {v.age ? `${v.age} yrs` : ""}{v.age && v.location ? " • " : ""}{v.location || ""}
@@ -94,8 +132,20 @@ function Visitors() {
                 <div style={{ fontSize: "10px", color: "#aaa", marginBottom: "8px" }}>
                   Viewed {new Date(v.viewed_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                 </div>
-                <Link to={`/profile/${v.id}`} style={{ background: "#8B0A2E", color: "white", padding: "6px 14px", borderRadius: "6px", fontSize: "11px", fontWeight: 700, textDecoration: "none", display: "inline-block" }}>
-                  View Profile
+                <Link 
+                  to={`/profile/${v.id}`} 
+                  style={{ 
+                    background: "#8B0A2E", 
+                    color: "white", 
+                    padding: "6px 14px", 
+                    borderRadius: "6px", 
+                    fontSize: "11px", 
+                    fontWeight: 700, 
+                    textDecoration: "none", 
+                    display: "inline-block" 
+                  }}
+                >
+                  {v.should_blur_photo ? "🔒 View Profile" : "View Profile"}
                 </Link>
               </div>
             </div>
