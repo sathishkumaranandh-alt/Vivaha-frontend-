@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
+import ProfileAnalytics from "../components/ProfileAnalytics";
+import ProfileCompletionCard from "../components/ProfileCompletionCard";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -154,6 +156,14 @@ function Dashboard() {
               </span>
             </p>
           </div>
+
+          {/* ===== Profile Completion Suggestions (NEW) ===== */}
+          <ProfileCompletionCard profile={profile || {}} isMobile={isMobile} />
+
+          {/* ===== Profile Analytics Dashboard (NEW) ===== */}
+          {user?.id && (
+            <ProfileAnalytics userId={user.id} isMobile={isMobile} />
+          )}
 
           <div style={S.completionCard}>
             <div style={S.completionRing}>
