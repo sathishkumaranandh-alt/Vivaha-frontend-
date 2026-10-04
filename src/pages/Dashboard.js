@@ -51,14 +51,12 @@ function Dashboard() {
         if (matchRes.ok) newCounts.matches = (await matchRes.json()).total || 0;
         setCounts(newCounts);
 
-        // Smart recommendations
         const recRes = await fetch(`${BACKEND_URL}/profile/recommendations/${user.id}`);
         if (recRes.ok) {
           const data = await recRes.json();
           setRecent((data.recommendations || []).slice(0, 3));
         }
 
-        // Plan
         const planRes = await fetch(`${BACKEND_URL}/plans/user-plan/${user.id}`);
         if (planRes.ok) {
           const data = await planRes.json();
@@ -72,13 +70,6 @@ function Dashboard() {
     }
     load();
   }, [navigate]);
-
-  const completion = (() => {
-    if (!profile) return 0;
-    const fields = ["name", "age", "gender", "religion", "location", "education", "occupation", "bio", "photo_url", "community"];
-    const filled = fields.filter((f) => profile[f] && String(profile[f]).trim() !== "").length;
-    return Math.round((filled / fields.length) * 100);
-  })();
 
   if (loading) {
     return (
@@ -108,11 +99,6 @@ function Dashboard() {
     header: { marginBottom: "20px" },
     h1: { fontFamily: "'Playfair Display', serif", fontSize: isMobile ? "22px" : "26px", fontWeight: 700, color: "#8B0A2E", marginBottom: "4px" },
     sub: { color: "#8a6b6b", fontSize: "13px", margin: 0 },
-    completionCard: { background: "linear-gradient(135deg, #8B0A2E, #a01438)", color: "white", borderRadius: "16px", padding: isMobile ? "16px" : "20px 24px", display: "flex", alignItems: "center", gap: "20px", marginBottom: "24px", flexWrap: "wrap" },
-    completionRing: { width: "70px", height: "70px", borderRadius: "50%", background: `conic-gradient(#D4A017 0% ${completion}%, rgba(255,255,255,0.15) ${completion}% 100%)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", flexShrink: 0 },
-    completionRingInner: { position: "absolute", inset: "6px", background: "#8B0A2E", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 800, fontSize: "16px" },
-    completionText: { flex: 1, minWidth: "160px" },
-    completeBtn: { background: "#D4A017", color: "#8B0A2E", padding: "10px 20px", borderRadius: "8px", border: "none", fontWeight: 700, fontSize: "12px", cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-block" },
     statsGrid: { display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: isMobile ? "10px" : "16px", marginBottom: "24px" },
     statCard: { background: "white", borderRadius: "12px", padding: isMobile ? "14px" : "18px", border: "1px solid #f0e0e0" },
     statTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" },
@@ -157,28 +143,13 @@ function Dashboard() {
             </p>
           </div>
 
-          {/* ===== Profile Completion Suggestions (NEW) ===== */}
+          {/* NEW: Profile Completion Card Only */}
           <ProfileCompletionCard profile={profile || {}} isMobile={isMobile} />
 
-          {/* ===== Profile Analytics Dashboard (NEW) ===== */}
+          {/* Profile Analytics Dashboard */}
           {user?.id && (
             <ProfileAnalytics userId={user.id} isMobile={isMobile} />
           )}
-
-          <div style={S.completionCard}>
-            <div style={S.completionRing}>
-              <div style={S.completionRingInner}>{completion}%</div>
-            </div>
-            <div style={S.completionText}>
-              <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "4px" }}>Profile Completion</div>
-              <div style={{ fontSize: "12px", opacity: 0.85 }}>
-                {completion < 80 ? "Complete your profile to get better matches" : "Great! Your profile is well-filled"}
-              </div>
-            </div>
-            <Link to="/profile" style={S.completeBtn}>
-              {completion < 100 ? "Complete Now →" : "View Profile →"}
-            </Link>
-          </div>
 
           <div style={S.statsGrid}>
             <div style={S.statCard}>
