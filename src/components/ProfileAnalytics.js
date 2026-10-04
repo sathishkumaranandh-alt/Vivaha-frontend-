@@ -64,15 +64,29 @@ function ProfileAnalytics({ userId, isMobile }) {
                 style={{ minWidth: "90px", textDecoration: "none", textAlign: "center", flexShrink: 0 }}
               >
                 <div style={{
+                  position: "relative",
                   width: "60px", height: "60px", borderRadius: "50%",
                   background: "#f0e0e0", margin: "0 auto 6px",
                   overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: "22px", color: "#8B0A2E", fontWeight: "800", border: "2px solid #f0c8d4"
                 }}>
                   {v.photo_url ? (
-                    <img src={v.photo_url} alt={v.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img 
+                      src={v.photo_url} 
+                      alt={v.name} 
+                      style={{ 
+                        width: "100%", height: "100%", objectFit: "cover",
+                        filter: v.should_blur_photo ? "blur(8px)" : "none"
+                      }} 
+                    />
                   ) : (
                     (v.name || "?")[0].toUpperCase()
+                  )}
+                  {v.should_blur_photo && (
+                    <div style={{
+                      position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)",
+                      display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", fontSize: "18px"
+                    }}>🔒</div>
                   )}
                 </div>
                 <div style={{ fontSize: "11px", fontWeight: "700", color: "#2D1B1B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
