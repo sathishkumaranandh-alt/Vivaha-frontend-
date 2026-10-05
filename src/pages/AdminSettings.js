@@ -637,5 +637,4 @@ const S = {
   positionGroupTitle: { fontSize: 13, fontWeight: 700, color: "#8B0A2E", marginBottom: 12 },
   resetPositionBtn: { background: "#f3f4f6", color: "#374151", border: "none", padding: "10px 18px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" },
 };
-
 export default AdminSettings;
