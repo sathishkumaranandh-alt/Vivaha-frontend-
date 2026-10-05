@@ -1,8 +1,23 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 
 function ProfileCompletionCard({ profile, isMobile }) {
   const navigate = useNavigate();
+  const [pageTheme, setPageTheme] = useState(getPageTheme("dashboard"));
+
+  useEffect(() => {
+    const handler = () => setPageTheme(getPageTheme("dashboard"));
+    window.addEventListener("theme-refresh", handler);
+    return () => window.removeEventListener("theme-refresh", handler);
+  }, []);
+
+  const pageHeading = pageTheme.heading;
+  const pageBody = pageTheme.body;
+  const pageMuted = pageTheme.muted;
+  const pageLink = pageTheme.link;
+  const baseSize = `${pageTheme.baseSize}px`;
+  const cardStyle = getCardStyle(pageTheme);
 
   const essentialFields = [
     { key: "photo_url", label: "Profile Photo", icon: "📷" },
@@ -24,12 +39,39 @@ function ProfileCompletionCard({ profile, isMobile }) {
   );
   const percent = Math.round((completedFields.length / totalCount) * 100);
 
+  // Success state
   if (percent === 100) {
     return (
-      <div style={styles.successCard}>
+      <div
+        style={{
+          background: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
+          borderRadius: `${pageTheme.cardRadius}px`,
+          padding: `${pageTheme.cardPadding}px`,
+          border: "2px solid #86efac",
+          textAlign: "center",
+          marginBottom: "20px",
+        }}
+      >
         <div style={{ fontSize: "42px", marginBottom: "8px" }}>🎉</div>
-        <h3 style={styles.successTitle}>Profile Complete!</h3>
-        <p style={styles.successText}>
+        <h3
+          style={{
+            color: "#16a34a",
+            fontSize: "18px",
+            fontWeight: "800",
+            margin: "0 0 6px 0",
+            fontFamily: "'Playfair Display', serif",
+          }}
+        >
+          Profile Complete!
+        </h3>
+        <p
+          style={{
+            color: "#166534",
+            fontSize: "13px",
+            margin: 0,
+            lineHeight: 1.6,
+          }}
+        >
           Your profile is 100% complete. You'll now appear higher in search results and get better matches.
         </p>
       </div>
@@ -37,150 +79,161 @@ function ProfileCompletionCard({ profile, isMobile }) {
   }
 
   return (
-    <div style={styles.card}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+    <div
+      style={{
+        ...cardStyle,
+        background: "linear-gradient(135deg, #fff9f5 0%, #fdf2f6 100%)",
+        border: `2px dashed ${pageTheme.cardBorder}`,
+        marginBottom: "20px",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          marginBottom: "16px",
+        }}
+      >
         <div style={{ fontSize: "32px" }}>✨</div>
         <div style={{ flex: 1 }}>
-          <h3 style={styles.title}>Complete Your Profile</h3>
-          <p style={styles.subtitle}>
+          <h3
+            style={{
+              color: pageHeading,
+              fontSize: "16px",
+              fontWeight: "800",
+              margin: "0 0 2px 0",
+              fontFamily: "'Playfair Display', serif",
+            }}
+          >
+            Complete Your Profile
+          </h3>
+          <p style={{ color: pageMuted, fontSize: "12px", margin: 0 }}>
             {missingFields.length} details left to unlock 3x more matches
           </p>
         </div>
       </div>
 
+      {/* Progress bar */}
       <div style={{ marginBottom: "16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", fontSize: "12px", fontWeight: "700" }}>
-          <span style={{ color: "#8B0A2E" }}>Progress</span>
-          <span style={{ color: "#8B0A2E" }}>{percent}%</span>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "6px",
+            fontSize: "12px",
+            fontWeight: "700",
+          }}
+        >
+          <span style={{ color: pageHeading }}>Progress</span>
+          <span style={{ color: pageHeading }}>{percent}%</span>
         </div>
-        <div style={styles.progressBg}>
+        <div
+          style={{
+            background: "#f3f4f6",
+            borderRadius: "10px",
+            height: "10px",
+            overflow: "hidden",
+          }}
+        >
           <div
             style={{
-              ...styles.progressFill,
+              height: "100%",
+              borderRadius: "10px",
               width: `${percent}%`,
-              background: percent < 40
-                ? "linear-gradient(90deg, #dc2626, #f59e0b)"
-                : percent < 80
-                ? "linear-gradient(90deg, #f59e0b, #eab308)"
-                : "linear-gradient(90deg, #16a34a, #22c55e)",
+              transition: "width 0.5s ease, background 0.5s ease",
+              background:
+                percent < 40
+                  ? "linear-gradient(90deg, #dc2626, #f59e0b)"
+                  : percent < 80
+                  ? "linear-gradient(90deg, #f59e0b, #eab308)"
+                  : "linear-gradient(90deg, #16a34a, #22c55e)",
             }}
           />
         </div>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "16px" }}>
+      {/* Missing field chips */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "6px",
+          marginBottom: "16px",
+        }}
+      >
         {missingFields.slice(0, 6).map((f) => (
-          <span key={f.key} style={styles.chip}>
+          <span
+            key={f.key}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              background: "white",
+              border: `1px solid ${pageTheme.cardBorder}`,
+              color: pageHeading,
+              padding: "5px 10px",
+              borderRadius: "20px",
+              fontSize: "11px",
+              fontWeight: "600",
+            }}
+          >
             <span style={{ marginRight: "4px" }}>{f.icon}</span>
             {f.label}
           </span>
         ))}
         {missingFields.length > 6 && (
-          <span style={{ ...styles.chip, background: "#8B0A2E", color: "white", borderColor: "#8B0A2E" }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              background: pageLink,
+              color: "white",
+              border: `1px solid ${pageLink}`,
+              padding: "5px 10px",
+              borderRadius: "20px",
+              fontSize: "11px",
+              fontWeight: "600",
+            }}
+          >
             +{missingFields.length - 6} more
           </span>
         )}
       </div>
 
+      {/* CTA */}
       <button
         onClick={() => navigate("/profile")}
         style={{
-          ...styles.btn,
+          width: "100%",
+          background: pageLink,
+          color: "white",
+          border: "none",
+          borderRadius: "12px",
+          fontWeight: "700",
+          fontSize: "14px",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          boxShadow: "0 6px 16px rgba(139,10,46,0.25)",
           padding: isMobile ? "12px" : "14px",
         }}
       >
         Complete Profile Now →
       </button>
 
-      <p style={styles.tip}>
+      <p
+        style={{
+          margin: "12px 0 0 0",
+          fontSize: "11px",
+          color: pageMuted,
+          lineHeight: 1.5,
+          textAlign: "center",
+        }}
+      >
         💡 <b>Tip:</b> Profiles with photos & complete details get <b>5x more interests</b> from matches.
       </p>
     </div>
   );
 }
-
-const styles = {
-  card: {
-    borderRadius: "16px",
-    padding: "20px",
-    border: "2px dashed #f0c8d4",
-    background: "linear-gradient(135deg, #fff9f5 0%, #fdf2f6 100%)",
-    marginBottom: "20px",
-  },
-  successCard: {
-    background: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
-    borderRadius: "16px",
-    padding: "24px",
-    border: "2px solid #86efac",
-    textAlign: "center",
-    marginBottom: "20px",
-  },
-  successTitle: {
-    color: "#16a34a",
-    fontSize: "18px",
-    fontWeight: "800",
-    margin: "0 0 6px 0",
-    fontFamily: "'Playfair Display', serif",
-  },
-  successText: {
-    color: "#166534",
-    fontSize: "13px",
-    margin: 0,
-    lineHeight: 1.6,
-  },
-  title: {
-    color: "#8B0A2E",
-    fontSize: "16px",
-    fontWeight: "800",
-    margin: "0 0 2px 0",
-    fontFamily: "'Playfair Display', serif",
-  },
-  subtitle: {
-    color: "#8a6b6b",
-    fontSize: "12px",
-    margin: 0,
-  },
-  progressBg: {
-    background: "#f3f4f6",
-    borderRadius: "10px",
-    height: "10px",
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: "10px",
-    transition: "width 0.5s ease, background 0.5s ease",
-  },
-  chip: {
-    display: "inline-flex",
-    alignItems: "center",
-    background: "white",
-    border: "1px solid #f0c8d4",
-    color: "#8B0A2E",
-    padding: "5px 10px",
-    borderRadius: "20px",
-    fontSize: "11px",
-    fontWeight: "600",
-  },
-  btn: {
-    width: "100%",
-    background: "linear-gradient(135deg, #8B0A2E, #a01438)",
-    color: "white",
-    border: "none",
-    borderRadius: "12px",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    fontFamily: "inherit",
-    boxShadow: "0 6px 16px rgba(139,10,46,0.25)",
-  },
-  tip: {
-    margin: "12px 0 0 0",
-    fontSize: "11px",
-    color: "#8a6b6b",
-    lineHeight: 1.5,
-    textAlign: "center",
-  },
-};
 
 export default ProfileCompletionCard;
