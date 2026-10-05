@@ -177,6 +177,7 @@ function AdminSettings() {
       <div style={S.tabs}>
         <button onClick={() => setTab("site")} style={{ ...S.tabBtn, background: tab === "site" ? "#8B0A2E" : "#f3f4f6", color: tab === "site" ? "white" : "#374151" }}>⚙️ Site</button>
         <button onClick={() => setTab("home")} style={{ ...S.tabBtn, background: tab === "home" ? "#D4A017" : "#f3f4f6", color: tab === "home" ? "white" : "#374151" }}>🏠 Homepage</button>
+       <button onClick={() => setTab("cards")} style={{ ...S.tabBtn, background: tab === "cards" ? "#ec4899" : "#f3f4f6", color: tab === "cards" ? "white" : "#374151" }}>🎴 Profile Cards</button>
         <button onClick={() => setTab("pages")} style={{ ...S.tabBtn, background: tab === "pages" ? "#16a34a" : "#f3f4f6", color: tab === "pages" ? "white" : "#374151" }}>🎨 Page Themes</button>
         <button onClick={() => setTab("privacy")} style={{ ...S.tabBtn, background: tab === "privacy" ? "#0891b2" : "#f3f4f6", color: tab === "privacy" ? "white" : "#374151" }}>🔒 Privacy Controls</button>
         <button onClick={() => setTab("logs")} style={{ ...S.tabBtn, background: tab === "logs" ? "#7c3aed" : "#f3f4f6", color: tab === "logs" ? "white" : "#374151" }}>📝 Audit ({logs.length})</button>
@@ -222,14 +223,6 @@ function AdminSettings() {
           <ColorPicker label="Body Text Color" value={settings.theme_body_color || "#2D1B1B"} onChange={(v) => handleSettingChange("theme_body_color", v)} />
           <ColorPicker label="Muted/Secondary Text Color" value={settings.theme_muted_color || "#8a6b6b"} onChange={(v) => handleSettingChange("theme_muted_color", v)} />
           <ColorPicker label="Link/Accent Color" value={settings.theme_link_color || "#8B0A2E"} onChange={(v) => handleSettingChange("theme_link_color", v)} />
-
-          {/* PROFILE CARD BUTTONS */}
-          <h3 style={{ ...S.sectionTitle, marginTop: 24 }}>🎴 Profile Card Buttons</h3>
-          <p style={S.sectionDesc}>Colors for the "View" button on profile cards (used everywhere)</p>
-          <ColorPicker label="View Button Background" value={settings.card_button_bg || "#8B0A2E"} onChange={(v) => handleSettingChange("card_button_bg", v)} />
-          <ColorPicker label="View Button Hover Color" value={settings.card_button_bg_hover || "#a01438"} onChange={(v) => handleSettingChange("card_button_bg_hover", v)} />
-          <ColorPicker label="View Button Text Color" value={settings.card_button_text || "#ffffff"} onChange={(v) => handleSettingChange("card_button_text", v)} />
-          <ColorPicker label="Protected/Blur Button Background" value={settings.card_protected_bg || "#8a6b6b"} onChange={(v) => handleSettingChange("card_protected_bg", v)} />
 
           <div style={{ marginTop: 28 }}>
             <button onClick={handleSave} disabled={saving} style={{ ...S.primaryBtn, opacity: saving ? 0.6 : 1 }}>
@@ -566,6 +559,69 @@ function AdminSettings() {
               {saving ? "Saving..." : "💾 Save Homepage Changes"}
             </button>
             <button onClick={() => window.open("/", "_blank")} style={S.previewSiteBtn}>👁️ Preview Homepage</button>
+          </div>
+        </div>
+      )}
+      {/* ==================== PROFILE CARDS ==================== */}
+      {tab === "cards" && (
+        <div style={S.card}>
+          {saved && <div style={S.savedBanner}>✅ Profile card design saved!</div>}
+          <div style={S.notice}>
+            💡 <strong>Tip:</strong> These settings apply to <strong>ALL</strong> profile cards site-wide (Home, Search, Dashboard, Matches, Recommendations).
+          </div>
+
+          <h3 style={S.sectionTitle}>📦 Card Box</h3>
+          <p style={S.sectionDesc}>Background, border, radius, shadow for the entire card</p>
+
+          <ColorPicker label="Card Background" value={settings.card_bg || "#ffffff"} onChange={(v) => handleSettingChange("card_bg", v)} />
+          <ColorPicker label="Card Border Color" value={settings.card_border_color || "#f0e0e0"} onChange={(v) => handleSettingChange("card_border_color", v)} />
+          <Slider label="Card Border Width" value={settings.card_border_width || "1"} onChange={(v) => handleSettingChange("card_border_width", v)} min={0} max={4} step={1} unit="px" />
+          <Slider label="Card Corner Radius" value={settings.card_radius || "12"} onChange={(v) => handleSettingChange("card_radius", v)} min={0} max={28} step={2} unit="px" />
+          <Slider label="Card Shadow Strength" value={settings.card_shadow || "40"} onChange={(v) => handleSettingChange("card_shadow", v)} min={0} max={100} step={5} />
+
+          <h3 style={{ ...S.sectionTitle, marginTop: 24 }}>📷 Photo</h3>
+          <p style={S.sectionDesc}>Photo shape and privacy blur intensity</p>
+
+          <label style={S.label}>Photo Aspect Ratio</label>
+          <select
+            value={settings.card_photo_ratio || "1/1"}
+            onChange={(e) => handleSettingChange("card_photo_ratio", e.target.value)}
+            style={{ ...S.input, marginBottom: 16, cursor: "pointer" }}
+          >
+            <option value="1/1">Square (1:1) — Compact</option>
+            <option value="4/5">Portrait (4:5) — Classic</option>
+            <option value="3/4">Portrait (3:4) — Traditional</option>
+            <option value="16/9">Landscape (16:9) — Wide</option>
+          </select>
+
+          <Slider label="Blur Intensity (for private photos)" value={settings.card_photo_blur || "20"} onChange={(v) => handleSettingChange("card_photo_blur", v)} min={5} max={40} step={1} unit="px" />
+
+          <h3 style={{ ...S.sectionTitle, marginTop: 24 }}>📝 Text</h3>
+          <p style={S.sectionDesc}>Name, body text and muted text colors on the card</p>
+
+          <ColorPicker label="Name Text Color (over photo)" value={settings.card_name_color || "#ffffff"} onChange={(v) => handleSettingChange("card_name_color", v)} />
+          <Slider label="Name Font Size" value={settings.card_name_size || "14.5"} onChange={(v) => handleSettingChange("card_name_size", v)} min={11} max={22} step={0.5} unit="px" />
+          <ColorPicker label="Body Text Color (education, occupation)" value={settings.card_body_color || "#3d2828"} onChange={(v) => handleSettingChange("card_body_color", v)} />
+          <ColorPicker label="Muted Text Color (company, hints)" value={settings.card_muted_color || "#8a6b6b"} onChange={(v) => handleSettingChange("card_muted_color", v)} />
+
+          <h3 style={{ ...S.sectionTitle, marginTop: 24 }}>🏷️ Chips</h3>
+          <p style={S.sectionDesc}>Community, mother tongue chips</p>
+
+          <ColorPicker label="Chip Background" value={settings.card_chip_bg || "#FDF2F6"} onChange={(v) => handleSettingChange("card_chip_bg", v)} />
+          <ColorPicker label="Chip Text Color" value={settings.card_chip_text || "#8B0A2E"} onChange={(v) => handleSettingChange("card_chip_text", v)} />
+
+          <h3 style={{ ...S.sectionTitle, marginTop: 24 }}>🎴 Buttons</h3>
+          <p style={S.sectionDesc}>"View" button colors (and "Unlock" for blurred photos)</p>
+
+          <ColorPicker label="View Button Background" value={settings.card_button_bg || "#8B0A2E"} onChange={(v) => handleSettingChange("card_button_bg", v)} />
+          <ColorPicker label="View Button Hover Color" value={settings.card_button_bg_hover || "#a01438"} onChange={(v) => handleSettingChange("card_button_bg_hover", v)} />
+          <ColorPicker label="View Button Text Color" value={settings.card_button_text || "#ffffff"} onChange={(v) => handleSettingChange("card_button_text", v)} />
+          <ColorPicker label="Protected/Blur Button Background" value={settings.card_protected_bg || "#8a6b6b"} onChange={(v) => handleSettingChange("card_protected_bg", v)} />
+
+          <div style={{ marginTop: 28 }}>
+            <button onClick={handleSave} disabled={saving} style={{ ...S.primaryBtn, background: "linear-gradient(135deg, #ec4899, #db2777)", opacity: saving ? 0.6 : 1 }}>
+              {saving ? "Saving..." : "💾 Save Profile Card Design"}
+            </button>
           </div>
         </div>
       )}
