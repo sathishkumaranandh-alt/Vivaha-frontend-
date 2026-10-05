@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { useCommunities } from "../utils/communities";
-import { getPageTheme } from "../utils/pageTheme";
+import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 import ProfileCard from "../components/ProfileCard";
 import BackButton from "../components/BackButton";
 
@@ -17,10 +17,8 @@ function ProfileSearch() {
   const [myCommunity, setMyCommunity] = useState("");
   const [myGender, setMyGender] = useState("");
 
-  // Per-page theme
   const [pageTheme, setPageTheme] = useState(getPageTheme("search"));
 
-  // Read ALL state from URL
   const [filters, setFilters] = useState({
     gender: searchParams.get("gender") || "",
     age_min: searchParams.get("age_min") || "21",
@@ -33,7 +31,6 @@ function ProfileSearch() {
     searchParams.get("allCommunities") === "true"
   );
 
-  // Sync filters to URL (so back button works)
   const syncURL = (f, allComm) => {
     const params = new URLSearchParams();
     if (f.gender) params.append("gender", f.gender);
@@ -52,7 +49,6 @@ function ProfileSearch() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
-  // Refresh theme on save from admin
   useEffect(() => {
     const handler = () => setPageTheme(getPageTheme("search"));
     window.addEventListener("theme-refresh", handler);
@@ -154,6 +150,9 @@ function ProfileSearch() {
   const headingSize = `${pageTheme.headingSize}px`;
   const headingSizeMobile = `${Math.round(pageTheme.headingSize * 0.85)}px`;
 
+  // Box theme
+  const cardStyle = getCardStyle(pageTheme);
+
   const S = {
     page: {
       maxWidth: "1300px",
@@ -179,10 +178,7 @@ function ProfileSearch() {
       gap: "24px",
     },
     sidebar: {
-      background: "white",
-      borderRadius: "14px",
-      padding: "20px",
-      border: "1px solid #f0e0e0",
+      ...cardStyle,
       height: "fit-content",
       position: isMobile ? "static" : "sticky",
       top: "90px",
@@ -237,14 +233,22 @@ function ProfileSearch() {
       gap: isMobile ? "10px" : "14px",
     },
     notice: {
+      ...cardStyle,
       background: "#FDF2F6",
-      border: "1px solid #f0e0e0",
-      borderRadius: "10px",
-      padding: "10px 12px",
       fontSize: "11px",
       color: pageMuted,
       marginBottom: "12px",
       lineHeight: 1.5,
+    },
+    emptyState: {
+      ...cardStyle,
+      textAlign: "center",
+      padding: "60px 20px",
+    },
+    countText: {
+      marginBottom: "16px",
+      fontSize: baseSize,
+      color: pageMuted,
     },
   };
 
@@ -318,7 +322,7 @@ function ProfileSearch() {
           {loading ? (
             <p style={{ textAlign: "center", color: pageMuted, padding: "40px 0" }}>Loading profiles...</p>
           ) : results.length === 0 ? (
-            <div style={{ background: "white", borderRadius: "14px", padding: "60px 20px", textAlign: "center", border: "1px solid #f0e0e0" }}>
+            <div style={S.emptyState}>
               <div style={{ fontSize: "50px", marginBottom: "12px" }}>🔎</div>
               <h3 style={{ color: pageHeading, marginBottom: "8px" }}>No matches found</h3>
               <p style={{ color: pageMuted, fontSize: baseSize }}>
@@ -329,7 +333,7 @@ function ProfileSearch() {
             </div>
           ) : (
             <>
-              <div style={{ marginBottom: "16px", fontSize: baseSize, color: pageMuted }}>
+              <div style={S.countText}>
                 Found <strong style={{ color: pageHeading }}>{results.length}</strong> profile{results.length !== 1 ? "s" : ""}
                 {showAllCommunities ? " (all communities)" : filters.community ? ` in ${filters.community}` : ""}
               </div>
