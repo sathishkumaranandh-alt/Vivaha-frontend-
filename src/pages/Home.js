@@ -53,6 +53,12 @@ const DEFAULTS = {
   home_trust_3_desc: "Your data is secure",
   home_trust_4_title: "Premium Support",
   home_trust_4_desc: "We are always here",
+  // NEW: Profile Card Button Colors
+  card_button_bg: "#8B0A2E",
+  card_button_bg_hover: "#a01438",
+  card_button_text: "#ffffff",
+  card_protected_bg: "#8a6b6b",
+  card_protected_bg_hover: "#5c3030",
 };
 
 function getCachedSettings() {
