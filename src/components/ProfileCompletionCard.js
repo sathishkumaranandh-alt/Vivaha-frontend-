@@ -13,10 +13,8 @@ function ProfileCompletionCard({ profile, isMobile }) {
   }, []);
 
   const pageHeading = pageTheme.heading;
-  const pageBody = pageTheme.body;
   const pageMuted = pageTheme.muted;
   const pageLink = pageTheme.link;
-  const baseSize = `${pageTheme.baseSize}px`;
   const cardStyle = getCardStyle(pageTheme);
 
   const essentialFields = [
