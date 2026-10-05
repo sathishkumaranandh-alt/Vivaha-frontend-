@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { useCommunities } from "../utils/communities";
+import { getPageTheme } from "../utils/pageTheme";
 import ProfileCard from "../components/ProfileCard";
 import BackButton from "../components/BackButton";
 
@@ -15,6 +16,9 @@ function ProfileSearch() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [myCommunity, setMyCommunity] = useState("");
   const [myGender, setMyGender] = useState("");
+
+  // Per-page theme
+  const [pageTheme, setPageTheme] = useState(getPageTheme("search"));
 
   // Read ALL state from URL
   const [filters, setFilters] = useState({
@@ -48,6 +52,13 @@ function ProfileSearch() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
+  // Refresh theme on save from admin
+  useEffect(() => {
+    const handler = () => setPageTheme(getPageTheme("search"));
+    window.addEventListener("theme-refresh", handler);
+    return () => window.removeEventListener("theme-refresh", handler);
+  }, []);
+
   useEffect(() => {
     async function loadMyProfile() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -57,7 +68,6 @@ function ProfileSearch() {
         setMyCommunity(data.community || "");
         setMyGender(data.gender || "");
 
-        // If no URL params at all, apply default (user's community + opposite gender)
         const hasURLParams = searchParams.toString().length > 0;
         if (!hasURLParams) {
           const defaultLookFor = data.gender === "male" ? "female" : "male";
@@ -134,19 +144,108 @@ function ProfileSearch() {
     syncURL(newFilters, newVal);
   };
 
+  // Per-page theme shortcuts
+  const pageBg = pageTheme.bg;
+  const pageHeading = pageTheme.heading;
+  const pageBody = pageTheme.body;
+  const pageMuted = pageTheme.muted;
+  const pageLink = pageTheme.link;
+  const baseSize = `${pageTheme.baseSize}px`;
+  const headingSize = `${pageTheme.headingSize}px`;
+  const headingSizeMobile = `${Math.round(pageTheme.headingSize * 0.85)}px`;
+
   const S = {
-    page: { maxWidth: "1300px", margin: "0 auto", padding: isMobile ? "16px" : "32px" },
+    page: {
+      maxWidth: "1300px",
+      margin: "0 auto",
+      padding: isMobile ? "16px" : "32px",
+      background: pageBg,
+      minHeight: "100vh",
+      boxSizing: "border-box",
+      fontSize: baseSize,
+      color: pageBody,
+    },
     header: { marginBottom: "20px" },
-    h1: { fontFamily: "'Playfair Display', serif", fontSize: isMobile ? "22px" : "28px", color: "#8B0A2E", marginBottom: "4px" },
-    sub: { color: "#8a6b6b", fontSize: "13px", margin: 0 },
-    layout: { display: isMobile ? "block" : "grid", gridTemplateColumns: isMobile ? undefined : "280px 1fr", gap: "24px" },
-    sidebar: { background: "white", borderRadius: "14px", padding: "20px", border: "1px solid #f0e0e0", height: "fit-content", position: isMobile ? "static" : "sticky", top: "90px", marginBottom: isMobile ? "16px" : 0 },
-    label: { display: "block", fontSize: "11px", fontWeight: 700, color: "#555", marginBottom: "6px", textTransform: "uppercase" },
-    input: { width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "13px", fontFamily: "inherit", outline: "none", background: "#FFF9F5", boxSizing: "border-box", marginBottom: "12px" },
-    btn: { width: "100%", background: "#8B0A2E", color: "white", border: "none", padding: "14px", borderRadius: "10px", fontWeight: 700, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" },
-    checkboxRow: { display: "flex", alignItems: "center", gap: "8px", marginTop: "8px", marginBottom: "12px", fontSize: "12px", color: "#555", cursor: "pointer" },
-    grid: { display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(240px, 1fr))", gap: isMobile ? "14px" : "20px" },
-    notice: { background: "#FDF2F6", border: "1px solid #f0e0e0", borderRadius: "10px", padding: "10px 12px", fontSize: "11px", color: "#8a6b6b", marginBottom: "12px", lineHeight: 1.5 },
+    h1: {
+      fontFamily: "'Playfair Display', serif",
+      fontSize: isMobile ? headingSizeMobile : headingSize,
+      color: pageHeading,
+      marginBottom: "4px",
+    },
+    sub: { color: pageMuted, fontSize: baseSize, margin: 0 },
+    layout: {
+      display: isMobile ? "block" : "grid",
+      gridTemplateColumns: isMobile ? undefined : "280px 1fr",
+      gap: "24px",
+    },
+    sidebar: {
+      background: "white",
+      borderRadius: "14px",
+      padding: "20px",
+      border: "1px solid #f0e0e0",
+      height: "fit-content",
+      position: isMobile ? "static" : "sticky",
+      top: "90px",
+      marginBottom: isMobile ? "16px" : 0,
+    },
+    label: {
+      display: "block",
+      fontSize: "11px",
+      fontWeight: 700,
+      color: pageBody,
+      marginBottom: "6px",
+      textTransform: "uppercase",
+    },
+    input: {
+      width: "100%",
+      padding: "10px 12px",
+      borderRadius: "8px",
+      border: "1px solid #d1d5db",
+      fontSize: "13px",
+      fontFamily: "inherit",
+      outline: "none",
+      background: "#FFF9F5",
+      boxSizing: "border-box",
+      marginBottom: "12px",
+      color: pageBody,
+    },
+    btn: {
+      width: "100%",
+      background: pageLink,
+      color: "white",
+      border: "none",
+      padding: "14px",
+      borderRadius: "10px",
+      fontWeight: 700,
+      fontSize: "14px",
+      cursor: "pointer",
+      fontFamily: "inherit",
+    },
+    checkboxRow: {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      marginTop: "8px",
+      marginBottom: "12px",
+      fontSize: "12px",
+      color: pageBody,
+      cursor: "pointer",
+    },
+    grid: {
+      display: "grid",
+      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(185px, 1fr))",
+      gap: isMobile ? "10px" : "14px",
+    },
+    notice: {
+      background: "#FDF2F6",
+      border: "1px solid #f0e0e0",
+      borderRadius: "10px",
+      padding: "10px 12px",
+      fontSize: "11px",
+      color: pageMuted,
+      marginBottom: "12px",
+      lineHeight: 1.5,
+    },
   };
 
   return (
@@ -167,7 +266,7 @@ function ProfileSearch() {
           </select>
 
           {myGender && (
-            <div style={{ fontSize: "11px", color: "#8a6b6b", marginTop: "-8px", marginBottom: "12px", fontStyle: "italic" }}>
+            <div style={{ fontSize: "11px", color: pageMuted, marginTop: "-8px", marginBottom: "12px", fontStyle: "italic" }}>
               Based on your profile ({myGender})
             </div>
           )}
@@ -187,7 +286,9 @@ function ProfileSearch() {
           <input style={S.input} placeholder="City" value={filters.location} onChange={(e) => setFilters({ ...filters, location: e.target.value })} onBlur={() => syncURL(filters, showAllCommunities)} />
 
           {myCommunity && (
-            <div style={S.notice}>🏷️ Your community: <strong style={{ textTransform: "capitalize" }}>{myCommunity}</strong></div>
+            <div style={S.notice}>
+              🏷️ Your community: <strong style={{ textTransform: "capitalize" }}>{myCommunity}</strong>
+            </div>
           )}
 
           <label style={S.label}>Community</label>
@@ -199,7 +300,12 @@ function ProfileSearch() {
           </select>
 
           <label style={S.checkboxRow}>
-            <input type="checkbox" checked={showAllCommunities} onChange={toggleAllCommunities} style={{ width: 16, height: 16, accentColor: "#8B0A2E" }} />
+            <input
+              type="checkbox"
+              checked={showAllCommunities}
+              onChange={toggleAllCommunities}
+              style={{ width: 16, height: 16, accentColor: pageLink }}
+            />
             Show all communities
           </label>
 
@@ -210,12 +316,12 @@ function ProfileSearch() {
 
         <main>
           {loading ? (
-            <p style={{ textAlign: "center", color: "#8a6b6b", padding: "40px 0" }}>Loading profiles...</p>
+            <p style={{ textAlign: "center", color: pageMuted, padding: "40px 0" }}>Loading profiles...</p>
           ) : results.length === 0 ? (
             <div style={{ background: "white", borderRadius: "14px", padding: "60px 20px", textAlign: "center", border: "1px solid #f0e0e0" }}>
               <div style={{ fontSize: "50px", marginBottom: "12px" }}>🔎</div>
-              <h3 style={{ color: "#8B0A2E", marginBottom: "8px" }}>No matches found</h3>
-              <p style={{ color: "#8a6b6b", fontSize: "13px" }}>
+              <h3 style={{ color: pageHeading, marginBottom: "8px" }}>No matches found</h3>
+              <p style={{ color: pageMuted, fontSize: baseSize }}>
                 {!showAllCommunities && myCommunity
                   ? `No profiles in "${myCommunity}" community. Try "Show all communities".`
                   : "Try loosening your filters."}
@@ -223,8 +329,8 @@ function ProfileSearch() {
             </div>
           ) : (
             <>
-              <div style={{ marginBottom: "16px", fontSize: "13px", color: "#8a6b6b" }}>
-                Found <strong>{results.length}</strong> profile{results.length !== 1 ? "s" : ""}
+              <div style={{ marginBottom: "16px", fontSize: baseSize, color: pageMuted }}>
+                Found <strong style={{ color: pageHeading }}>{results.length}</strong> profile{results.length !== 1 ? "s" : ""}
                 {showAllCommunities ? " (all communities)" : filters.community ? ` in ${filters.community}` : ""}
               </div>
               <div style={S.grid}>
