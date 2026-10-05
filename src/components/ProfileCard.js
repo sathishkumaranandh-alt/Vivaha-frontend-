@@ -1,9 +1,26 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-// Read card theme from cached settings (set by Home.js / AdminSettings)
 function getCardTheme() {
-  const DEFAULT_THEME = {
+  const D = {
+    // Card box
+    cardBg: "#ffffff",
+    cardBorder: "#f0e0e0",
+    cardBorderWidth: "1",
+    cardRadius: "12",
+    cardShadow: "40",
+    // Photo
+    photoRatio: "1/1",
+    photoBlur: "20",
+    // Text
+    nameColor: "#ffffff",
+    nameSize: "14.5",
+    bodyColor: "#3d2828",
+    mutedColor: "#8a6b6b",
+    // Chips
+    chipBg: "#FDF2F6",
+    chipText: "#8B0A2E",
+    // Buttons
     buttonBg: "#8B0A2E",
     buttonBgHover: "#a01438",
     buttonText: "#ffffff",
@@ -12,16 +29,29 @@ function getCardTheme() {
   };
   try {
     const raw = localStorage.getItem("vivaha_home_settings_v1");
-    const cached = raw ? JSON.parse(raw) : {};
+    const c = raw ? JSON.parse(raw) : {};
     return {
-      buttonBg: cached.card_button_bg || DEFAULT_THEME.buttonBg,
-      buttonBgHover: cached.card_button_bg_hover || DEFAULT_THEME.buttonBgHover,
-      buttonText: cached.card_button_text || DEFAULT_THEME.buttonText,
-      protectedBg: cached.card_protected_bg || DEFAULT_THEME.protectedBg,
-      protectedHover: cached.card_protected_bg_hover || DEFAULT_THEME.protectedHover,
+      cardBg: c.card_bg || D.cardBg,
+      cardBorder: c.card_border_color || D.cardBorder,
+      cardBorderWidth: parseInt(c.card_border_width || D.cardBorderWidth),
+      cardRadius: parseInt(c.card_radius || D.cardRadius),
+      cardShadow: parseInt(c.card_shadow || D.cardShadow),
+      photoRatio: c.card_photo_ratio || D.photoRatio,
+      photoBlur: parseInt(c.card_photo_blur || D.photoBlur),
+      nameColor: c.card_name_color || D.nameColor,
+      nameSize: c.card_name_size || D.nameSize,
+      bodyColor: c.card_body_color || D.bodyColor,
+      mutedColor: c.card_muted_color || D.mutedColor,
+      chipBg: c.card_chip_bg || D.chipBg,
+      chipText: c.card_chip_text || D.chipText,
+      buttonBg: c.card_button_bg || D.buttonBg,
+      buttonBgHover: c.card_button_bg_hover || D.buttonBgHover,
+      buttonText: c.card_button_text || D.buttonText,
+      protectedBg: c.card_protected_bg || D.protectedBg,
+      protectedHover: c.card_protected_bg_hover || D.protectedHover,
     };
   } catch {
-    return DEFAULT_THEME;
+    return D;
   }
 }
 
@@ -30,7 +60,7 @@ function ProfileCard({ user, isMobile = false }) {
   const [shortlisted, setShortlisted] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
 
-  const cardTheme = getCardTheme();
+  const theme = getCardTheme();
 
   const {
     id, name, age, location, education, occupation, community,
@@ -50,18 +80,24 @@ function ProfileCard({ user, isMobile = false }) {
   const scoreColor = getScoreColor(match_score);
   const scorePercent = match_score ? Math.round(match_score) : 0;
 
+  // Box shadow from strength
+  const shadowStrength = theme.cardShadow || 0;
+  const boxShadow = shadowStrength === 0
+    ? "none"
+    : `0 ${Math.round(shadowStrength / 8)}px ${Math.round(shadowStrength / 3)}px -${Math.round(shadowStrength / 15)}px rgba(139,10,46,0.12)`;
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: "white",
-        borderRadius: "12px",
+        background: theme.cardBg,
+        borderRadius: `${theme.cardRadius}px`,
         overflow: "hidden",
-        border: hovered ? "1px solid #f0d0da" : "1px solid #f0e0e0",
+        border: `${theme.cardBorderWidth}px solid ${hovered ? "#f0d0da" : theme.cardBorder}`,
         boxShadow: hovered
-          ? "0 14px 32px -10px rgba(139,10,46,0.16)"
-          : "0 2px 10px -3px rgba(139,10,46,0.06)",
+          ? `0 ${Math.round(shadowStrength / 5)}px ${Math.round(shadowStrength / 2.5)}px -10px rgba(139,10,46,0.18)`
+          : boxShadow,
         transform: hovered ? "translateY(-4px)" : "translateY(0)",
         transition: "all 0.35s cubic-bezier(0.22, 1, 0.36, 1)",
         display: "flex",
@@ -70,12 +106,12 @@ function ProfileCard({ user, isMobile = false }) {
         cursor: "pointer",
       }}
     >
-      {/* ==================== PHOTO (Square 1:1) ==================== */}
+      {/* PHOTO */}
       <div
         style={{
           position: "relative",
           width: "100%",
-          aspectRatio: "1/1",
+          aspectRatio: theme.photoRatio,
           background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
           overflow: "hidden",
         }}
@@ -91,565 +127,149 @@ function ProfileCard({ user, isMobile = false }) {
                 height: "100%",
                 objectFit: "cover",
                 objectPosition: "center 18%",
-                filter: should_blur_photo ? "blur(20px)" : "none",
+                filter: should_blur_photo ? `blur(${theme.photoBlur}px)` : "none",
                 transform: should_blur_photo
                   ? "scale(1.12)"
                   : hovered
                   ? "scale(1.05)"
                   : "scale(1)",
-                transition: "transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease",
+                transition: "transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s",
                 opacity: imgLoaded ? 1 : 0,
               }}
             />
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(15,3,8,0.85) 100%)",
-                pointerEvents: "none",
-                zIndex: 1,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: "60px",
-                background:
-                  "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 100%)",
-                pointerEvents: "none",
-                zIndex: 1,
-              }}
-            />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(15,3,8,0.85) 100%)", pointerEvents: "none", zIndex: 1 }} />
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "60px", background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 100%)", pointerEvents: "none", zIndex: 1 }} />
           </>
         ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "linear-gradient(135deg, #FAF3F5, #f4dde5)",
-              gap: "8px",
-            }}
-          >
-            <div
-              style={{
-                width: "56px",
-                height: "56px",
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #8B0A2E, #a01438)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "'Playfair Display', serif",
-                fontSize: "24px",
-                fontWeight: 700,
-                color: "#D4A017",
-              }}
-            >
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #FAF3F5, #f4dde5)", gap: "8px" }}>
+            <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, #8B0A2E, #a01438)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: 700, color: "#D4A017" }}>
               {(name || "?")[0].toUpperCase()}
             </div>
-            <div
-              style={{
-                fontSize: "7.5px",
-                fontWeight: 700,
-                color: "#8a6b6b",
-                letterSpacing: "1.5px",
-                textTransform: "uppercase",
-              }}
-            >
-              No Photo
-            </div>
+            <div style={{ fontSize: "7.5px", fontWeight: 700, color: "#8a6b6b", letterSpacing: "1.5px", textTransform: "uppercase" }}>No Photo</div>
           </div>
         )}
 
         {/* BADGES */}
-        <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            left: "8px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-            zIndex: 3,
-          }}
-        >
+        <div style={{ position: "absolute", top: "8px", left: "8px", display: "flex", flexDirection: "column", gap: "4px", zIndex: 3 }}>
           {is_boosted && (
-            <div
-              style={{
-                background: "rgba(255,255,255,0.96)",
-                color: "#b8860b",
-                fontSize: "7px",
-                fontWeight: 800,
-                padding: "3px 6px",
-                borderRadius: "3px",
-                letterSpacing: "0.8px",
-                border: "1px solid rgba(212,160,23,0.4)",
-                width: "fit-content",
-              }}
-            >
-              ◆ PREMIUM
-            </div>
+            <div style={{ background: "rgba(255,255,255,0.96)", color: "#b8860b", fontSize: "7px", fontWeight: 800, padding: "3px 6px", borderRadius: "3px", letterSpacing: "0.8px", border: "1px solid rgba(212,160,23,0.4)", width: "fit-content" }}>◆ PREMIUM</div>
           )}
           {is_verified && (
-            <div
-              style={{
-                background: "rgba(255,255,255,0.96)",
-                color: "#059669",
-                fontSize: "7px",
-                fontWeight: 800,
-                padding: "3px 6px",
-                borderRadius: "3px",
-                letterSpacing: "0.8px",
-                border: "1px solid rgba(16,185,129,0.35)",
-                width: "fit-content",
-              }}
-            >
-              ✓ VERIFIED
-            </div>
+            <div style={{ background: "rgba(255,255,255,0.96)", color: "#059669", fontSize: "7px", fontWeight: 800, padding: "3px 6px", borderRadius: "3px", letterSpacing: "0.8px", border: "1px solid rgba(16,185,129,0.35)", width: "fit-content" }}>✓ VERIFIED</div>
           )}
         </div>
 
         {/* HEART */}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setShortlisted((s) => !s);
-          }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShortlisted((s) => !s); }}
           style={{
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-            width: "28px",
-            height: "28px",
-            borderRadius: "50%",
-            background: shortlisted
-              ? "linear-gradient(135deg, #8B0A2E, #a01438)"
-              : "rgba(255,255,255,0.96)",
+            position: "absolute", top: "8px", right: "8px", width: "28px", height: "28px", borderRadius: "50%",
+            background: shortlisted ? "linear-gradient(135deg, #8B0A2E, #a01438)" : "rgba(255,255,255,0.96)",
             border: shortlisted ? "1.5px solid #D4A017" : "none",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "13px",
-            color: shortlisted ? "#D4A017" : "#8B0A2E",
-            cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-            transition: "all 0.25s",
-            zIndex: 3,
-            fontFamily: "inherit",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "13px", color: shortlisted ? "#D4A017" : "#8B0A2E",
+            cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            transition: "all 0.25s", zIndex: 3, fontFamily: "inherit",
           }}
-        >
-          {shortlisted ? "♥" : "♡"}
-        </button>
+        >{shortlisted ? "♥" : "♡"}</button>
 
         {/* LIVE */}
         {is_online && (
-          <div
-            style={{
-              position: "absolute",
-              top: "40px",
-              right: "8px",
-              background: "rgba(255,255,255,0.96)",
-              color: "#16a34a",
-              fontSize: "7px",
-              fontWeight: 800,
-              padding: "3px 6px",
-              borderRadius: "9px",
-              display: "flex",
-              alignItems: "center",
-              gap: "3px",
-              letterSpacing: "0.6px",
-              zIndex: 3,
-            }}
-          >
-            <span
-              style={{
-                width: "4px",
-                height: "4px",
-                borderRadius: "50%",
-                background: "#16a34a",
-                animation: "pulse 2s infinite",
-              }}
-            />
-            LIVE
+          <div style={{ position: "absolute", top: "40px", right: "8px", background: "rgba(255,255,255,0.96)", color: "#16a34a", fontSize: "7px", fontWeight: 800, padding: "3px 6px", borderRadius: "9px", display: "flex", alignItems: "center", gap: "3px", letterSpacing: "0.6px", zIndex: 3 }}>
+            <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#16a34a", animation: "pulse 2s infinite" }} />LIVE
           </div>
         )}
 
-        {/* PROTECTED OVERLAY */}
+        {/* PROTECTED */}
         {should_blur_photo && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "rgba(15,3,8,0.4)",
-              zIndex: 2,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <div
-                style={{
-                  width: "46px",
-                  height: "46px",
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.98)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "18px",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
-                  border: "1.5px solid rgba(212,160,23,0.5)",
-                }}
-              >
-                🔒
-              </div>
-              <div
-                style={{
-                  fontSize: "7.5px",
-                  fontWeight: 700,
-                  color: "white",
-                  letterSpacing: "2px",
-                  textTransform: "uppercase",
-                  textShadow: "0 1px 3px rgba(0,0,0,0.6)",
-                }}
-              >
-                Protected
-              </div>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(15,3,8,0.4)", zIndex: 2 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+              <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "rgba(255,255,255,0.98)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", boxShadow: "0 4px 16px rgba(0,0,0,0.3)", border: "1.5px solid rgba(212,160,23,0.5)" }}>🔒</div>
+              <div style={{ fontSize: "7.5px", fontWeight: 700, color: "white", letterSpacing: "2px", textTransform: "uppercase", textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}>Protected</div>
             </div>
           </div>
         )}
 
         {/* PHOTO COUNT */}
         {photo_count > 1 && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: "8px",
-              left: "8px",
-              background: "rgba(0,0,0,0.55)",
-              color: "white",
-              fontSize: "8px",
-              fontWeight: 700,
-              padding: "2px 7px",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              gap: "3px",
-              zIndex: 3,
-            }}
-          >
-            📷 {photo_count}
-          </div>
+          <div style={{ position: "absolute", bottom: "8px", left: "8px", background: "rgba(0,0,0,0.55)", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 7px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "3px", zIndex: 3 }}>📷 {photo_count}</div>
         )}
 
         {/* MATCH SCORE */}
         {match_score ? (
-          <div
-            style={{
-              position: "absolute",
-              bottom: "8px",
-              right: "8px",
-              background: "rgba(255,255,255,0.97)",
-              color: scoreColor,
-              fontSize: "9px",
-              fontWeight: 800,
-              padding: "3px 7px",
-              borderRadius: "10px",
-              border: `1px solid ${scoreColor}55`,
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              zIndex: 3,
-            }}
-          >
-            <span
-              style={{
-                width: "4px",
-                height: "4px",
-                borderRadius: "50%",
-                background: scoreColor,
-                boxShadow: `0 0 4px ${scoreColor}`,
-              }}
-            />
+          <div style={{ position: "absolute", bottom: "8px", right: "8px", background: "rgba(255,255,255,0.97)", color: scoreColor, fontSize: "9px", fontWeight: 800, padding: "3px 7px", borderRadius: "10px", border: `1px solid ${scoreColor}55`, display: "flex", alignItems: "center", gap: "4px", zIndex: 3 }}>
+            <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: scoreColor, boxShadow: `0 0 4px ${scoreColor}` }} />
             {scorePercent}%
           </div>
         ) : null}
 
         {/* NAME */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            padding: "10px 10px 8px",
-            zIndex: 3,
-          }}
-        >
-          <div
-            style={{
-              width: hovered ? "24px" : "14px",
-              height: "1.5px",
-              background: "linear-gradient(90deg, #D4A017, rgba(212,160,23,0))",
-              marginBottom: "5px",
-              transition: "width 0.4s",
-            }}
-          />
-          <div
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: isMobile ? "13px" : "14.5px",
-              fontWeight: 700,
-              color: "white",
-              textShadow: "0 2px 8px rgba(0,0,0,0.65)",
-              marginBottom: "2px",
-              lineHeight: 1.15,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 10px 8px", zIndex: 3 }}>
+          <div style={{ width: hovered ? "24px" : "14px", height: "1.5px", background: "linear-gradient(90deg, #D4A017, rgba(212,160,23,0))", marginBottom: "5px", transition: "width 0.4s" }} />
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? `${Math.round(parseFloat(theme.nameSize) * 0.9)}px` : `${theme.nameSize}px`, fontWeight: 700, color: theme.nameColor, textShadow: "0 2px 8px rgba(0,0,0,0.65)", marginBottom: "2px", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {name || "Anonymous"}
-            {age ? (
-              <span
-                style={{
-                  fontWeight: 500,
-                  fontSize: "11px",
-                  opacity: 0.88,
-                  marginLeft: "3px",
-                  fontStyle: "italic",
-                }}
-              >
-                , {age}
-              </span>
-            ) : null}
+            {age ? <span style={{ fontWeight: 500, fontSize: "11px", opacity: 0.88, marginLeft: "3px", fontStyle: "italic" }}>, {age}</span> : null}
           </div>
-          <div
-            style={{
-              fontSize: "9px",
-              color: "rgba(255,255,255,0.9)",
-              textShadow: "0 1px 3px rgba(0,0,0,0.6)",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              fontWeight: 500,
-            }}
-          >
-            {location ? (
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "2px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  maxWidth: "100px",
-                }}
-              >
-                📍 {location}
-              </span>
-            ) : null}
+          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.9)", textShadow: "0 1px 3px rgba(0,0,0,0.6)", display: "flex", alignItems: "center", gap: "6px", fontWeight: 500 }}>
+            {location ? <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100px" }}>📍 {location}</span> : null}
             {height ? <span>📏 {height}</span> : null}
           </div>
         </div>
       </div>
 
-      {/* ==================== BODY ==================== */}
-      <div
-        style={{
-          padding: "9px 10px 10px",
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          gap: "5px",
-        }}
-      >
+      {/* BODY */}
+      <div style={{ padding: "9px 10px 10px", display: "flex", flexDirection: "column", flex: 1, gap: "5px" }}>
         {(education || occupation) && (
           <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
             {education && (
-              <div
-                style={{
-                  fontSize: "10px",
-                  color: "#3d2828",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  fontWeight: 500,
-                }}
-              >
+              <div style={{ fontSize: "10px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "5px", fontWeight: 500 }}>
                 <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
-                <span
-                  style={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {education}
-                </span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{education}</span>
               </div>
             )}
             {occupation && (
-              <div
-                style={{
-                  fontSize: "10px",
-                  color: "#3d2828",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  fontWeight: 500,
-                }}
-              >
+              <div style={{ fontSize: "10px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "5px", fontWeight: 500 }}>
                 <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
-                <span
-                  style={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {occupation}
-                  {company ? (
-                    <span style={{ color: "#8a6b6b", fontSize: "9px" }}>
-                      {" "}· {company}
-                    </span>
-                  ) : null}
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {occupation}{company ? <span style={{ color: theme.mutedColor, fontSize: "9px" }}> · {company}</span> : null}
                 </span>
               </div>
             )}
           </div>
         )}
 
-        {/* CHIPS */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "4px",
-            alignItems: "center",
-          }}
-        >
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", alignItems: "center" }}>
           {community && (
-            <span
-              style={{
-                background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
-                color: "#8B0A2E",
-                padding: "2px 8px",
-                borderRadius: "10px",
-                fontSize: "8px",
-                fontWeight: 700,
-                textTransform: "capitalize",
-                border: "1px solid #f5dce4",
-              }}
-            >
-              🏷️ {community}
-            </span>
+            <span style={{ background: theme.chipBg, color: theme.chipText, padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, textTransform: "capitalize", border: `1px solid ${theme.chipText}20` }}>🏷️ {community}</span>
           )}
           {mother_tongue && (
-            <span
-              style={{
-                background: "#F5F3FF",
-                color: "#6B21A8",
-                padding: "2px 8px",
-                borderRadius: "10px",
-                fontSize: "8px",
-                fontWeight: 700,
-                border: "1px solid #EDE9FE",
-              }}
-            >
-              🗣️ {mother_tongue}
-            </span>
+            <span style={{ background: "#F5F3FF", color: "#6B21A8", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, border: "1px solid #EDE9FE" }}>🗣️ {mother_tongue}</span>
           )}
           {contact_masked && contact_locked_reason === "owner_privacy" && (
-            <span
-              style={{
-                background: "#f3f4f6",
-                color: "#6b7280",
-                padding: "2px 8px",
-                borderRadius: "10px",
-                fontSize: "8px",
-                fontWeight: 600,
-              }}
-            >
-              🔒 Contact
-            </span>
+            <span style={{ background: "#f3f4f6", color: "#6b7280", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 600 }}>🔒 Contact</span>
           )}
           {contact_masked && contact_locked_reason !== "owner_privacy" && (
-            <Link
-              to="/subscription"
-              style={{
-                background: "linear-gradient(135deg, #D4A017, #b8860b)",
-                color: "white",
-                padding: "2px 8px",
-                borderRadius: "10px",
-                fontSize: "8px",
-                fontWeight: 700,
-                textDecoration: "none",
-              }}
-            >
-              ⭐ Unlock
-            </Link>
+            <Link to="/subscription" style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, textDecoration: "none" }}>⭐ Unlock</Link>
           )}
         </div>
 
-        {/* CTA BUTTON */}
         <Link
           to={`/profile/${id}`}
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "5px",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
             background: should_blur_photo
-              ? hovered
-                ? cardTheme.protectedHover
-                : cardTheme.protectedBg
-              : hovered
-              ? cardTheme.buttonBgHover
-              : cardTheme.buttonBg,
-            color: cardTheme.buttonText,
-            padding: "8px 10px",
-            borderRadius: "8px",
-            textDecoration: "none",
-            fontWeight: 700,
-            fontSize: "10px",
-            letterSpacing: "0.4px",
-            marginTop: "auto",
-            textTransform: "uppercase",
-            transition: "all 0.3s",
-            boxShadow: hovered
-              ? "0 6px 16px rgba(139,10,46,0.35)"
-              : "0 2px 8px rgba(139,10,46,0.22)",
+              ? (hovered ? theme.protectedHover : theme.protectedBg)
+              : (hovered ? theme.buttonBgHover : theme.buttonBg),
+            color: theme.buttonText,
+            padding: "8px 10px", borderRadius: "8px", textDecoration: "none",
+            fontWeight: 700, fontSize: "10px", letterSpacing: "0.4px",
+            marginTop: "auto", textTransform: "uppercase", transition: "all 0.3s",
+            boxShadow: hovered ? "0 6px 16px rgba(139,10,46,0.35)" : "0 2px 8px rgba(139,10,46,0.22)",
           }}
         >
           <span>{should_blur_photo ? "🔒 Unlock" : "View"}</span>
           {!should_blur_photo && (
-            <span
-              style={{
-                transform: hovered ? "translateX(3px)" : "translateX(0)",
-                transition: "transform 0.3s",
-              }}
-            >
-              →
-            </span>
+            <span style={{ transform: hovered ? "translateX(3px)" : "translateX(0)", transition: "transform 0.3s" }}>→</span>
           )}
         </Link>
       </div>
