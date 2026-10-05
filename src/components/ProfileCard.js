@@ -39,11 +39,11 @@ function ProfileCard({ user, isMobile = false }) {
     company, mother_tongue, is_online, photo_count, height,
   } = user;
 
-  const getScoreColor = (score) => {
-    if (!score) return "#8a6b6b";
-    if (score >= 80) return "#16a34a";
-    if (score >= 60) return "#22c55e";
-    if (score >= 40) return "#f59e0b";
+  const getScoreColor = (s) => {
+    if (!s) return "#8a6b6b";
+    if (s >= 80) return "#16a34a";
+    if (s >= 60) return "#22c55e";
+    if (s >= 40) return "#f59e0b";
     return "#dc2626";
   };
 
@@ -56,29 +56,26 @@ function ProfileCard({ user, isMobile = false }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         background: "white",
-        borderRadius: "14px",
+        borderRadius: "12px",
         overflow: "hidden",
         border: hovered ? "1px solid #f0d0da" : "1px solid #f0e0e0",
         boxShadow: hovered
-          ? "0 18px 40px -12px rgba(139,10,46,0.18), 0 4px 12px rgba(139,10,46,0.06)"
-          : "0 3px 14px -4px rgba(139,10,46,0.06)",
-        transform: hovered ? "translateY(-5px)" : "translateY(0)",
-        transition: "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
-        position: "relative",
+          ? "0 14px 32px -10px rgba(139,10,46,0.16)"
+          : "0 2px 10px -3px rgba(139,10,46,0.06)",
+        transform: hovered ? "translateY(-4px)" : "translateY(0)",
+        transition: "all 0.35s cubic-bezier(0.22, 1, 0.36, 1)",
         display: "flex",
         flexDirection: "column",
         height: "100%",
         cursor: "pointer",
       }}
     >
-      {/* ============================================
-          PHOTO SECTION
-      ============================================ */}
+      {/* ==================== PHOTO (Square 1:1) ==================== */}
       <div
         style={{
           position: "relative",
           width: "100%",
-          aspectRatio: "4/5",
+          aspectRatio: "1/1",
           background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
           overflow: "hidden",
         }}
@@ -94,38 +91,35 @@ function ProfileCard({ user, isMobile = false }) {
                 height: "100%",
                 objectFit: "cover",
                 objectPosition: "center 18%",
-                filter: should_blur_photo ? "blur(24px)" : "none",
+                filter: should_blur_photo ? "blur(20px)" : "none",
                 transform: should_blur_photo
-                  ? "scale(1.15)"
+                  ? "scale(1.12)"
                   : hovered
-                  ? "scale(1.06)"
-                  : "scale(1.01)",
-                transition:
-                  "transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease",
+                  ? "scale(1.05)"
+                  : "scale(1)",
+                transition: "transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease",
                 opacity: imgLoaded ? 1 : 0,
               }}
             />
-
             <div
               style={{
                 position: "absolute",
                 inset: 0,
                 background:
-                  "linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(15,3,8,0.35) 65%, rgba(15,3,8,0.9) 100%)",
+                  "linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(15,3,8,0.85) 100%)",
                 pointerEvents: "none",
                 zIndex: 1,
               }}
             />
-
             <div
               style={{
                 position: "absolute",
                 top: 0,
                 left: 0,
                 right: 0,
-                height: "80px",
+                height: "60px",
                 background:
-                  "linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 100%)",
+                  "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 100%)",
                 pointerEvents: "none",
                 zIndex: 1,
               }}
@@ -141,50 +135,49 @@ function ProfileCard({ user, isMobile = false }) {
               alignItems: "center",
               justifyContent: "center",
               background: "linear-gradient(135deg, #FAF3F5, #f4dde5)",
-              gap: "10px",
+              gap: "8px",
             }}
           >
             <div
               style={{
-                width: "68px",
-                height: "68px",
+                width: "56px",
+                height: "56px",
                 borderRadius: "50%",
                 background: "linear-gradient(135deg, #8B0A2E, #a01438)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontFamily: "'Playfair Display', serif",
-                fontSize: "30px",
+                fontSize: "24px",
                 fontWeight: 700,
                 color: "#D4A017",
-                boxShadow: "0 6px 20px rgba(139,10,46,0.22)",
               }}
             >
               {(name || "?")[0].toUpperCase()}
             </div>
             <div
               style={{
-                fontSize: "8.5px",
+                fontSize: "7.5px",
                 fontWeight: 700,
                 color: "#8a6b6b",
-                letterSpacing: "2px",
+                letterSpacing: "1.5px",
                 textTransform: "uppercase",
               }}
             >
-              Photo Pending
+              No Photo
             </div>
           </div>
         )}
 
-        {/* TOP-LEFT BADGES */}
+        {/* BADGES */}
         <div
           style={{
             position: "absolute",
-            top: "10px",
-            left: "10px",
+            top: "8px",
+            left: "8px",
             display: "flex",
             flexDirection: "column",
-            gap: "5px",
+            gap: "4px",
             zIndex: 3,
           }}
         >
@@ -192,127 +185,103 @@ function ProfileCard({ user, isMobile = false }) {
             <div
               style={{
                 background: "rgba(255,255,255,0.96)",
-                backdropFilter: "blur(10px)",
                 color: "#b8860b",
-                fontSize: "7.5px",
+                fontSize: "7px",
                 fontWeight: 800,
-                padding: "4px 8px",
-                borderRadius: "4px",
-                letterSpacing: "1px",
-                display: "flex",
-                alignItems: "center",
-                gap: "3px",
+                padding: "3px 6px",
+                borderRadius: "3px",
+                letterSpacing: "0.8px",
                 border: "1px solid rgba(212,160,23,0.4)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
                 width: "fit-content",
               }}
             >
-              <span style={{ fontSize: "8px", color: "#D4A017" }}>◆</span> PREMIUM
+              ◆ PREMIUM
             </div>
           )}
           {is_verified && (
             <div
               style={{
                 background: "rgba(255,255,255,0.96)",
-                backdropFilter: "blur(10px)",
                 color: "#059669",
-                fontSize: "7.5px",
+                fontSize: "7px",
                 fontWeight: 800,
-                padding: "4px 8px",
-                borderRadius: "4px",
-                letterSpacing: "1px",
-                display: "flex",
-                alignItems: "center",
-                gap: "3px",
+                padding: "3px 6px",
+                borderRadius: "3px",
+                letterSpacing: "0.8px",
                 border: "1px solid rgba(16,185,129,0.35)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
                 width: "fit-content",
               }}
             >
-              <span style={{ fontSize: "9px" }}>✓</span> VERIFIED
+              ✓ VERIFIED
             </div>
           )}
         </div>
 
-        {/* TOP-RIGHT: HEART + ONLINE */}
-        <div
+        {/* HEART */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setShortlisted((s) => !s);
+          }}
           style={{
             position: "absolute",
-            top: "10px",
-            right: "10px",
+            top: "8px",
+            right: "8px",
+            width: "28px",
+            height: "28px",
+            borderRadius: "50%",
+            background: shortlisted
+              ? "linear-gradient(135deg, #8B0A2E, #a01438)"
+              : "rgba(255,255,255,0.96)",
+            border: shortlisted ? "1.5px solid #D4A017" : "none",
             display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
-            gap: "6px",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "13px",
+            color: shortlisted ? "#D4A017" : "#8B0A2E",
+            cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            transition: "all 0.25s",
             zIndex: 3,
+            fontFamily: "inherit",
           }}
         >
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setShortlisted((s) => !s);
-            }}
+          {shortlisted ? "♥" : "♡"}
+        </button>
+
+        {/* LIVE */}
+        {is_online && (
+          <div
             style={{
-              width: "32px",
-              height: "32px",
-              borderRadius: "50%",
-              background: shortlisted
-                ? "linear-gradient(135deg, #8B0A2E, #a01438)"
-                : "rgba(255,255,255,0.96)",
-              border: shortlisted
-                ? "1.5px solid #D4A017"
-                : "1px solid rgba(255,255,255,0.8)",
+              position: "absolute",
+              top: "40px",
+              right: "8px",
+              background: "rgba(255,255,255,0.96)",
+              color: "#16a34a",
+              fontSize: "7px",
+              fontWeight: 800,
+              padding: "3px 6px",
+              borderRadius: "9px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              fontSize: "14px",
-              color: shortlisted ? "#D4A017" : "#8B0A2E",
-              cursor: "pointer",
-              boxShadow: shortlisted
-                ? "0 4px 14px rgba(139,10,46,0.4)"
-                : "0 2px 8px rgba(0,0,0,0.15)",
-              transition: "all 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
-              transform: hovered ? "scale(1.08)" : "scale(1)",
-              fontFamily: "inherit",
-              backdropFilter: "blur(8px)",
+              gap: "3px",
+              letterSpacing: "0.6px",
+              zIndex: 3,
             }}
-            title="Shortlist"
           >
-            {shortlisted ? "♥" : "♡"}
-          </button>
-
-          {is_online && (
-            <div
+            <span
               style={{
-                background: "rgba(255,255,255,0.96)",
-                color: "#16a34a",
-                fontSize: "8px",
-                fontWeight: 800,
-                padding: "3px 7px",
-                borderRadius: "10px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-                backdropFilter: "blur(8px)",
-                letterSpacing: "0.8px",
+                width: "4px",
+                height: "4px",
+                borderRadius: "50%",
+                background: "#16a34a",
+                animation: "pulse 2s infinite",
               }}
-            >
-              <span
-                style={{
-                  width: "5px",
-                  height: "5px",
-                  borderRadius: "50%",
-                  background: "#16a34a",
-                  boxShadow: "0 0 6px #16a34a",
-                  animation: "pulse 2s infinite",
-                }}
-              />
-              LIVE
-            </div>
-          )}
-        </div>
+            />
+            LIVE
+          </div>
+        )}
 
         {/* PROTECTED OVERLAY */}
         {should_blur_photo && (
@@ -323,8 +292,7 @@ function ProfileCard({ user, isMobile = false }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "rgba(15,3,8,0.42)",
-              backdropFilter: "blur(3px)",
+              background: "rgba(15,3,8,0.4)",
               zIndex: 2,
             }}
           >
@@ -333,54 +301,33 @@ function ProfileCard({ user, isMobile = false }) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: "10px",
+                gap: "6px",
               }}
             >
               <div
                 style={{
-                  position: "relative",
-                  width: "62px",
-                  height: "62px",
+                  width: "46px",
+                  height: "46px",
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.98)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  fontSize: "18px",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+                  border: "1.5px solid rgba(212,160,23,0.5)",
                 }}
               >
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: "50%",
-                    border: "1.5px solid rgba(212,160,23,0.6)",
-                    opacity: 0.7,
-                  }}
-                />
-                <div
-                  style={{
-                    width: "50px",
-                    height: "50px",
-                    borderRadius: "50%",
-                    background: "rgba(255,255,255,0.98)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "20px",
-                    boxShadow:
-                      "0 6px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.9)",
-                  }}
-                >
-                  🔒
-                </div>
+                🔒
               </div>
               <div
                 style={{
-                  fontSize: "8.5px",
+                  fontSize: "7.5px",
                   fontWeight: 700,
                   color: "white",
-                  letterSpacing: "2.5px",
+                  letterSpacing: "2px",
                   textTransform: "uppercase",
-                  textShadow: "0 1px 4px rgba(0,0,0,0.6)",
-                  fontFamily: "inherit",
+                  textShadow: "0 1px 3px rgba(0,0,0,0.6)",
                 }}
               >
                 Protected
@@ -394,98 +341,89 @@ function ProfileCard({ user, isMobile = false }) {
           <div
             style={{
               position: "absolute",
-              bottom: "14px",
-              left: "14px",
+              bottom: "8px",
+              left: "8px",
               background: "rgba(0,0,0,0.55)",
-              backdropFilter: "blur(8px)",
               color: "white",
-              fontSize: "8.5px",
+              fontSize: "8px",
               fontWeight: 700,
-              padding: "3px 8px",
-              borderRadius: "10px",
+              padding: "2px 7px",
+              borderRadius: "8px",
               display: "flex",
               alignItems: "center",
-              gap: "4px",
+              gap: "3px",
               zIndex: 3,
-              letterSpacing: "0.5px",
-              border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
-            <span style={{ fontSize: "9px" }}>📷</span> {photo_count}
+            📷 {photo_count}
           </div>
         )}
 
-        {/* MATCH SCORE BADGE */}
+        {/* MATCH SCORE */}
         {match_score ? (
           <div
             style={{
               position: "absolute",
-              bottom: "14px",
-              right: "14px",
+              bottom: "8px",
+              right: "8px",
               background: "rgba(255,255,255,0.97)",
               color: scoreColor,
-              fontSize: "10px",
+              fontSize: "9px",
               fontWeight: 800,
-              padding: "4px 9px",
-              borderRadius: "12px",
+              padding: "3px 7px",
+              borderRadius: "10px",
               border: `1px solid ${scoreColor}55`,
-              boxShadow: `0 3px 10px ${scoreColor}30`,
-              backdropFilter: "blur(8px)",
               display: "flex",
               alignItems: "center",
-              gap: "5px",
-              letterSpacing: "0.3px",
+              gap: "4px",
               zIndex: 3,
             }}
           >
             <span
               style={{
-                width: "5px",
-                height: "5px",
+                width: "4px",
+                height: "4px",
                 borderRadius: "50%",
                 background: scoreColor,
-                boxShadow: `0 0 6px ${scoreColor}`,
+                boxShadow: `0 0 4px ${scoreColor}`,
               }}
             />
             {scorePercent}%
           </div>
         ) : null}
 
-        {/* NAME + AGE + LOCATION */}
+        {/* NAME */}
         <div
           style={{
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
-            padding: "14px 14px 12px",
+            padding: "10px 10px 8px",
             zIndex: 3,
           }}
         >
           <div
             style={{
-              width: hovered ? "32px" : "18px",
+              width: hovered ? "24px" : "14px",
               height: "1.5px",
-              background:
-                "linear-gradient(90deg, #D4A017, rgba(212,160,23,0))",
-              marginBottom: "8px",
-              transition: "width 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
+              background: "linear-gradient(90deg, #D4A017, rgba(212,160,23,0))",
+              marginBottom: "5px",
+              transition: "width 0.4s",
             }}
           />
-
           <div
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: isMobile ? "15px" : "17px",
+              fontSize: isMobile ? "13px" : "14.5px",
               fontWeight: 700,
               color: "white",
-              textShadow: "0 2px 10px rgba(0,0,0,0.65), 0 1px 2px rgba(0,0,0,0.4)",
-              marginBottom: "4px",
+              textShadow: "0 2px 8px rgba(0,0,0,0.65)",
+              marginBottom: "2px",
               lineHeight: 1.15,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              letterSpacing: "-0.2px",
             }}
           >
             {name || "Anonymous"}
@@ -493,9 +431,9 @@ function ProfileCard({ user, isMobile = false }) {
               <span
                 style={{
                   fontWeight: 500,
-                  fontSize: "13px",
+                  fontSize: "11px",
                   opacity: 0.88,
-                  marginLeft: "4px",
+                  marginLeft: "3px",
                   fontStyle: "italic",
                 }}
               >
@@ -503,18 +441,15 @@ function ProfileCard({ user, isMobile = false }) {
               </span>
             ) : null}
           </div>
-
           <div
             style={{
-              fontSize: "10px",
+              fontSize: "9px",
               color: "rgba(255,255,255,0.9)",
-              textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+              textShadow: "0 1px 3px rgba(0,0,0,0.6)",
               display: "flex",
               alignItems: "center",
-              gap: "8px",
-              flexWrap: "wrap",
+              gap: "6px",
               fontWeight: 500,
-              letterSpacing: "0.2px",
             }}
           >
             {location ? (
@@ -522,60 +457,45 @@ function ProfileCard({ user, isMobile = false }) {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "3px",
+                  gap: "2px",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
-                  maxWidth: "130px",
+                  maxWidth: "100px",
                 }}
               >
-                <span style={{ fontSize: "9px", opacity: 0.9 }}>📍</span>
-                {location}
+                📍 {location}
               </span>
             ) : null}
-            {height ? (
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "3px",
-                }}
-              >
-                <span style={{ fontSize: "9px", opacity: 0.9 }}>📏</span>
-                {height}
-              </span>
-            ) : null}
+            {height ? <span>📏 {height}</span> : null}
           </div>
         </div>
       </div>
 
-      {/* BODY SECTION */}
+      {/* ==================== BODY ==================== */}
       <div
         style={{
-          padding: "13px 14px 14px",
+          padding: "9px 10px 10px",
           display: "flex",
           flexDirection: "column",
           flex: 1,
-          gap: "8px",
+          gap: "5px",
         }}
       >
         {(education || occupation) && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
             {education && (
               <div
                 style={{
-                  fontSize: "11px",
+                  fontSize: "10px",
                   color: "#3d2828",
                   display: "flex",
                   alignItems: "center",
-                  gap: "7px",
+                  gap: "5px",
                   fontWeight: 500,
-                  letterSpacing: "0.1px",
                 }}
               >
-                <span style={{ color: "#D4A017", fontSize: "7px", lineHeight: 1 }}>
-                  ◆
-                </span>
+                <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
                 <span
                   style={{
                     overflow: "hidden",
@@ -590,18 +510,15 @@ function ProfileCard({ user, isMobile = false }) {
             {occupation && (
               <div
                 style={{
-                  fontSize: "11px",
+                  fontSize: "10px",
                   color: "#3d2828",
                   display: "flex",
                   alignItems: "center",
-                  gap: "7px",
+                  gap: "5px",
                   fontWeight: 500,
-                  letterSpacing: "0.1px",
                 }}
               >
-                <span style={{ color: "#D4A017", fontSize: "7px", lineHeight: 1 }}>
-                  ◆
-                </span>
+                <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
                 <span
                   style={{
                     overflow: "hidden",
@@ -611,13 +528,7 @@ function ProfileCard({ user, isMobile = false }) {
                 >
                   {occupation}
                   {company ? (
-                    <span
-                      style={{
-                        color: "#8a6b6b",
-                        fontWeight: 500,
-                        fontSize: "10px",
-                      }}
-                    >
+                    <span style={{ color: "#8a6b6b", fontSize: "9px" }}>
                       {" "}· {company}
                     </span>
                   ) : null}
@@ -627,23 +538,13 @@ function ProfileCard({ user, isMobile = false }) {
           </div>
         )}
 
-        {(education || occupation) && (
-          <div
-            style={{
-              height: "1px",
-              background:
-                "linear-gradient(90deg, rgba(212,160,23,0.25) 0%, rgba(212,160,23,0.05) 50%, transparent 100%)",
-            }}
-          />
-        )}
-
+        {/* CHIPS */}
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
-            gap: "5px",
+            gap: "4px",
             alignItems: "center",
-            marginTop: "1px",
           }}
         >
           {community && (
@@ -651,72 +552,57 @@ function ProfileCard({ user, isMobile = false }) {
               style={{
                 background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
                 color: "#8B0A2E",
-                padding: "3px 9px",
-                borderRadius: "14px",
-                fontSize: "9px",
+                padding: "2px 8px",
+                borderRadius: "10px",
+                fontSize: "8px",
                 fontWeight: 700,
                 textTransform: "capitalize",
-                display: "inline-block",
                 border: "1px solid #f5dce4",
-                letterSpacing: "0.3px",
               }}
             >
               🏷️ {community}
             </span>
           )}
-
           {mother_tongue && (
             <span
               style={{
                 background: "#F5F3FF",
                 color: "#6B21A8",
-                padding: "3px 9px",
-                borderRadius: "14px",
-                fontSize: "9px",
+                padding: "2px 8px",
+                borderRadius: "10px",
+                fontSize: "8px",
                 fontWeight: 700,
-                display: "inline-block",
                 border: "1px solid #EDE9FE",
-                letterSpacing: "0.3px",
               }}
             >
               🗣️ {mother_tongue}
             </span>
           )}
-
           {contact_masked && contact_locked_reason === "owner_privacy" && (
             <span
               style={{
                 background: "#f3f4f6",
                 color: "#6b7280",
-                padding: "3px 9px",
-                borderRadius: "14px",
-                fontSize: "9px",
+                padding: "2px 8px",
+                borderRadius: "10px",
+                fontSize: "8px",
                 fontWeight: 600,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "3px",
               }}
             >
               🔒 Contact
             </span>
           )}
-
           {contact_masked && contact_locked_reason !== "owner_privacy" && (
             <Link
               to="/subscription"
               style={{
                 background: "linear-gradient(135deg, #D4A017, #b8860b)",
                 color: "white",
-                padding: "3px 9px",
-                borderRadius: "14px",
-                fontSize: "9px",
+                padding: "2px 8px",
+                borderRadius: "10px",
+                fontSize: "8px",
                 fontWeight: 700,
                 textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "3px",
-                boxShadow: "0 2px 8px rgba(212,160,23,0.3)",
-                letterSpacing: "0.3px",
               }}
             >
               ⭐ Unlock
@@ -724,14 +610,14 @@ function ProfileCard({ user, isMobile = false }) {
           )}
         </div>
 
-        {/* CTA BUTTON - Uses admin configurable color */}
+        {/* CTA BUTTON */}
         <Link
           to={`/profile/${id}`}
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "6px",
+            gap: "5px",
             background: should_blur_photo
               ? hovered
                 ? cardTheme.protectedHover
@@ -740,61 +626,35 @@ function ProfileCard({ user, isMobile = false }) {
               ? cardTheme.buttonBgHover
               : cardTheme.buttonBg,
             color: cardTheme.buttonText,
-            padding: "10px 12px",
-            borderRadius: "9px",
+            padding: "8px 10px",
+            borderRadius: "8px",
             textDecoration: "none",
             fontWeight: 700,
-            fontSize: "11px",
-            boxShadow: hovered
-              ? "0 8px 20px rgba(139,10,46,0.42), inset 0 1px 0 rgba(255,255,255,0.15)"
-              : "0 3px 10px rgba(139,10,46,0.25), inset 0 1px 0 rgba(255,255,255,0.12)",
+            fontSize: "10px",
+            letterSpacing: "0.4px",
             marginTop: "auto",
-            transition: "all 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
-            letterSpacing: "0.5px",
-            position: "relative",
-            overflow: "hidden",
             textTransform: "uppercase",
+            transition: "all 0.3s",
+            boxShadow: hovered
+              ? "0 6px 16px rgba(139,10,46,0.35)"
+              : "0 2px 8px rgba(139,10,46,0.22)",
           }}
         >
-          <span style={{ position: "relative", zIndex: 2 }}>
-            {should_blur_photo ? "🔒 Unlock" : "View"}
-          </span>
+          <span>{should_blur_photo ? "🔒 Unlock" : "View"}</span>
           {!should_blur_photo && (
             <span
               style={{
-                position: "relative",
-                zIndex: 2,
-                transform: hovered ? "translateX(4px)" : "translateX(0)",
-                transition: "transform 0.3s ease",
-                fontSize: "12px",
+                transform: hovered ? "translateX(3px)" : "translateX(0)",
+                transition: "transform 0.3s",
               }}
             >
               →
             </span>
           )}
-          <span
-            style={{
-              position: "absolute",
-              top: 0,
-              left: hovered ? "100%" : "-100%",
-              width: "50%",
-              height: "100%",
-              background:
-                "linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent)",
-              transition: "left 0.7s cubic-bezier(0.22, 1, 0.36, 1)",
-              pointerEvents: "none",
-              zIndex: 1,
-            }}
-          />
         </Link>
       </div>
 
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-      `}</style>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
     </div>
   );
 }
