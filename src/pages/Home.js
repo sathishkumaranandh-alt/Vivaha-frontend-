@@ -309,10 +309,10 @@ function Home() {
       fontSize: isMobile ? "22px" : "26px", fontWeight: 700, color: "#8B0A2E",
     },
     viewAll: { color: "#8B0A2E", fontSize: "13px", fontWeight: 600, textDecoration: "none" },
-    grid: {
+        grid: {
       display: "grid",
-      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(240px, 1fr))",
-      gap: isMobile ? "14px" : "20px",
+      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(185px, 1fr))",
+      gap: isMobile ? "10px" : "14px",
     },
     bannerSection: {
       background: "linear-gradient(135deg, #FDF2F6 0%, #FFF9F5 100%)",
