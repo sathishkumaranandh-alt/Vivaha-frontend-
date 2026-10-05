@@ -308,6 +308,83 @@ function AdminSettings() {
             max={40}
             unit="px"
           />
+                    {/* ==================== PAGE THEMES ==================== */}
+      {tab === "pages" && (
+        <div style={S.card}>
+          {saved && <div style={S.savedBanner}>✅ Page theme saved!</div>}
+          <div style={S.notice}>
+            💡 <strong>Tip:</strong> Select a page, then customize its background, text colors, and font sizes. Each page can look different!
+          </div>
+
+          <h3 style={S.sectionTitle}>📄 Select Page</h3>
+          <select
+            value={selectedPage}
+            onChange={(e) => setSelectedPage(e.target.value)}
+            style={{ ...S.input, marginBottom: 24, cursor: "pointer", fontWeight: 700, fontSize: 15 }}
+          >
+            {CONFIGURABLE_PAGES.map((p) => (
+              <option key={p.key} value={p.key}>{p.label}</option>
+            ))}
+          </select>
+
+          <h3 style={{ ...S.sectionTitle, marginTop: 24 }}>
+            {currentPageLabel} — Colors
+          </h3>
+          <p style={S.sectionDesc}>Colors for this specific page only</p>
+
+          <ColorPicker
+            label="Page Background Color"
+            value={settings[`page_${selectedPage}_bg`] || "#FFF9F5"}
+            onChange={(v) => handleSettingChange(`page_${selectedPage}_bg`, v)}
+          />
+          <ColorPicker
+            label="Heading Text Color"
+            value={settings[`page_${selectedPage}_heading_color`] || "#8B0A2E"}
+            onChange={(v) => handleSettingChange(`page_${selectedPage}_heading_color`, v)}
+          />
+          <ColorPicker
+            label="Body Text Color"
+            value={settings[`page_${selectedPage}_body_color`] || "#2D1B1B"}
+            onChange={(v) => handleSettingChange(`page_${selectedPage}_body_color`, v)}
+          />
+          <ColorPicker
+            label="Muted/Secondary Text Color"
+            value={settings[`page_${selectedPage}_muted_color`] || "#8a6b6b"}
+            onChange={(v) => handleSettingChange(`page_${selectedPage}_muted_color`, v)}
+          />
+          <ColorPicker
+            label="Link/Accent Color"
+            value={settings[`page_${selectedPage}_link_color`] || "#8B0A2E"}
+            onChange={(v) => handleSettingChange(`page_${selectedPage}_link_color`, v)}
+          />
+
+          <h3 style={{ ...S.sectionTitle, marginTop: 24 }}>🔤 Font Sizes</h3>
+          <p style={S.sectionDesc}>Font sizes for this page only</p>
+
+          <Slider
+            label="Base Text Size (Body)"
+            value={settings[`page_${selectedPage}_base_size`] || "14"}
+            onChange={(v) => handleSettingChange(`page_${selectedPage}_base_size`, v)}
+            min={12}
+            max={20}
+            unit="px"
+          />
+          <Slider
+            label="Heading Text Size"
+            value={settings[`page_${selectedPage}_heading_size`] || "26"}
+            onChange={(v) => handleSettingChange(`page_${selectedPage}_heading_size`, v)}
+            min={18}
+            max={40}
+            unit="px"
+          />
+
+          <div style={{ marginTop: 28 }}>
+            <button onClick={handleSave} disabled={saving} style={{ ...S.primaryBtn, background: "linear-gradient(135deg, #16a34a, #22c55e)", opacity: saving ? 0.6 : 1 }}>
+              {saving ? "Saving..." : "💾 Save Page Theme"}
+            </button>
+          </div>
+        </div>
+      )}
 
           <div style={{ marginTop: 28 }}>
             <button onClick={handleSave} disabled={saving} style={{ ...S.primaryBtn, background: "linear-gradient(135deg, #16a34a, #22c55e)", opacity: saving ? 0.6 : 1 }}>
