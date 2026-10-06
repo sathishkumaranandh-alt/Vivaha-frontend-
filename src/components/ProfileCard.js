@@ -6,16 +6,16 @@ function getCardTheme() {
     cardBg: "#ffffff",
     cardBorder: "#f0e0e0",
     cardBorderWidth: "1",
-    cardRadius: "12",
+    cardRadius: "14",
     cardShadow: "40",
-    photoRatio: "4/5",
+    photoRatio: "3/4",
     photoBlur: "20",
     nameColor: "#ffffff",
-    nameSize: "14.5",
-    bodyColor: "#3d2828",
-    mutedColor: "#8a6b6b",
-    chipBg: "#FDF2F6",
-    chipText: "#8B0A2E",
+    nameSize: "17",
+    bodyColor: "#ffffff",
+    mutedColor: "rgba(255,255,255,0.85)",
+    chipBg: "rgba(255,255,255,0.15)",
+    chipText: "#ffffff",
     buttonBg: "#8B0A2E",
     buttonBgHover: "#a01438",
     buttonText: "#ffffff",
@@ -77,151 +77,194 @@ function ProfileCard({ user, isMobile = false }) {
   const shadowStrength = theme.cardShadow || 0;
   const boxShadow = shadowStrength === 0
     ? "none"
-    : `0 ${Math.round(shadowStrength / 8)}px ${Math.round(shadowStrength / 3)}px -${Math.round(shadowStrength / 15)}px rgba(139,10,46,0.12)`;
+    : `0 ${Math.round(shadowStrength / 8)}px ${Math.round(shadowStrength / 3)}px -${Math.round(shadowStrength / 15)}px rgba(139,10,46,0.15)`;
 
   return (
-    <div
+    <Link
+      to={`/profile/${id}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: theme.cardBg,
+        display: "block",
+        position: "relative",
+        width: "100%",
+        aspectRatio: theme.photoRatio,
         borderRadius: `${theme.cardRadius}px`,
         overflow: "hidden",
         border: `${theme.cardBorderWidth}px solid ${hovered ? "#f0d0da" : theme.cardBorder}`,
         boxShadow: hovered
-          ? `0 ${Math.round(shadowStrength / 5)}px ${Math.round(shadowStrength / 2.5)}px -10px rgba(139,10,46,0.18)`
+          ? `0 ${Math.round(shadowStrength / 4)}px ${Math.round(shadowStrength / 2)}px -8px rgba(139,10,46,0.28)`
           : boxShadow,
-        transform: hovered ? "translateY(-4px)" : "translateY(0)",
-        transition: "all 0.35s cubic-bezier(0.22, 1, 0.36, 1)",
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+        transform: hovered ? "translateY(-5px)" : "translateY(0)",
+        transition: "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
         cursor: "pointer",
+        textDecoration: "none",
+        background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
       }}
     >
-      {/* ==================== PHOTO (4:5 - Taller) ==================== */}
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          aspectRatio: theme.photoRatio,
-          background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
-          overflow: "hidden",
-        }}
-      >
-        {photo_url ? (
-          <>
-            <img
-              src={photo_url}
-              alt={name || "Profile"}
-              onLoad={() => setImgLoaded(true)}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center 15%",
-                filter: should_blur_photo ? `blur(${theme.photoBlur}px)` : "none",
-                transform: should_blur_photo
-                  ? "scale(1.12)"
-                  : hovered
-                  ? "scale(1.05)"
-                  : "scale(1)",
-                transition: "transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s",
-                opacity: imgLoaded ? 1 : 0,
-              }}
-            />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(15,3,8,0.88) 100%)", pointerEvents: "none", zIndex: 1 }} />
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "60px", background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 100%)", pointerEvents: "none", zIndex: 1 }} />
-          </>
-        ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #FAF3F5, #f4dde5)", gap: "8px" }}>
-            <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "linear-gradient(135deg, #8B0A2E, #a01438)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display', serif", fontSize: "26px", fontWeight: 700, color: "#D4A017" }}>
-              {(name || "?")[0].toUpperCase()}
-            </div>
-            <div style={{ fontSize: "8px", fontWeight: 700, color: "#8a6b6b", letterSpacing: "1.5px", textTransform: "uppercase" }}>No Photo</div>
-          </div>
-        )}
+      {/* ==================== FULL PHOTO ==================== */}
+      {photo_url ? (
+        <>
+          <img
+            src={photo_url}
+            alt={name || "Profile"}
+            onLoad={() => setImgLoaded(true)}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center 18%",
+              filter: should_blur_photo ? `blur(${theme.photoBlur}px)` : "none",
+              transform: should_blur_photo
+                ? "scale(1.1)"
+                : hovered
+                ? "scale(1.06)"
+                : "scale(1)",
+              transition: "transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s",
+              opacity: imgLoaded ? 1 : 0,
+            }}
+          />
 
-        {/* BADGES */}
-        <div style={{ position: "absolute", top: "8px", left: "8px", display: "flex", flexDirection: "column", gap: "4px", zIndex: 3 }}>
-          {is_boosted && (
-            <div style={{ background: "rgba(255,255,255,0.96)", color: "#b8860b", fontSize: "7px", fontWeight: 800, padding: "3px 6px", borderRadius: "3px", letterSpacing: "0.8px", border: "1px solid rgba(212,160,23,0.4)", width: "fit-content" }}>◆ PREMIUM</div>
-          )}
-          {is_verified && (
-            <div style={{ background: "rgba(255,255,255,0.96)", color: "#059669", fontSize: "7px", fontWeight: 800, padding: "3px 6px", borderRadius: "3px", letterSpacing: "0.8px", border: "1px solid rgba(16,185,129,0.35)", width: "fit-content" }}>✓ VERIFIED</div>
-          )}
-        </div>
-
-        {/* HEART */}
-        <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShortlisted((s) => !s); }}
+          {/* Deep bottom gradient for readability */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0) 40%, rgba(15,3,8,0.75) 70%, rgba(15,3,8,0.96) 100%)",
+              pointerEvents: "none",
+              zIndex: 1,
+            }}
+          />
+        </>
+      ) : (
+        <div
           style={{
-            position: "absolute", top: "8px", right: "8px", width: "28px", height: "28px", borderRadius: "50%",
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "linear-gradient(135deg, #FAF3F5, #f4dde5)",
+            gap: "10px",
+          }}
+        >
+          <div
+            style={{
+              width: "70px",
+              height: "70px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #8B0A2E, #a01438)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: "'Playfair Display', serif",
+              fontSize: "28px",
+              fontWeight: 700,
+              color: "#D4A017",
+            }}
+          >
+            {(name || "?")[0].toUpperCase()}
+          </div>
+          <div style={{ fontSize: "9px", fontWeight: 700, color: "#8a6b6b", letterSpacing: "2px", textTransform: "uppercase" }}>No Photo</div>
+        </div>
+      )}
+
+      {/* ==================== TOP-LEFT BADGES ==================== */}
+      <div style={{ position: "absolute", top: "10px", left: "10px", display: "flex", flexDirection: "column", gap: "5px", zIndex: 4 }}>
+        {is_boosted && (
+          <div style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", fontSize: "7.5px", fontWeight: 800, padding: "3px 8px", borderRadius: "4px", letterSpacing: "0.8px", boxShadow: "0 2px 8px rgba(212,160,23,0.5)" }}>◆ PREMIUM</div>
+        )}
+        {is_verified && (
+          <div style={{ background: "linear-gradient(135deg, #10B981, #059669)", color: "white", fontSize: "7.5px", fontWeight: 800, padding: "3px 8px", borderRadius: "4px", letterSpacing: "0.8px", boxShadow: "0 2px 8px rgba(16,185,129,0.5)" }}>✓ VERIFIED</div>
+        )}
+      </div>
+
+      {/* ==================== TOP-RIGHT: HEART + LIVE + MATCH ==================== */}
+      <div style={{ position: "absolute", top: "10px", right: "10px", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", zIndex: 4 }}>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setShortlisted((s) => !s);
+          }}
+          style={{
+            width: "32px",
+            height: "32px",
+            borderRadius: "50%",
             background: shortlisted ? "linear-gradient(135deg, #8B0A2E, #a01438)" : "rgba(255,255,255,0.96)",
             border: shortlisted ? "1.5px solid #D4A017" : "none",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "13px", color: shortlisted ? "#D4A017" : "#8B0A2E",
-            cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-            transition: "all 0.25s", zIndex: 3, fontFamily: "inherit",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "14px",
+            color: shortlisted ? "#D4A017" : "#8B0A2E",
+            cursor: "pointer",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+            transition: "all 0.25s",
+            fontFamily: "inherit",
+            backdropFilter: "blur(8px)",
           }}
-        >{shortlisted ? "♥" : "♡"}</button>
+        >
+          {shortlisted ? "♥" : "♡"}
+        </button>
 
-        {/* LIVE */}
         {is_online && (
-          <div style={{ position: "absolute", top: "40px", right: "8px", background: "rgba(255,255,255,0.96)", color: "#16a34a", fontSize: "7px", fontWeight: 800, padding: "3px 6px", borderRadius: "9px", display: "flex", alignItems: "center", gap: "3px", letterSpacing: "0.6px", zIndex: 3 }}>
+          <div style={{ background: "rgba(255,255,255,0.95)", color: "#16a34a", fontSize: "7.5px", fontWeight: 800, padding: "3px 7px", borderRadius: "9px", display: "flex", alignItems: "center", gap: "3px", letterSpacing: "0.6px", backdropFilter: "blur(8px)" }}>
             <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#16a34a", animation: "pulse 2s infinite" }} />LIVE
           </div>
         )}
 
-        {/* PROTECTED */}
-        {should_blur_photo && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(15,3,8,0.4)", zIndex: 2 }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-              <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "rgba(255,255,255,0.98)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", boxShadow: "0 4px 16px rgba(0,0,0,0.3)", border: "1.5px solid rgba(212,160,23,0.5)" }}>🔒</div>
-              <div style={{ fontSize: "7.5px", fontWeight: 700, color: "white", letterSpacing: "2px", textTransform: "uppercase", textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}>Protected</div>
-            </div>
-          </div>
-        )}
-
-        {/* PHOTO COUNT */}
-        {photo_count > 1 && (
-          <div style={{ position: "absolute", bottom: "8px", left: "8px", background: "rgba(0,0,0,0.55)", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 7px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "3px", zIndex: 3 }}>📷 {photo_count}</div>
-        )}
-
-        {/* MATCH SCORE */}
-        {match_score ? (
-          <div style={{ position: "absolute", bottom: "8px", right: "8px", background: "rgba(255,255,255,0.97)", color: scoreColor, fontSize: "9px", fontWeight: 800, padding: "3px 7px", borderRadius: "10px", border: `1px solid ${scoreColor}55`, display: "flex", alignItems: "center", gap: "4px", zIndex: 3 }}>
+        {match_score && (
+          <div style={{ background: "rgba(255,255,255,0.97)", color: scoreColor, fontSize: "9px", fontWeight: 800, padding: "3px 7px", borderRadius: "10px", border: `1px solid ${scoreColor}55`, display: "flex", alignItems: "center", gap: "4px", backdropFilter: "blur(8px)" }}>
             <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: scoreColor, boxShadow: `0 0 4px ${scoreColor}` }} />
             {scorePercent}%
           </div>
-        ) : null}
-
-        {/* NAME */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 10px 8px", zIndex: 3 }}>
-          <div style={{ width: hovered ? "24px" : "14px", height: "1.5px", background: "linear-gradient(90deg, #D4A017, rgba(212,160,23,0))", marginBottom: "5px", transition: "width 0.4s" }} />
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? `${Math.round(parseFloat(theme.nameSize) * 0.9)}px` : `${theme.nameSize}px`, fontWeight: 700, color: theme.nameColor, textShadow: "0 2px 8px rgba(0,0,0,0.65)", marginBottom: "2px", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {name || "Anonymous"}
-            {age ? <span style={{ fontWeight: 500, fontSize: "11px", opacity: 0.88, marginLeft: "3px", fontStyle: "italic" }}>, {age}</span> : null}
-          </div>
-          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.9)", textShadow: "0 1px 3px rgba(0,0,0,0.6)", display: "flex", alignItems: "center", gap: "6px", fontWeight: 500 }}>
-            {location ? <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100px" }}>📍 {location}</span> : null}
-            {height ? <span>📏 {height}</span> : null}
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* ==================== BODY (Compact) ==================== */}
-      <div style={{ padding: "7px 9px 8px", display: "flex", flexDirection: "column", flex: 1, gap: "3px" }}>
+      {/* ==================== PROTECTED OVERLAY ==================== */}
+      {should_blur_photo && (
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(15,3,8,0.4)", zIndex: 2 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+            <div style={{ width: "50px", height: "50px", borderRadius: "50%", background: "rgba(255,255,255,0.98)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", boxShadow: "0 4px 16px rgba(0,0,0,0.3)", border: "1.5px solid rgba(212,160,23,0.5)" }}>🔒</div>
+            <div style={{ fontSize: "8px", fontWeight: 700, color: "white", letterSpacing: "2px", textTransform: "uppercase", textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}>Protected</div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== PHOTO COUNT ==================== */}
+      {photo_count > 1 && (
+        <div style={{ position: "absolute", top: "10px", left: "10px", marginTop: is_boosted && is_verified ? "46px" : is_boosted || is_verified ? "24px" : "0px", background: "rgba(0,0,0,0.55)", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 7px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "3px", zIndex: 3, backdropFilter: "blur(8px)" }}>📷 {photo_count}</div>
+      )}
+
+      {/* ==================== BOTTOM CONTENT (Overlay on Photo) ==================== */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 12px 10px", zIndex: 3 }}>
+        {/* Name + Age */}
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? `${Math.round(parseFloat(theme.nameSize) * 0.9)}px` : `${theme.nameSize}px`, fontWeight: 700, color: theme.nameColor, textShadow: "0 2px 10px rgba(0,0,0,0.7)", marginBottom: "3px", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {name || "Anonymous"}
+          {age ? <span style={{ fontWeight: 500, fontSize: "12px", opacity: 0.9, marginLeft: "4px", fontStyle: "italic" }}>, {age}</span> : null}
+        </div>
+
+        {/* Location + Height */}
+        <div style={{ fontSize: "9.5px", color: theme.mutedColor, textShadow: "0 1px 3px rgba(0,0,0,0.7)", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontWeight: 500, marginBottom: "6px" }}>
+          {location && <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "120px" }}>📍 {location}</span>}
+          {height && <span>📏 {height}</span>}
+        </div>
+
+        {/* Education / Occupation */}
         {(education || occupation) && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "6px" }}>
             {education && (
-              <div style={{ fontSize: "9.5px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "4px", fontWeight: 500 }}>
+              <div style={{ fontSize: "9.5px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "5px", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>
                 <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{education}</span>
               </div>
             )}
             {occupation && (
-              <div style={{ fontSize: "9.5px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "4px", fontWeight: 500 }}>
+              <div style={{ fontSize: "9.5px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "5px", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>
                 <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {occupation}{company ? <span style={{ color: theme.mutedColor, fontSize: "8.5px" }}> · {company}</span> : null}
@@ -231,44 +274,52 @@ function ProfileCard({ user, isMobile = false }) {
           </div>
         )}
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "3px", alignItems: "center" }}>
+        {/* Chips (Community, Mother Tongue, Contact) */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", alignItems: "center", marginBottom: "8px" }}>
           {community && (
-            <span style={{ background: theme.chipBg, color: theme.chipText, padding: "2px 7px", borderRadius: "9px", fontSize: "7.5px", fontWeight: 700, textTransform: "capitalize", border: `1px solid ${theme.chipText}20` }}>🏷️ {community}</span>
+            <span style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, textTransform: "capitalize", border: "1px solid rgba(255,255,255,0.25)", backdropFilter: "blur(8px)", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>🏷️ {community}</span>
           )}
           {mother_tongue && (
-            <span style={{ background: "#F5F3FF", color: "#6B21A8", padding: "2px 7px", borderRadius: "9px", fontSize: "7.5px", fontWeight: 700, border: "1px solid #EDE9FE" }}>🗣️ {mother_tongue}</span>
+            <span style={{ background: "rgba(139,92,246,0.35)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, border: "1px solid rgba(139,92,246,0.5)", backdropFilter: "blur(8px)" }}>🗣️ {mother_tongue}</span>
           )}
           {contact_masked && contact_locked_reason === "owner_privacy" && (
-            <span style={{ background: "#f3f4f6", color: "#6b7280", padding: "2px 7px", borderRadius: "9px", fontSize: "7.5px", fontWeight: 600 }}>🔒 Contact</span>
+            <span style={{ background: "rgba(0,0,0,0.4)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 600, backdropFilter: "blur(8px)" }}>🔒 Contact</span>
           )}
           {contact_masked && contact_locked_reason !== "owner_privacy" && (
-            <Link to="/subscription" style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "2px 7px", borderRadius: "9px", fontSize: "7.5px", fontWeight: 700, textDecoration: "none" }}>⭐ Unlock</Link>
+            <span style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, boxShadow: "0 2px 6px rgba(212,160,23,0.4)" }}>⭐ Unlock</span>
           )}
         </div>
 
-        <Link
-          to={`/profile/${id}`}
+        {/* CTA Button */}
+        <div
           style={{
-            display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "5px",
             background: should_blur_photo
               ? (hovered ? theme.protectedHover : theme.protectedBg)
               : (hovered ? theme.buttonBgHover : theme.buttonBg),
             color: theme.buttonText,
-            padding: "7px 10px", borderRadius: "7px", textDecoration: "none",
-            fontWeight: 700, fontSize: "9.5px", letterSpacing: "0.4px",
-            marginTop: "auto", textTransform: "uppercase", transition: "all 0.3s",
-            boxShadow: hovered ? "0 5px 14px rgba(139,10,46,0.35)" : "0 2px 6px rgba(139,10,46,0.2)",
+            padding: "8px 10px",
+            borderRadius: "8px",
+            fontWeight: 700,
+            fontSize: "10px",
+            letterSpacing: "0.5px",
+            textTransform: "uppercase",
+            transition: "all 0.3s",
+            boxShadow: hovered ? "0 5px 14px rgba(139,10,46,0.4)" : "0 2px 8px rgba(139,10,46,0.3)",
           }}
         >
-          <span>{should_blur_photo ? "🔒 Unlock" : "View"}</span>
+          <span>{should_blur_photo ? "🔒 Unlock" : "View Profile"}</span>
           {!should_blur_photo && (
             <span style={{ transform: hovered ? "translateX(3px)" : "translateX(0)", transition: "transform 0.3s" }}>→</span>
           )}
-        </Link>
+        </div>
       </div>
 
       <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
-    </div>
+    </Link>
   );
 }
 
