@@ -122,8 +122,7 @@ function ProfileCard({ user, isMobile = false }) {
               opacity: imgLoaded ? 1 : 0,
             }}
           />
-          {/* Multi-stop gradient - only bottom 35% dark */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 55%, rgba(15,3,8,0.65) 80%, rgba(15,3,8,0.95) 100%)", pointerEvents: "none", zIndex: 1 }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 50%, rgba(15,3,8,0.65) 78%, rgba(15,3,8,0.96) 100%)", pointerEvents: "none", zIndex: 1 }} />
         </>
       ) : (
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #FAF3F5, #f4dde5)", gap: "10px" }}>
@@ -188,25 +187,35 @@ function ProfileCard({ user, isMobile = false }) {
         <div style={{ position: "absolute", top: is_boosted && is_verified ? "52px" : (is_boosted || is_verified) ? "32px" : "10px", left: "10px", background: "rgba(0,0,0,0.55)", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 7px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "3px", zIndex: 3, backdropFilter: "blur(8px)" }}>📷 {photo_count}</div>
       )}
 
-      {/* ==================== BOTTOM OVERLAY (Compact & Elegant) ==================== */}
+      {/* ==================== BOTTOM OVERLAY ==================== */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 12px 12px", zIndex: 3 }}>
 
-        {/* Name + Age — Single line, elegant */}
+        {/* Name + Age */}
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? "15px" : "17px", fontWeight: 700, color: theme.nameColor, textShadow: "0 2px 10px rgba(0,0,0,0.85)", marginBottom: "3px", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {name || "Anonymous"}
           {age ? <span style={{ fontWeight: 500, fontSize: "12px", opacity: 0.9, marginLeft: "4px", fontStyle: "italic" }}>, {age}</span> : null}
         </div>
 
-        {/* Location + Education — tiny inline */}
-        <div style={{ fontSize: "9.5px", color: "rgba(255,255,255,0.9)", textShadow: "0 1px 3px rgba(0,0,0,0.7)", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontWeight: 500, marginBottom: "6px" }}>
+        {/* Location + Education + Occupation + Height — inline tiny */}
+        <div style={{ fontSize: "9.5px", color: "rgba(255,255,255,0.9)", textShadow: "0 1px 3px rgba(0,0,0,0.7)", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontWeight: 500, marginBottom: "5px" }}>
           {location && <span style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}>📍 {location}</span>}
           {education && <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100px" }}>🎓 {education}</span>}
           {height && <span>📏 {height}</span>}
         </div>
 
+        {/* Occupation · Company — separate tiny line */}
+        {(occupation || company) && (
+          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.82)", textShadow: "0 1px 3px rgba(0,0,0,0.7)", display: "flex", alignItems: "center", gap: "4px", fontWeight: 500, marginBottom: "6px", overflow: "hidden" }}>
+            <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {occupation || ""}{company ? (occupation ? ` · ${company}` : company) : ""}
+            </span>
+          </div>
+        )}
+
         {/* Chips + CTA in same row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
-          {/* Left: Chips (Community, Mother tongue) */}
+          {/* Left: Chips */}
           <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", alignItems: "center", flex: 1, minWidth: 0 }}>
             {community && (
               <span style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, textTransform: "capitalize", border: "1px solid rgba(255,255,255,0.25)", backdropFilter: "blur(8px)", textShadow: "0 1px 2px rgba(0,0,0,0.5)", whiteSpace: "nowrap" }}>🏷️ {community}</span>
@@ -214,9 +223,15 @@ function ProfileCard({ user, isMobile = false }) {
             {mother_tongue && (
               <span style={{ background: "rgba(139,92,246,0.4)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, border: "1px solid rgba(139,92,246,0.5)", backdropFilter: "blur(8px)", whiteSpace: "nowrap" }}>🗣️ {mother_tongue}</span>
             )}
+            {contact_masked && contact_locked_reason === "owner_privacy" && (
+              <span style={{ background: "rgba(0,0,0,0.4)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 600, backdropFilter: "blur(8px)", whiteSpace: "nowrap" }}>🔒 Contact</span>
+            )}
+            {contact_masked && contact_locked_reason !== "owner_privacy" && (
+              <span style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, boxShadow: "0 2px 6px rgba(212,160,23,0.4)", whiteSpace: "nowrap" }}>⭐ Unlock</span>
+            )}
           </div>
 
-          {/* Right: Small CTA Pill (Not full width) */}
+          {/* Right: Small CTA Pill */}
           <div
             style={{
               display: "inline-flex",
