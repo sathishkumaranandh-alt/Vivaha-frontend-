@@ -3,24 +3,19 @@ import { Link } from "react-router-dom";
 
 function getCardTheme() {
   const D = {
-    // Card box
     cardBg: "#ffffff",
     cardBorder: "#f0e0e0",
     cardBorderWidth: "1",
     cardRadius: "12",
     cardShadow: "40",
-    // Photo
-    photoRatio: "1/1",
+    photoRatio: "4/5",
     photoBlur: "20",
-    // Text
     nameColor: "#ffffff",
     nameSize: "14.5",
     bodyColor: "#3d2828",
     mutedColor: "#8a6b6b",
-    // Chips
     chipBg: "#FDF2F6",
     chipText: "#8B0A2E",
-    // Buttons
     buttonBg: "#8B0A2E",
     buttonBgHover: "#a01438",
     buttonText: "#ffffff",
@@ -59,7 +54,6 @@ function ProfileCard({ user, isMobile = false }) {
   const [hovered, setHovered] = useState(false);
   const [shortlisted, setShortlisted] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-
   const theme = getCardTheme();
 
   const {
@@ -80,7 +74,6 @@ function ProfileCard({ user, isMobile = false }) {
   const scoreColor = getScoreColor(match_score);
   const scorePercent = match_score ? Math.round(match_score) : 0;
 
-  // Box shadow from strength
   const shadowStrength = theme.cardShadow || 0;
   const boxShadow = shadowStrength === 0
     ? "none"
@@ -106,7 +99,7 @@ function ProfileCard({ user, isMobile = false }) {
         cursor: "pointer",
       }}
     >
-      {/* PHOTO */}
+      {/* ==================== PHOTO (4:5 - Taller) ==================== */}
       <div
         style={{
           position: "relative",
@@ -126,7 +119,7 @@ function ProfileCard({ user, isMobile = false }) {
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
-                objectPosition: "center 18%",
+                objectPosition: "center 15%",
                 filter: should_blur_photo ? `blur(${theme.photoBlur}px)` : "none",
                 transform: should_blur_photo
                   ? "scale(1.12)"
@@ -137,15 +130,15 @@ function ProfileCard({ user, isMobile = false }) {
                 opacity: imgLoaded ? 1 : 0,
               }}
             />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(15,3,8,0.85) 100%)", pointerEvents: "none", zIndex: 1 }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(15,3,8,0.88) 100%)", pointerEvents: "none", zIndex: 1 }} />
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "60px", background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 100%)", pointerEvents: "none", zIndex: 1 }} />
           </>
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #FAF3F5, #f4dde5)", gap: "8px" }}>
-            <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, #8B0A2E, #a01438)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: 700, color: "#D4A017" }}>
+            <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "linear-gradient(135deg, #8B0A2E, #a01438)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display', serif", fontSize: "26px", fontWeight: 700, color: "#D4A017" }}>
               {(name || "?")[0].toUpperCase()}
             </div>
-            <div style={{ fontSize: "7.5px", fontWeight: 700, color: "#8a6b6b", letterSpacing: "1.5px", textTransform: "uppercase" }}>No Photo</div>
+            <div style={{ fontSize: "8px", fontWeight: 700, color: "#8a6b6b", letterSpacing: "1.5px", textTransform: "uppercase" }}>No Photo</div>
           </div>
         )}
 
@@ -217,39 +210,39 @@ function ProfileCard({ user, isMobile = false }) {
         </div>
       </div>
 
-      {/* BODY */}
-      <div style={{ padding: "9px 10px 10px", display: "flex", flexDirection: "column", flex: 1, gap: "5px" }}>
+      {/* ==================== BODY (Compact) ==================== */}
+      <div style={{ padding: "7px 9px 8px", display: "flex", flexDirection: "column", flex: 1, gap: "3px" }}>
         {(education || occupation) && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             {education && (
-              <div style={{ fontSize: "10px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "5px", fontWeight: 500 }}>
+              <div style={{ fontSize: "9.5px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "4px", fontWeight: 500 }}>
                 <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{education}</span>
               </div>
             )}
             {occupation && (
-              <div style={{ fontSize: "10px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "5px", fontWeight: 500 }}>
+              <div style={{ fontSize: "9.5px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "4px", fontWeight: 500 }}>
                 <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {occupation}{company ? <span style={{ color: theme.mutedColor, fontSize: "9px" }}> · {company}</span> : null}
+                  {occupation}{company ? <span style={{ color: theme.mutedColor, fontSize: "8.5px" }}> · {company}</span> : null}
                 </span>
               </div>
             )}
           </div>
         )}
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", alignItems: "center" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "3px", alignItems: "center" }}>
           {community && (
-            <span style={{ background: theme.chipBg, color: theme.chipText, padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, textTransform: "capitalize", border: `1px solid ${theme.chipText}20` }}>🏷️ {community}</span>
+            <span style={{ background: theme.chipBg, color: theme.chipText, padding: "2px 7px", borderRadius: "9px", fontSize: "7.5px", fontWeight: 700, textTransform: "capitalize", border: `1px solid ${theme.chipText}20` }}>🏷️ {community}</span>
           )}
           {mother_tongue && (
-            <span style={{ background: "#F5F3FF", color: "#6B21A8", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, border: "1px solid #EDE9FE" }}>🗣️ {mother_tongue}</span>
+            <span style={{ background: "#F5F3FF", color: "#6B21A8", padding: "2px 7px", borderRadius: "9px", fontSize: "7.5px", fontWeight: 700, border: "1px solid #EDE9FE" }}>🗣️ {mother_tongue}</span>
           )}
           {contact_masked && contact_locked_reason === "owner_privacy" && (
-            <span style={{ background: "#f3f4f6", color: "#6b7280", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 600 }}>🔒 Contact</span>
+            <span style={{ background: "#f3f4f6", color: "#6b7280", padding: "2px 7px", borderRadius: "9px", fontSize: "7.5px", fontWeight: 600 }}>🔒 Contact</span>
           )}
           {contact_masked && contact_locked_reason !== "owner_privacy" && (
-            <Link to="/subscription" style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, textDecoration: "none" }}>⭐ Unlock</Link>
+            <Link to="/subscription" style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "2px 7px", borderRadius: "9px", fontSize: "7.5px", fontWeight: 700, textDecoration: "none" }}>⭐ Unlock</Link>
           )}
         </div>
 
@@ -261,10 +254,10 @@ function ProfileCard({ user, isMobile = false }) {
               ? (hovered ? theme.protectedHover : theme.protectedBg)
               : (hovered ? theme.buttonBgHover : theme.buttonBg),
             color: theme.buttonText,
-            padding: "8px 10px", borderRadius: "8px", textDecoration: "none",
-            fontWeight: 700, fontSize: "10px", letterSpacing: "0.4px",
+            padding: "7px 10px", borderRadius: "7px", textDecoration: "none",
+            fontWeight: 700, fontSize: "9.5px", letterSpacing: "0.4px",
             marginTop: "auto", textTransform: "uppercase", transition: "all 0.3s",
-            boxShadow: hovered ? "0 6px 16px rgba(139,10,46,0.35)" : "0 2px 8px rgba(139,10,46,0.22)",
+            boxShadow: hovered ? "0 5px 14px rgba(139,10,46,0.35)" : "0 2px 6px rgba(139,10,46,0.2)",
           }}
         >
           <span>{should_blur_photo ? "🔒 Unlock" : "View"}</span>
