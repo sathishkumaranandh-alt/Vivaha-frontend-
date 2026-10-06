@@ -343,9 +343,10 @@ function AdminSettings() {
             onChange={(e) => handleSettingChange("card_photo_ratio", e.target.value)}
             style={{ ...S.input, marginBottom: 16, cursor: "pointer" }}
           >
+                        <option value="2/3">Tall Portrait (2:3) — Photo focused</option>
+            <option value="3/4">Portrait (3:4) — Classic</option>
+            <option value="4/5">Portrait (4:5)</option>
             <option value="1/1">Square (1:1) — Compact</option>
-            <option value="4/5">Portrait (4:5) — Classic</option>
-            <option value="3/4">Portrait (3:4) — Traditional</option>
             <option value="16/9">Landscape (16:9) — Wide</option>
           </select>
 
@@ -358,6 +359,37 @@ function AdminSettings() {
           <Slider label="Name Font Size" value={settings.card_name_size || "14.5"} onChange={(v) => handleSettingChange("card_name_size", v)} min={11} max={22} step={0.5} unit="px" />
           <ColorPicker label="Body Text Color (education, occupation)" value={settings.card_body_color || "#3d2828"} onChange={(v) => handleSettingChange("card_body_color", v)} />
           <ColorPicker label="Muted Text Color (company, hints)" value={settings.card_muted_color || "#8a6b6b"} onChange={(v) => handleSettingChange("card_muted_color", v)} />
+                      <h3 style={{ ...S.sectionTitle, marginTop: 24 }}>👁️ Show / Hide Details on Photo</h3>
+          <p style={S.sectionDesc}>Choose which details appear on each profile card photo</p>
+
+          <div style={S.toggleRow}>
+            <div><div style={S.toggleLabel}>📍 Location</div><div style={S.toggleHint}>Show city / location</div></div>
+            <ToggleSwitch value={settings.card_show_location !== "false"} onChange={(v) => handleSettingChange("card_show_location", v ? "true" : "false")} color="#ec4899" />
+          </div>
+          <div style={S.toggleRow}>
+            <div><div style={S.toggleLabel}>🎓 Education</div><div style={S.toggleHint}>Show education / degree</div></div>
+            <ToggleSwitch value={settings.card_show_education !== "false"} onChange={(v) => handleSettingChange("card_show_education", v ? "true" : "false")} color="#ec4899" />
+          </div>
+          <div style={S.toggleRow}>
+            <div><div style={S.toggleLabel}>💼 Occupation</div><div style={S.toggleHint}>Show job + company</div></div>
+            <ToggleSwitch value={settings.card_show_occupation !== "false"} onChange={(v) => handleSettingChange("card_show_occupation", v ? "true" : "false")} color="#ec4899" />
+          </div>
+          <div style={S.toggleRow}>
+            <div><div style={S.toggleLabel}>📏 Height</div><div style={S.toggleHint}>Show height</div></div>
+            <ToggleSwitch value={settings.card_show_height !== "false"} onChange={(v) => handleSettingChange("card_show_height", v ? "true" : "false")} color="#ec4899" />
+          </div>
+          <div style={S.toggleRow}>
+            <div><div style={S.toggleLabel}>🏷️ Community</div><div style={S.toggleHint}>Show community chip</div></div>
+            <ToggleSwitch value={settings.card_show_community !== "false"} onChange={(v) => handleSettingChange("card_show_community", v ? "true" : "false")} color="#ec4899" />
+          </div>
+          <div style={S.toggleRow}>
+            <div><div style={S.toggleLabel}>🗣️ Mother Tongue</div><div style={S.toggleHint}>Show language chip</div></div>
+            <ToggleSwitch value={settings.card_show_mother_tongue !== "false"} onChange={(v) => handleSettingChange("card_show_mother_tongue", v ? "true" : "false")} color="#ec4899" />
+          </div>
+          <div style={S.toggleRow}>
+            <div><div style={S.toggleLabel}>🔒 Contact Status</div><div style={S.toggleHint}>Show contact lock/unlock chip</div></div>
+            <ToggleSwitch value={settings.card_show_contact !== "false"} onChange={(v) => handleSettingChange("card_show_contact", v ? "true" : "false")} color="#ec4899" />
+          </div>
 
           <h3 style={{ ...S.sectionTitle, marginTop: 24 }}>🏷️ Chips</h3>
           <p style={S.sectionDesc}>Community, mother tongue chips</p>
