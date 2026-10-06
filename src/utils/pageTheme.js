@@ -15,6 +15,13 @@ const DEFAULT_THEME = {
   cardRadius: "14",
   cardPadding: "20",
   cardShadow: "40",
+  // Label / Value
+  labelColor: "#8a6b6b",
+  labelSize: "12",
+  labelWeight: "500",
+  valueColor: "#2D1B1B",
+  valueSize: "12",
+  valueWeight: "600",
 };
 
 export function getPageTheme(pageName) {
@@ -37,7 +44,15 @@ export function getPageTheme(pageName) {
       cardRadius: parseInt(s[p + "card_radius"] || DEFAULT_THEME.cardRadius) || 0,
       cardPadding: parseInt(s[p + "card_padding"] || DEFAULT_THEME.cardPadding) || 0,
       cardShadow: parseInt(s[p + "card_shadow"] || DEFAULT_THEME.cardShadow) || 0,
+      // Label / Value
+      labelColor: s[p + "label_color"] || DEFAULT_THEME.labelColor,
+      labelSize: parseInt(s[p + "label_size"] || DEFAULT_THEME.labelSize) || 12,
+      labelWeight: s[p + "label_weight"] || DEFAULT_THEME.labelWeight,
+      valueColor: s[p + "value_color"] || DEFAULT_THEME.valueColor,
+      valueSize: parseInt(s[p + "value_size"] || DEFAULT_THEME.valueSize) || 12,
+      valueWeight: s[p + "value_weight"] || DEFAULT_THEME.valueWeight,
     };
+    
   } catch {
     return DEFAULT_THEME;
   }
