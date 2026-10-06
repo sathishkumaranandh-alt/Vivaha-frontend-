@@ -102,7 +102,7 @@ function ProfileCard({ user, isMobile = false }) {
         background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
       }}
     >
-      {/* ==================== FULL PHOTO ==================== */}
+      {/* PHOTO */}
       {photo_url ? (
         <>
           <img
@@ -117,62 +117,24 @@ function ProfileCard({ user, isMobile = false }) {
               objectFit: "cover",
               objectPosition: "center 18%",
               filter: should_blur_photo ? `blur(${theme.photoBlur}px)` : "none",
-              transform: should_blur_photo
-                ? "scale(1.1)"
-                : hovered
-                ? "scale(1.06)"
-                : "scale(1)",
+              transform: should_blur_photo ? "scale(1.1)" : hovered ? "scale(1.06)" : "scale(1)",
               transition: "transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s",
               opacity: imgLoaded ? 1 : 0,
             }}
           />
-
-          {/* Deep bottom gradient for readability */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0) 40%, rgba(15,3,8,0.75) 70%, rgba(15,3,8,0.96) 100%)",
-              pointerEvents: "none",
-              zIndex: 1,
-            }}
-          />
+          {/* Multi-stop gradient - only bottom 35% dark */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 55%, rgba(15,3,8,0.65) 80%, rgba(15,3,8,0.95) 100%)", pointerEvents: "none", zIndex: 1 }} />
         </>
       ) : (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "linear-gradient(135deg, #FAF3F5, #f4dde5)",
-            gap: "10px",
-          }}
-        >
-          <div
-            style={{
-              width: "70px",
-              height: "70px",
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #8B0A2E, #a01438)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: "'Playfair Display', serif",
-              fontSize: "28px",
-              fontWeight: 700,
-              color: "#D4A017",
-            }}
-          >
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #FAF3F5, #f4dde5)", gap: "10px" }}>
+          <div style={{ width: "70px", height: "70px", borderRadius: "50%", background: "linear-gradient(135deg, #8B0A2E, #a01438)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display', serif", fontSize: "28px", fontWeight: 700, color: "#D4A017" }}>
             {(name || "?")[0].toUpperCase()}
           </div>
           <div style={{ fontSize: "9px", fontWeight: 700, color: "#8a6b6b", letterSpacing: "2px", textTransform: "uppercase" }}>No Photo</div>
         </div>
       )}
 
-      {/* ==================== TOP-LEFT BADGES ==================== */}
+      {/* TOP-LEFT BADGES */}
       <div style={{ position: "absolute", top: "10px", left: "10px", display: "flex", flexDirection: "column", gap: "5px", zIndex: 4 }}>
         {is_boosted && (
           <div style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", fontSize: "7.5px", fontWeight: 800, padding: "3px 8px", borderRadius: "4px", letterSpacing: "0.8px", boxShadow: "0 2px 8px rgba(212,160,23,0.5)" }}>◆ PREMIUM</div>
@@ -182,34 +144,20 @@ function ProfileCard({ user, isMobile = false }) {
         )}
       </div>
 
-      {/* ==================== TOP-RIGHT: HEART + LIVE + MATCH ==================== */}
+      {/* TOP-RIGHT: HEART + LIVE + MATCH */}
       <div style={{ position: "absolute", top: "10px", right: "10px", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", zIndex: 4 }}>
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setShortlisted((s) => !s);
-          }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShortlisted((s) => !s); }}
           style={{
-            width: "32px",
-            height: "32px",
-            borderRadius: "50%",
+            width: "32px", height: "32px", borderRadius: "50%",
             background: shortlisted ? "linear-gradient(135deg, #8B0A2E, #a01438)" : "rgba(255,255,255,0.96)",
             border: shortlisted ? "1.5px solid #D4A017" : "none",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "14px",
-            color: shortlisted ? "#D4A017" : "#8B0A2E",
-            cursor: "pointer",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-            transition: "all 0.25s",
-            fontFamily: "inherit",
-            backdropFilter: "blur(8px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "14px", color: shortlisted ? "#D4A017" : "#8B0A2E",
+            cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+            transition: "all 0.25s", fontFamily: "inherit", backdropFilter: "blur(8px)",
           }}
-        >
-          {shortlisted ? "♥" : "♡"}
-        </button>
+        >{shortlisted ? "♥" : "♡"}</button>
 
         {is_online && (
           <div style={{ background: "rgba(255,255,255,0.95)", color: "#16a34a", fontSize: "7.5px", fontWeight: 800, padding: "3px 7px", borderRadius: "9px", display: "flex", alignItems: "center", gap: "3px", letterSpacing: "0.6px", backdropFilter: "blur(8px)" }}>
@@ -225,7 +173,7 @@ function ProfileCard({ user, isMobile = false }) {
         )}
       </div>
 
-      {/* ==================== PROTECTED OVERLAY ==================== */}
+      {/* PROTECTED OVERLAY */}
       {should_blur_photo && (
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(15,3,8,0.4)", zIndex: 2 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
@@ -235,86 +183,66 @@ function ProfileCard({ user, isMobile = false }) {
         </div>
       )}
 
-      {/* ==================== PHOTO COUNT ==================== */}
+      {/* PHOTO COUNT */}
       {photo_count > 1 && (
-        <div style={{ position: "absolute", top: "10px", left: "10px", marginTop: is_boosted && is_verified ? "46px" : is_boosted || is_verified ? "24px" : "0px", background: "rgba(0,0,0,0.55)", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 7px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "3px", zIndex: 3, backdropFilter: "blur(8px)" }}>📷 {photo_count}</div>
+        <div style={{ position: "absolute", top: is_boosted && is_verified ? "52px" : (is_boosted || is_verified) ? "32px" : "10px", left: "10px", background: "rgba(0,0,0,0.55)", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 7px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "3px", zIndex: 3, backdropFilter: "blur(8px)" }}>📷 {photo_count}</div>
       )}
 
-      {/* ==================== BOTTOM CONTENT (Overlay on Photo) ==================== */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 12px 10px", zIndex: 3 }}>
-        {/* Name + Age */}
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? `${Math.round(parseFloat(theme.nameSize) * 0.9)}px` : `${theme.nameSize}px`, fontWeight: 700, color: theme.nameColor, textShadow: "0 2px 10px rgba(0,0,0,0.7)", marginBottom: "3px", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      {/* ==================== BOTTOM OVERLAY (Compact & Elegant) ==================== */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 12px 12px", zIndex: 3 }}>
+
+        {/* Name + Age — Single line, elegant */}
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? "15px" : "17px", fontWeight: 700, color: theme.nameColor, textShadow: "0 2px 10px rgba(0,0,0,0.85)", marginBottom: "3px", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {name || "Anonymous"}
           {age ? <span style={{ fontWeight: 500, fontSize: "12px", opacity: 0.9, marginLeft: "4px", fontStyle: "italic" }}>, {age}</span> : null}
         </div>
 
-        {/* Location + Height */}
-        <div style={{ fontSize: "9.5px", color: theme.mutedColor, textShadow: "0 1px 3px rgba(0,0,0,0.7)", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontWeight: 500, marginBottom: "6px" }}>
-          {location && <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "120px" }}>📍 {location}</span>}
+        {/* Location + Education — tiny inline */}
+        <div style={{ fontSize: "9.5px", color: "rgba(255,255,255,0.9)", textShadow: "0 1px 3px rgba(0,0,0,0.7)", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontWeight: 500, marginBottom: "6px" }}>
+          {location && <span style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}>📍 {location}</span>}
+          {education && <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100px" }}>🎓 {education}</span>}
           {height && <span>📏 {height}</span>}
         </div>
 
-        {/* Education / Occupation */}
-        {(education || occupation) && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "6px" }}>
-            {education && (
-              <div style={{ fontSize: "9.5px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "5px", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>
-                <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{education}</span>
-              </div>
+        {/* Chips + CTA in same row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+          {/* Left: Chips (Community, Mother tongue) */}
+          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", alignItems: "center", flex: 1, minWidth: 0 }}>
+            {community && (
+              <span style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, textTransform: "capitalize", border: "1px solid rgba(255,255,255,0.25)", backdropFilter: "blur(8px)", textShadow: "0 1px 2px rgba(0,0,0,0.5)", whiteSpace: "nowrap" }}>🏷️ {community}</span>
             )}
-            {occupation && (
-              <div style={{ fontSize: "9.5px", color: theme.bodyColor, display: "flex", alignItems: "center", gap: "5px", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>
-                <span style={{ color: "#D4A017", fontSize: "6px" }}>◆</span>
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {occupation}{company ? <span style={{ color: theme.mutedColor, fontSize: "8.5px" }}> · {company}</span> : null}
-                </span>
-              </div>
+            {mother_tongue && (
+              <span style={{ background: "rgba(139,92,246,0.4)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, border: "1px solid rgba(139,92,246,0.5)", backdropFilter: "blur(8px)", whiteSpace: "nowrap" }}>🗣️ {mother_tongue}</span>
             )}
           </div>
-        )}
 
-        {/* Chips (Community, Mother Tongue, Contact) */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", alignItems: "center", marginBottom: "8px" }}>
-          {community && (
-            <span style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, textTransform: "capitalize", border: "1px solid rgba(255,255,255,0.25)", backdropFilter: "blur(8px)", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>🏷️ {community}</span>
-          )}
-          {mother_tongue && (
-            <span style={{ background: "rgba(139,92,246,0.35)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, border: "1px solid rgba(139,92,246,0.5)", backdropFilter: "blur(8px)" }}>🗣️ {mother_tongue}</span>
-          )}
-          {contact_masked && contact_locked_reason === "owner_privacy" && (
-            <span style={{ background: "rgba(0,0,0,0.4)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 600, backdropFilter: "blur(8px)" }}>🔒 Contact</span>
-          )}
-          {contact_masked && contact_locked_reason !== "owner_privacy" && (
-            <span style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, boxShadow: "0 2px 6px rgba(212,160,23,0.4)" }}>⭐ Unlock</span>
-          )}
-        </div>
-
-        {/* CTA Button */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "5px",
-            background: should_blur_photo
-              ? (hovered ? theme.protectedHover : theme.protectedBg)
-              : (hovered ? theme.buttonBgHover : theme.buttonBg),
-            color: theme.buttonText,
-            padding: "8px 10px",
-            borderRadius: "8px",
-            fontWeight: 700,
-            fontSize: "10px",
-            letterSpacing: "0.5px",
-            textTransform: "uppercase",
-            transition: "all 0.3s",
-            boxShadow: hovered ? "0 5px 14px rgba(139,10,46,0.4)" : "0 2px 8px rgba(139,10,46,0.3)",
-          }}
-        >
-          <span>{should_blur_photo ? "🔒 Unlock" : "View Profile"}</span>
-          {!should_blur_photo && (
-            <span style={{ transform: hovered ? "translateX(3px)" : "translateX(0)", transition: "transform 0.3s" }}>→</span>
-          )}
+          {/* Right: Small CTA Pill (Not full width) */}
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              background: should_blur_photo
+                ? (hovered ? theme.protectedHover : theme.protectedBg)
+                : (hovered ? theme.buttonBgHover : theme.buttonBg),
+              color: theme.buttonText,
+              padding: "6px 12px",
+              borderRadius: "20px",
+              fontWeight: 700,
+              fontSize: "9.5px",
+              letterSpacing: "0.4px",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+              transition: "all 0.3s",
+              boxShadow: hovered ? "0 4px 12px rgba(139,10,46,0.45)" : "0 2px 8px rgba(139,10,46,0.35)",
+              flexShrink: 0,
+            }}
+          >
+            <span>{should_blur_photo ? "🔒 Unlock" : "View"}</span>
+            {!should_blur_photo && (
+              <span style={{ transform: hovered ? "translateX(2px)" : "translateX(0)", transition: "transform 0.3s" }}>→</span>
+            )}
+          </div>
         </div>
       </div>
 
