@@ -827,3 +827,23 @@ const modernStyles = {
 };
 
 export default Home;
+  // Profile card design defaults
+  card_bg: "#ffffff",
+  card_border_color: "#f0e0e0",
+  card_border_width: "1",
+  card_radius: "12",
+  card_shadow: "40",
+  card_photo_ratio: "1/1",
+  card_photo_blur: "20",
+  card_name_color: "#ffffff",
+  card_name_size: "14.5",
+  card_body_color: "#3d2828",
+  card_muted_color: "#8a6b6b",
+  card_chip_bg: "#FDF2F6",
+  card_chip_text: "#8B0A2E",
+  card_button_bg: "#8B0A2E",
+  card_button_bg_hover: "#a01438",
+  card_button_text: "#ffffff",
+  card_protected_bg: "#8a6b6b",
+  card_protected_bg_hover: "#5c3030",
+};
