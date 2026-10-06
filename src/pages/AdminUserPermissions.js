@@ -29,6 +29,9 @@ function AdminUserPermissions() {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
   const [permissions, setPermissions] = useState({});
+  const [originalPerms, setOriginalPerms] = useState({});
+  const [planPermissions, setPlanPermissions] = useState({});
+  const [planName, setPlanName] = useState("Free");
   const [categories, setCategories] = useState([]);
   const [category, setCategory] = useState("");
   const [loading, setLoading] = useState(true);
@@ -51,7 +54,7 @@ function AdminUserPermissions() {
 
         if (!userId) { navigate("/admin"); return; }
 
-        // Load the target user
+        // Load target user
         const userRes = await fetch(`${BACKEND_URL}/profile/admin/users/${userId}/details`);
         if (userRes.ok) {
           const data = await userRes.json();
@@ -62,8 +65,18 @@ function AdminUserPermissions() {
         const permRes = await fetch(`${BACKEND_URL}/user-permissions/user/${userId}`);
         if (permRes.ok) {
           const data = await permRes.json();
-          setPermissions(data.custom_permissions || {});
+          const custom = data.custom_permissions || {};
+          setPermissions(custom);
+          setOriginalPerms(custom);
           setCategory(data.category || "");
+        }
+
+        // Load plan permissions (for showing plan default)
+        const planRes = await fetch(`${BACKEND_URL}/plans/user-plan/${userId}`);
+        if (planRes.ok) {
+          const data = await planRes.json();
+          setPlanName(data.plan || "Free");
+          setPlanPermissions(data.permissions || {});
         }
 
         // Load categories
@@ -89,15 +102,42 @@ function AdminUserPermissions() {
     setPermissions(prev => ({ ...prev, [key]: value }));
   };
 
+  // Clear a specific override — returns to plan default
+  const clearOverride = (key) => {
+    setPermissions(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Clean permissions: remove false values that were never explicitly set
+      // This prevents stale 'false' data from blocking plan permissions
+      const cleaned = {};
+      Object.keys(permissions).forEach((key) => {
+        const val = permissions[key];
+        // Keep TRUE values and numbers
+        if (val === true || typeof val === "number") {
+          cleaned[key] = val;
+        }
+        // Keep FALSE only if it was in the original custom permissions
+        // (i.e., admin explicitly set it as override before)
+        else if (val === false && originalPerms.hasOwnProperty(key)) {
+          cleaned[key] = val;
+        }
+      });
+
       const res = await fetch(`${BACKEND_URL}/user-permissions/user/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ custom_permissions: permissions, category }),
+        body: JSON.stringify({ custom_permissions: cleaned, category }),
       });
       if (res.ok) {
+        setPermissions(cleaned);
+        setOriginalPerms(cleaned);
         toast.success("Permissions saved for user!");
       } else {
         toast.error("Failed to save");
@@ -112,6 +152,7 @@ function AdminUserPermissions() {
       const res = await fetch(`${BACKEND_URL}/user-permissions/user/${userId}`, { method: "DELETE" });
       if (res.ok) {
         setPermissions({});
+        setOriginalPerms({});
         setCategory("");
         toast.success("Reset to plan defaults");
       }
@@ -124,11 +165,13 @@ function AdminUserPermissions() {
       const res = await fetch(`${BACKEND_URL}/user-permissions/apply-category/${userId}/${encodeURIComponent(catName)}`, { method: "POST" });
       if (res.ok) {
         const data = await res.json();
-        setPermissions(data.user.custom_permissions || {});
+        const custom = data.user.custom_permissions || {};
+        setPermissions(custom);
+        setOriginalPerms(custom);
         setCategory(catName);
         toast.success(`Applied ${catName} category`);
       }
-    } catch { toast.error("Failed to apply"); }
+    } catch { toast.error("Failed to apply"); } finally { }
   };
 
   if (loading) return <div style={{ padding: 60, textAlign: "center" }}>Loading...</div>;
@@ -142,13 +185,16 @@ function AdminUserPermissions() {
     label: { display: "block", fontSize: "11px", fontWeight: 700, color: "#555", marginBottom: "6px", textTransform: "uppercase" },
     input: { width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", fontFamily: "inherit", outline: "none", background: "#FFF9F5", boxSizing: "border-box" },
     permsGrid: { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "10px", marginTop: "12px" },
-    permRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: "#FFF9F5", borderRadius: "8px", border: "1px solid #f0e0e0" },
-    permLabel: { fontSize: "13px", color: "#2D1B1B", fontWeight: 600 },
+    permRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: "#FFF9F5", borderRadius: "8px", border: "1px solid #f0e0e0", gap: 8, position: "relative" },
+    permRowOverride: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: "#FEF3C7", borderRadius: "8px", border: "1.5px solid #D4A017", gap: 8, position: "relative" },
+    permLabel: { fontSize: "13px", color: "#2D1B1B", fontWeight: 600, flex: 1 },
+    planHint: { fontSize: "10px", color: "#8a6b6b", fontStyle: "italic", marginTop: "2px" },
     btn: { background: "#8B0A2E", color: "white", border: "none", padding: "12px 20px", borderRadius: "10px", fontWeight: 700, cursor: "pointer", fontSize: "14px", fontFamily: "inherit" },
     backBtn: { background: "#e5e7eb", color: "#8B0A2E", padding: "10px 18px", borderRadius: 8, textDecoration: "none", fontWeight: "bold", fontSize: 14 },
     resetBtn: { background: "#f3f4f6", color: "#374151", border: "none", padding: "12px 20px", borderRadius: "10px", fontWeight: 700, cursor: "pointer", fontSize: "14px", fontFamily: "inherit" },
     catRow: { display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" },
     catChip: { padding: "8px 14px", borderRadius: "20px", border: "1.5px solid #e5e7eb", background: "white", fontSize: "12px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
+    clearBtn: { background: "transparent", border: "none", color: "#dc2626", fontSize: "10px", cursor: "pointer", textDecoration: "underline", padding: "2px 4px", fontFamily: "inherit" },
   };
 
   return (
@@ -157,7 +203,7 @@ function AdminUserPermissions() {
         <div>
           <h1 style={S.h1}>🔐 User Permissions</h1>
           <p style={S.sub}>
-            {user?.name || user?.email || "User"} · Plan: <strong>{user?.plan || "Free"}</strong>
+            {user?.name || user?.email || "User"} · Plan: <strong>{planName}</strong>
             {category && ` · Category: ${category}`}
           </p>
         </div>
@@ -188,30 +234,56 @@ function AdminUserPermissions() {
       <div style={S.card}>
         <h3 style={{ color: "#8B0A2E", marginTop: 0, marginBottom: "6px", fontSize: "16px" }}>🎛️ Custom Permissions</h3>
         <p style={{ color: "#8a6b6b", fontSize: "12px", marginBottom: "12px" }}>
-          These override the user's plan. Leave empty to use plan defaults.
+          These override the user's plan. <strong>Highlighted rows (yellow)</strong> are explicit overrides.
+          Other rows use the plan's default value.
         </p>
 
         <div style={S.permsGrid}>
-          {PERMISSION_FIELDS.map((p) => (
-            <div key={p.key} style={S.permRow}>
-              <span style={S.permLabel}>{p.label}</span>
-              {p.type === "bool" ? (
-                <input
-                  type="checkbox"
-                  checked={permissions[p.key] || false}
-                  onChange={() => togglePermission(p.key)}
-                  style={{ width: 20, height: 20, accentColor: "#8B0A2E" }}
-                />
-              ) : (
-                <input
-                  type="number"
-                  value={permissions[p.key] ?? 0}
-                  onChange={(e) => updatePermissionValue(p.key, parseInt(e.target.value) || 0)}
-                  style={{ width: 80, padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 13, textAlign: "center", fontFamily: "inherit" }}
-                />
-              )}
-            </div>
-          ))}
+          {PERMISSION_FIELDS.map((p) => {
+            const isOverride = originalPerms.hasOwnProperty(p.key);
+            const currentVal = permissions[p.key];
+            const planVal = planPermissions[p.key];
+            const boolVal = currentVal === true;
+            const numVal = currentVal ?? (typeof planVal === "number" ? planVal : 0);
+
+            return (
+              <div key={p.key} style={isOverride ? S.permRowOverride : S.permRow}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={S.permLabel}>{p.label}</div>
+                  <div style={S.planHint}>
+                    Plan: {typeof planVal === "boolean" ? (planVal ? "✓ On" : "✗ Off") : (planVal ?? "—")}
+                    {isOverride && " · Override active"}
+                  </div>
+                </div>
+
+                {p.type === "bool" ? (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <input
+                      type="checkbox"
+                      checked={boolVal}
+                      onChange={() => togglePermission(p.key)}
+                      style={{ width: 20, height: 20, accentColor: "#8B0A2E", cursor: "pointer" }}
+                    />
+                    {isOverride && (
+                      <button onClick={() => clearOverride(p.key)} style={S.clearBtn} title="Clear override">clear</button>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <input
+                      type="number"
+                      value={numVal}
+                      onChange={(e) => updatePermissionValue(p.key, parseInt(e.target.value) || 0)}
+                      style={{ width: 70, padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 13, textAlign: "center", fontFamily: "inherit" }}
+                    />
+                    {isOverride && (
+                      <button onClick={() => clearOverride(p.key)} style={S.clearBtn} title="Clear override">clear</button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
