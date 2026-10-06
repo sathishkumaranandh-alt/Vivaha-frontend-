@@ -8,14 +8,19 @@ function getCardTheme() {
     cardBorderWidth: "1",
     cardRadius: "14",
     cardShadow: "40",
-    photoRatio: "3/4",
+    photoRatio: "2/3",
     photoBlur: "20",
     nameColor: "#ffffff",
     nameSize: "17",
     bodyColor: "rgba(255,255,255,0.92)",
     mutedColor: "rgba(255,255,255,0.75)",
-    chipBg: "rgba(255,255,255,0.18)",
-    chipText: "#ffffff",
+    showLocation: true,
+    showEducation: true,
+    showOccupation: true,
+    showHeight: true,
+    showCommunity: true,
+    showMotherTongue: true,
+    showContact: true,
   };
   try {
     const raw = localStorage.getItem("vivaha_home_settings_v1");
@@ -32,8 +37,13 @@ function getCardTheme() {
       nameSize: c.card_name_size || D.nameSize,
       bodyColor: c.card_body_color || D.bodyColor,
       mutedColor: c.card_muted_color || D.mutedColor,
-      chipBg: c.card_chip_bg || D.chipBg,
-      chipText: c.card_chip_text || D.chipText,
+      showLocation: c.card_show_location !== "false",
+      showEducation: c.card_show_education !== "false",
+      showOccupation: c.card_show_occupation !== "false",
+      showHeight: c.card_show_height !== "false",
+      showCommunity: c.card_show_community !== "false",
+      showMotherTongue: c.card_show_mother_tongue !== "false",
+      showContact: c.card_show_contact !== "false",
     };
   } catch {
     return D;
@@ -69,12 +79,11 @@ function ProfileCard({ user, isMobile = false }) {
     ? "none"
     : `0 ${Math.round(shadowStrength / 8)}px ${Math.round(shadowStrength / 3)}px -${Math.round(shadowStrength / 15)}px rgba(139,10,46,0.15)`;
 
-  // Build info stack (only show what exists)
   const detailRows = [];
-  if (location) detailRows.push({ icon: "📍", text: location });
-  if (education) detailRows.push({ icon: "🎓", text: education });
-  if (occupation) detailRows.push({ icon: "💼", text: company ? `${occupation} · ${company}` : occupation });
-  if (height) detailRows.push({ icon: "📏", text: height });
+  if (theme.showLocation && location) detailRows.push({ icon: "📍", text: location });
+  if (theme.showEducation && education) detailRows.push({ icon: "🎓", text: education });
+  if (theme.showOccupation && occupation) detailRows.push({ icon: "💼", text: company ? `${occupation} · ${company}` : occupation });
+  if (theme.showHeight && height) detailRows.push({ icon: "📏", text: height });
 
   return (
     <Link
@@ -99,7 +108,6 @@ function ProfileCard({ user, isMobile = false }) {
         background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
       }}
     >
-      {/* ==================== FULL PHOTO ==================== */}
       {photo_url ? (
         <>
           <img
@@ -119,37 +127,35 @@ function ProfileCard({ user, isMobile = false }) {
               opacity: imgLoaded ? 1 : 0,
             }}
           />
-          {/* Bottom-only gradient (photo 80% visible, bottom 30% dark) */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(180deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 55%, rgba(15,3,8,0.55) 75%, rgba(15,3,8,0.94) 100%)",
-              pointerEvents: "none",
-              zIndex: 1,
-            }}
-          />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 55%, rgba(15,3,8,0.6) 78%, rgba(15,3,8,0.96) 100%)", pointerEvents: "none", zIndex: 1 }} />
         </>
       ) : (
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #FAF3F5, #f4dde5)", gap: "10px" }}>
-          <div style={{ width: "70px", height: "70px", borderRadius: "50%", background: "linear-gradient(135deg, #8B0A2E, #a01438)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display', serif", fontSize: "28px", fontWeight: 700, color: "#D4A017" }}>
-            {(name || "?")[0].toUpperCase()}
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #FFF9F5 0%, #FDF2F6 50%, #F8E8ED 100%)", gap: "14px" }}>
+          <div style={{ width: "72px", height: "72px", borderRadius: "50%", background: "rgba(255,255,255,0.7)", border: "2px solid rgba(139,10,46,0.15)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(139,10,46,0.08)", backdropFilter: "blur(6px)" }}>
+            <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "linear-gradient(135deg, rgba(139,10,46,0.08), rgba(212,160,23,0.08))", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display', serif", fontSize: "22px", fontWeight: 700, color: "#8B0A2E", opacity: 0.6 }}>
+              {(name || "?")[0].toUpperCase()}
+            </div>
           </div>
-          <div style={{ fontSize: "9px", fontWeight: 700, color: "#8a6b6b", letterSpacing: "2px", textTransform: "uppercase" }}>No Photo</div>
+          <div style={{ textAlign: "center", padding: "0 20px" }}>
+            <div style={{ fontSize: "10px", fontWeight: 700, color: "#8a6b6b", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "2px", opacity: 0.75 }}>📷 No Photo</div>
+            <div style={{ fontSize: "9px", color: "#aaa", fontStyle: "italic" }}>Photo coming soon</div>
+          </div>
         </div>
       )}
 
-      {/* ==================== TOP-LEFT BADGES ==================== */}
       <div style={{ position: "absolute", top: "10px", left: "10px", display: "flex", flexDirection: "column", gap: "5px", zIndex: 4 }}>
         {is_boosted && (
-          <div style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", fontSize: "7.5px", fontWeight: 800, padding: "3px 8px", borderRadius: "4px", letterSpacing: "0.8px", boxShadow: "0 2px 8px rgba(212,160,23,0.5)" }}>◆ PREMIUM</div>
+          <div style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", fontSize: "7.5px", fontWeight: 800, padding: "4px 9px", borderRadius: "4px", letterSpacing: "0.8px", boxShadow: "0 2px 8px rgba(212,160,23,0.55)", display: "flex", alignItems: "center", gap: "3px" }}>
+            <span style={{ fontSize: "8px" }}>★</span> PAID
+          </div>
         )}
         {is_verified && (
-          <div style={{ background: "linear-gradient(135deg, #10B981, #059669)", color: "white", fontSize: "7.5px", fontWeight: 800, padding: "3px 8px", borderRadius: "4px", letterSpacing: "0.8px", boxShadow: "0 2px 8px rgba(16,185,129,0.5)" }}>✓ VERIFIED</div>
+          <div style={{ background: "linear-gradient(135deg, #10B981, #059669)", color: "white", fontSize: "7.5px", fontWeight: 800, padding: "4px 9px", borderRadius: "4px", letterSpacing: "0.8px", boxShadow: "0 2px 8px rgba(16,185,129,0.55)", display: "flex", alignItems: "center", gap: "3px" }}>
+            <span style={{ fontSize: "9px" }}>✓</span> VERIFIED
+          </div>
         )}
       </div>
 
-      {/* ==================== TOP-RIGHT ==================== */}
       <div style={{ position: "absolute", top: "10px", right: "10px", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", zIndex: 4 }}>
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShortlisted((s) => !s); }}
@@ -178,7 +184,6 @@ function ProfileCard({ user, isMobile = false }) {
         )}
       </div>
 
-      {/* ==================== PROTECTED OVERLAY ==================== */}
       {should_blur_photo && (
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(15,3,8,0.4)", zIndex: 2 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
@@ -188,15 +193,11 @@ function ProfileCard({ user, isMobile = false }) {
         </div>
       )}
 
-      {/* ==================== PHOTO COUNT ==================== */}
       {photo_count > 1 && (
         <div style={{ position: "absolute", top: is_boosted && is_verified ? "52px" : (is_boosted || is_verified) ? "32px" : "10px", left: "10px", background: "rgba(0,0,0,0.55)", color: "white", fontSize: "8px", fontWeight: 700, padding: "2px 7px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "3px", zIndex: 3, backdropFilter: "blur(8px)" }}>📷 {photo_count}</div>
       )}
 
-      {/* ==================== BOTTOM-LEFT DETAILS (Compact Stack) ==================== */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 12px 12px", zIndex: 3, textAlign: "left" }}>
-
-        {/* Name + Age */}
         <div style={{
           fontFamily: "'Playfair Display', serif",
           fontSize: isMobile ? "15px" : "17px",
@@ -213,22 +214,10 @@ function ProfileCard({ user, isMobile = false }) {
           {age ? <span style={{ fontWeight: 500, fontSize: "12px", opacity: 0.9, marginLeft: "4px", fontStyle: "italic" }}>, {age}</span> : null}
         </div>
 
-        {/* Detail rows — compact */}
         {detailRows.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "6px" }}>
             {detailRows.slice(0, 2).map((row, i) => (
-              <div key={i} style={{
-                fontSize: "9.5px",
-                color: theme.bodyColor,
-                textShadow: "0 1px 3px rgba(0,0,0,0.7)",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                fontWeight: 500,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}>
+              <div key={i} style={{ fontSize: "9.5px", color: theme.bodyColor, textShadow: "0 1px 3px rgba(0,0,0,0.7)", display: "flex", alignItems: "center", gap: "5px", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 <span style={{ fontSize: "9px", opacity: 0.95 }}>{row.icon}</span>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.text}</span>
               </div>
@@ -236,38 +225,24 @@ function ProfileCard({ user, isMobile = false }) {
           </div>
         )}
 
-        {/* Chips row (bottom) — Glassmorphism */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", alignItems: "center" }}>
-          {community && (
+          {theme.showCommunity && community && (
             <span style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, textTransform: "capitalize", border: "1px solid rgba(255,255,255,0.25)", backdropFilter: "blur(8px)", textShadow: "0 1px 2px rgba(0,0,0,0.5)", whiteSpace: "nowrap" }}>🏷️ {community}</span>
           )}
-          {mother_tongue && (
+          {theme.showMotherTongue && mother_tongue && (
             <span style={{ background: "rgba(139,92,246,0.4)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, border: "1px solid rgba(139,92,246,0.5)", backdropFilter: "blur(8px)", whiteSpace: "nowrap" }}>🗣️ {mother_tongue}</span>
           )}
-          {contact_masked && contact_locked_reason === "owner_privacy" && (
+          {theme.showContact && contact_masked && contact_locked_reason === "owner_privacy" && (
             <span style={{ background: "rgba(0,0,0,0.4)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 600, backdropFilter: "blur(8px)", whiteSpace: "nowrap" }}>🔒 Contact</span>
           )}
-          {contact_masked && contact_locked_reason !== "owner_privacy" && (
+          {theme.showContact && contact_masked && contact_locked_reason !== "owner_privacy" && (
             <span style={{ background: "linear-gradient(135deg, #D4A017, #b8860b)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "8px", fontWeight: 700, boxShadow: "0 2px 6px rgba(212,160,23,0.4)", whiteSpace: "nowrap" }}>⭐ Unlock</span>
           )}
         </div>
       </div>
 
-      {/* Subtle "Tap" hint on hover (bottom-right) */}
       {hovered && !should_blur_photo && (
-        <div style={{
-          position: "absolute",
-          bottom: "12px",
-          right: "12px",
-          fontSize: "9px",
-          color: "rgba(255,255,255,0.85)",
-          fontWeight: 700,
-          letterSpacing: "1px",
-          textTransform: "uppercase",
-          textShadow: "0 1px 3px rgba(0,0,0,0.7)",
-          zIndex: 4,
-          animation: "fadeIn 0.3s ease",
-        }}>
+        <div style={{ position: "absolute", bottom: "12px", right: "12px", fontSize: "9px", color: "rgba(255,255,255,0.85)", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", textShadow: "0 1px 3px rgba(0,0,0,0.7)", zIndex: 4, animation: "fadeIn 0.3s ease" }}>
           View →
         </div>
       )}
