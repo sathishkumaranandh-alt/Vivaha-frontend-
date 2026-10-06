@@ -47,16 +47,29 @@ export function usePlan() {
 
         // Get custom permissions
         const customRes = await fetch(`${BACKEND_URL}/user-permissions/user/${user.id}`);
-        let customPerms = {};
+        let rawCustom = {};
         let category = null;
         if (customRes.ok) {
           const data = await customRes.json();
-          customPerms = data.custom_permissions || {};
+          rawCustom = data.custom_permissions || {};
           category = data.category || null;
         }
 
-        // Merge: custom overrides plan
-        const merged = { ...FREE_PERMISSIONS, ...planPerms, ...customPerms };
+        // ============================================
+        // SMART MERGE (same as backend logic):
+        // Start with defaults + plan permissions
+        // Then apply ONLY custom TRUE values + numbers
+        // Custom FALSE values are IGNORED (plan decides)
+        // ============================================
+        const merged = { ...FREE_PERMISSIONS, ...planPerms };
+
+        Object.keys(rawCustom).forEach((key) => {
+          const val = rawCustom[key];
+          if (val === true || typeof val === "number") {
+            merged[key] = val;
+          }
+          // Custom FALSE values are ignored — plan permission wins
+        });
 
         setPlan(category ? `${planName} · ${category}` : planName);
         setPermissions(merged);
