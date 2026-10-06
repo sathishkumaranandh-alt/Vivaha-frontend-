@@ -846,4 +846,4 @@ export default Home;
   card_button_text: "#ffffff",
   card_protected_bg: "#8a6b6b",
   card_protected_bg_hover: "#5c3030",
-};
+};  
