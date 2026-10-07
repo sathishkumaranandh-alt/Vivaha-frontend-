@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import supabase from "../supabaseClient";
-import PhotoGallery from "../components/PhotoGallery";
+import PhotoGallery from "../components/PhotoGallery";j
 import ReportModal from "../components/ReportModal";
 import BackButton from "../components/BackButton";
 import { toast } from "../utils/toast";
