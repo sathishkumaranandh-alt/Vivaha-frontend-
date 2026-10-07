@@ -92,6 +92,7 @@ function Register() {
           email: form.email.trim(),
           password: form.password,
           community: form.community,
+          caste: form.community, // NEW: sync caste with community slug
           name: form.name.trim(),
           gender: form.gender,
           dob: form.dob,
