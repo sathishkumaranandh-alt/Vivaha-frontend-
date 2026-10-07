@@ -489,9 +489,13 @@ function Profile() {
     );
   };
 
-  const buildTabFields = (tabKey) => {
-    const coreInTab = coreFieldsConfig.filter(f => (CORE_TAB_MAP[f.field_key] || "basic") === tabKey);
-    const customInTab = customFieldsConfig.filter(f => (f.profile_tab || "basic") === tabKey);
+    const buildTabFields = (tabKey) => {
+    const coreInTab = coreFieldsConfig
+      .filter(f => (CORE_TAB_MAP[f.field_key] || "basic") === tabKey)
+      .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    const customInTab = customFieldsConfig
+      .filter(f => (f.profile_tab || "basic") === tabKey)
+      .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
     return { coreInTab, customInTab };
   };
 
