@@ -31,6 +31,7 @@ import Visitors from "./pages/Visitors";
 import Boost from "./pages/Boost";
 import AdminPlans from "./pages/AdminPlans";
 import AdvancedSearch from "./pages/AdvancedSearch";
+import ScrollToTop from "./components/ScrollToTop";
 
 
 
