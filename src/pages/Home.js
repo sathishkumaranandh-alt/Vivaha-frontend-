@@ -310,7 +310,6 @@ function Home() {
     navigate(`/search?${params.toString()}`);
   };
 
-  const overlayOpacity = parseInt(settings.home_overlay_opacity) || 40;
 
   const size = (key) => {
     const desktopPx = parseInt(settings[key]) || 0;
