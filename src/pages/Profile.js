@@ -466,13 +466,20 @@ function Profile() {
     );
   };
 
-  const buildTabFields = (tabKey) => {
+    const buildTabFields = (tabKey) => {
+    const sortFn = (a, b) => {
+      const ao = a.display_order || 0;
+      const bo = b.display_order || 0;
+      if (ao !== bo) return ao - bo;
+      // Stable tiebreaker: label alphabetical
+      return (a.label || "").localeCompare(b.label || "");
+    };
     const coreInTab = coreFieldsConfig
       .filter(f => (CORE_TAB_MAP[f.field_key] || "basic") === tabKey)
-      .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+      .sort(sortFn);
     const customInTab = customFieldsConfig
       .filter(f => (f.profile_tab || "basic") === tabKey)
-      .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+      .sort(sortFn);
     return { coreInTab, customInTab };
   };
 
