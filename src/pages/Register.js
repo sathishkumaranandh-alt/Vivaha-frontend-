@@ -114,11 +114,12 @@ function Register() {
         email: form.email.trim(), password: form.password,
       });
 
-      if (loginError) {
+            if (loginError) {
         toast.error("Please log in.");
         navigate("/login");
       } else {
-        navigate("/profile");
+        navigate("/onboarding");   // ✅ NEW
+            }
       }
     } catch (err) {
       console.error(err);
