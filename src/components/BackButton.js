@@ -1,15 +1,39 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function BackButton({ fallback = "/dashboard", label = "← Back" }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate(fallback);
+    // ============================================
+    // 1. If we have a "from" state (passed by Profile links)
+    //    → go to that exact page
+    // ============================================
+    if (location.state?.from) {
+      navigate(location.state.from);
+      return;
     }
+
+    // ============================================
+    // 2. Check if browser history has a previous
+    //    page from the SAME origin (same website)
+    //    → safe to go back
+    // ============================================
+    if (
+      window.history.length > 1 &&
+      document.referrer &&
+      document.referrer.startsWith(window.location.origin)
+    ) {
+      navigate(-1);
+      return;
+    }
+
+    // ============================================
+    // 3. Otherwise, use fallback (safe route)
+    //    Example: direct link open panna, aprom Back click
+    // ============================================
+    navigate(fallback);
   };
 
   return (
