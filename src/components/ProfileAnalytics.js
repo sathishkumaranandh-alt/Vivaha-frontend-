@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function ProfileAnalytics({ userId, isMobile }) {
+  const location = useLocation();
   const [stats, setStats] = useState(null);
   const [recentViewers, setRecentViewers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,9 @@ function ProfileAnalytics({ userId, isMobile }) {
   const pageHeading = pageTheme.heading;
   const pageMuted = pageTheme.muted;
   const cardStyle = getCardStyle(pageTheme);
+
+  // Current page path — passed to Profile page so Back button returns here
+  const fromPath = location.pathname + location.search;
 
   const statCards = [
     { label: "Profile Views", value: stats.totalViews, icon: "👀", color: "#3b82f6" },
@@ -143,6 +147,7 @@ function ProfileAnalytics({ userId, isMobile }) {
               <Link
                 key={v.id}
                 to={`/profile/${v.id}`}
+                state={{ from: fromPath }}
                 style={{
                   minWidth: "90px",
                   textDecoration: "none",
