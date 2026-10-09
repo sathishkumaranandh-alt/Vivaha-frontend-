@@ -7,6 +7,7 @@ import InstallAppButton from "./components/InstallAppButton";
 
 import Home from "./pages/Home";
 import SuccessStories from "./pages/SuccessStories";
+import AdminSuccessStories from "./pages/AdminSuccessStories";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
@@ -94,6 +95,7 @@ function App() {
             <Route path="/admin-communities" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommunities /></ProtectedRoute>} />
             <Route path="/admin-settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin-form-builder" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFormBuilder /></ProtectedRoute>} />
+  <Route path="/admin/success-stories" element={<AdminSuccessStories />} />
           </Routes>
         </div>
         <Footer />
