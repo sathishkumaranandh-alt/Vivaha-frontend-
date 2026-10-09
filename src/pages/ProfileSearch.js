@@ -251,11 +251,17 @@ function ProfileSearch() {
       fontSize: baseSize,
       color: pageMuted,
     },
+    // Desktop grid
+    desktopGrid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+      gap: "14px",
+      width: "100%",
+    },
   };
 
   return (
     <div style={S.page}>
-      {/* Carousel CSS */}
       <style>{`
         .vivah-carousel {
           scrollbar-width: none;
@@ -263,16 +269,6 @@ function ProfileSearch() {
         }
         .vivah-carousel::-webkit-scrollbar {
           display: none;
-        }
-        .vivah-carousel-arrow {
-          opacity: 0;
-          transition: opacity 0.25s ease, transform 0.2s ease;
-        }
-        .vivah-carousel-wrap:hover .vivah-carousel-arrow {
-          opacity: 1;
-        }
-        .vivah-carousel-arrow:hover {
-          transform: translateY(-50%) scale(1.1) !important;
         }
       `}</style>
 
@@ -420,7 +416,21 @@ function ProfileSearch() {
                   : ""}
               </div>
 
-              <SearchCarousel results={results} isMobile={isMobile} />
+              {/* ============================================ */}
+              {/* MOBILE: Carousel | DESKTOP: Grid */}
+              {/* ============================================ */}
+              {isMobile ? (
+                <SearchCarouselMobile
+                  results={results}
+                  isMobile={isMobile}
+                />
+              ) : (
+                <div style={S.desktopGrid}>
+                  {results.map((u) => (
+                    <ProfileCard key={u.id} user={u} isMobile={false} />
+                  ))}
+                </div>
+              )}
             </>
           )}
         </main>
@@ -430,107 +440,41 @@ function ProfileSearch() {
 }
 
 /* ============================================ */
-/* SEARCH CAROUSEL — Hotstar Style Horizontal Scroll */
+/* MOBILE CAROUSEL (only used on mobile) */
 /* ============================================ */
-function SearchCarousel({ results, isMobile }) {
+function SearchCarouselMobile({ results }) {
   const scrollRef = useRef(null);
-
-  const scroll = (dir) => {
-    if (!scrollRef.current) return;
-    const step = (isMobile ? 150 : 190) * 2;
-    scrollRef.current.scrollBy({ left: dir * step, behavior: "smooth" });
-  };
 
   if (!results || results.length === 0) return null;
 
-  const cardWidth = isMobile ? "150px" : "190px";
+  const cardWidth = "150px";
 
   return (
-    <div style={{ position: "relative" }} className="vivah-carousel-wrap">
-      <div
-        ref={scrollRef}
-        className="vivah-carousel"
-        style={{
-          display: "flex",
-          gap: 0,
-          overflowX: "auto",
-          scrollSnapType: "x mandatory",
-          paddingBottom: "10px",
-          scrollBehavior: "smooth",
-        }}
-      >
-        {results.map((u) => (
-          <div
-            key={u.id}
-            style={{
-              flex: "0 0 auto",
-              width: cardWidth,
-              scrollSnapAlign: "start",
-            }}
-          >
-            <ProfileCard user={u} isMobile={isMobile} />
-          </div>
-        ))}
-      </div>
-
-      {!isMobile && results.length > 2 && (
-        <>
-          <button
-            onClick={() => scroll(-1)}
-            className="vivah-carousel-arrow"
-            style={{
-              position: "absolute",
-              left: "-18px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              border: "none",
-              background: "white",
-              color: "#8B0A2E",
-              fontSize: "22px",
-              fontWeight: 900,
-              cursor: "pointer",
-              boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-              zIndex: 5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            aria-label="Scroll left"
-          >
-            ‹
-          </button>
-          <button
-            onClick={() => scroll(1)}
-            className="vivah-carousel-arrow"
-            style={{
-              position: "absolute",
-              right: "-18px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              border: "none",
-              background: "white",
-              color: "#8B0A2E",
-              fontSize: "22px",
-              fontWeight: 900,
-              cursor: "pointer",
-              boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-              zIndex: 5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            aria-label="Scroll right"
-          >
-            ›
-          </button>
-        </>
-      )}
+    <div
+      ref={scrollRef}
+      className="vivah-carousel"
+      style={{
+        display: "flex",
+        gap: 0,
+        overflowX: "auto",
+        scrollSnapType: "x mandatory",
+        paddingBottom: "10px",
+        scrollBehavior: "smooth",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
+      {results.map((u) => (
+        <div
+          key={u.id}
+          style={{
+            flex: "0 0 auto",
+            width: cardWidth,
+            scrollSnapAlign: "start",
+          }}
+        >
+          <ProfileCard user={u} isMobile={true} />
+        </div>
+      ))}
     </div>
   );
 }
