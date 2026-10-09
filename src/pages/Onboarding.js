@@ -37,7 +37,6 @@ const STEPS = [
 
 function Onboarding() {
   const navigate = useNavigate();
-  const { communities } = useCommunities();
   const [stepIndex, setStepIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
