@@ -199,9 +199,9 @@ function ProfileCompletionCard({ profile, isMobile }) {
         )}
       </div>
 
-      {/* CTA */}
+      {/* CTA — CHANGED: /profile → /onboarding */}
       <button
-        onClick={() => navigate("/profile")}
+        onClick={() => navigate("/onboarding")}
         style={{
           width: "100%",
           background: pageLink,
