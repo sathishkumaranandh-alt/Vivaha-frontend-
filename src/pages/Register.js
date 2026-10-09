@@ -119,7 +119,7 @@ function Register() {
         navigate("/login");
       } else {
         navigate("/onboarding");   // ✅ NEW
-            }
+            
       }
     } catch (err) {
       console.error(err);
