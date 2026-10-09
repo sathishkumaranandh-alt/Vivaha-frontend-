@@ -176,6 +176,9 @@ function AdminDashboard() {
           <Link to="/admin-settings" style={{ background: "#7c3aed", color: "white", padding: "10px 20px", borderRadius: 8, textDecoration: "none", fontWeight: "bold", fontSize: 14 }}>⚙️ Settings</Link>
           <Link to="/admin-plans" style={{ background: "#0891b2", color: "white", padding: "10px 20px", borderRadius: 8, textDecoration: "none", fontWeight: "bold", fontSize: 14 }}>💎 Plans</Link>
           <Link to="/admin-form-builder" style={{ background: "#0284c7", color: "white", padding: "10px 20px", borderRadius: 8, textDecoration: "none", fontWeight: "bold", fontSize: 14 }}>🛠️ Form Builder</Link>
+    <Link to="/admin/success-stories" style={{ ... existing card style ... }}>
+  💕 Success Stories
+</Link>
         </div>
       </div>
 
