@@ -127,7 +127,6 @@ function Home() {
 
   // ============ HERO SLIDESHOW ============
   const [heroSlideIndex, setHeroSlideIndex] = useState(0);
-  const [heroAutoPlay, setHeroAutoPlay] = useState(true);
   const [heroProgress, setHeroProgress] = useState(0);
   const [heroHovering, setHeroHovering] = useState(false);
   const heroAutoTimer = useRef(null);
@@ -245,7 +244,7 @@ function Home() {
 
   const totalHeroSlides = heroSlides.length;
   const heroSlideshowActive =
-    totalHeroSlides > 1 && heroAutoPlay && !heroHovering && settingsReady;
+  totalHeroSlides > 1 && !heroHovering && settingsReady;
 
   useEffect(() => {
     if (!heroSlideshowActive) {
