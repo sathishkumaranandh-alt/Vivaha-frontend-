@@ -4,6 +4,7 @@ import Navbar from "./components/Navigation";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import InstallAppButton from "./components/InstallAppButton";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 import Home from "./pages/Home";
 import SuccessStories from "./pages/SuccessStories";
@@ -62,7 +63,6 @@ function App() {
 
   return (
     <Router>
-      {/* ✅ ScrollToTop — Router-க்கு உள்ளே, Routes-க்கு வெளியே */}
       <ScrollToTop />
 
       <div style={{ minHeight: "100vh", width: "100vw", background: pageBg, overflowX: "hidden", margin: 0, padding: 0 }}>
@@ -96,12 +96,13 @@ function App() {
             <Route path="/admin-communities" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommunities /></ProtectedRoute>} />
             <Route path="/admin-settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin-form-builder" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFormBuilder /></ProtectedRoute>} />
-  <Route path="/admin/success-stories" element={<AdminSuccessStories />} />
-  <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/admin/success-stories" element={<AdminSuccessStories />} />
+            <Route path="/onboarding" element={<Onboarding />} />
           </Routes>
         </div>
         <Footer />
         <InstallAppButton />
+        <PWAInstallPrompt />
       </div>
     </Router>
   );
