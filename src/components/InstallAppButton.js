@@ -1,21 +1,15 @@
 import React, { useState, useEffect } from "react";
 
-const DISMISS_KEY = "vivaha_manual_install_dismissed_at";
-const DISMISS_DAYS = 3;
-
 function InstallAppButton({ variant = "card" }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showIOSModal, setShowIOSModal] = useState(false);
 
   useEffect(() => {
     const ua = window.navigator.userAgent;
     const iosDevice = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-    const mobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
     setIsIOS(iosDevice);
-    setIsMobile(mobileDevice);
 
     // Check if already installed (standalone mode)
     const isStandalone =
@@ -69,10 +63,6 @@ function InstallAppButton({ variant = "card" }) {
 
   // Hide if already installed
   if (isInstalled) return null;
-
-  // Hide on desktop? No — show everywhere, but with appropriate instructions
-  // (Optional: hide on desktop → uncomment below)
-  // if (!isMobile) return null;
 
   return (
     <>
