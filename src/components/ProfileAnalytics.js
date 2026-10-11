@@ -5,6 +5,18 @@ import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
+// Helper — multiple possible field names-a support panna
+function getPhotoUrl(user) {
+  if (!user) return "";
+  return (
+    user.photo_url ||
+    user.photo ||
+    user.profile_photo ||
+    user.primary_photo ||
+    ""
+  );
+}
+
 function ProfileAnalytics({ userId, isMobile }) {
   const location = useLocation();
   const [stats, setStats] = useState(null);
@@ -25,6 +37,8 @@ function ProfileAnalytics({ userId, isMobile }) {
       .then((data) => {
         setStats(data.stats || {});
         setRecentViewers(data.recentViewers || []);
+        // Debug log — browser console la API response print aagum
+        console.log("[ProfileAnalytics] recentViewers:", data.recentViewers);
       })
       .catch((err) => console.error("Analytics fetch error:", err))
       .finally(() => setLoading(false));
@@ -37,7 +51,7 @@ function ProfileAnalytics({ userId, isMobile }) {
   const pageMuted = pageTheme.muted;
   const cardStyle = getCardStyle(pageTheme);
 
-  // Current page path — passed to Profile page so Back button returns here
+  // Current page path — Back button correct-a work aagum
   const fromPath = location.pathname + location.search;
 
   const statCards = [
@@ -143,84 +157,93 @@ function ProfileAnalytics({ userId, isMobile }) {
               paddingBottom: "6px",
             }}
           >
-            {recentViewers.map((v) => (
-              <Link
-                key={v.id}
-                to={`/profile/${v.id}`}
-                state={{ from: fromPath }}
-                style={{
-                  minWidth: "90px",
-                  textDecoration: "none",
-                  textAlign: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <div
+            {recentViewers.map((v) => {
+              const photoUrl = getPhotoUrl(v);
+              const initial = (v.name || "?")[0].toUpperCase();
+              return (
+                <Link
+                  key={v.id}
+                  to={`/profile/${v.id}`}
+                  state={{ from: fromPath }}
                   style={{
-                    position: "relative",
-                    width: "60px",
-                    height: "60px",
-                    borderRadius: "50%",
-                    background: "#f0e0e0",
-                    margin: "0 auto 6px",
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "22px",
-                    color: pageHeading,
-                    fontWeight: "800",
-                    border: `2px solid ${pageTheme.cardBorder}`,
+                    minWidth: "90px",
+                    textDecoration: "none",
+                    textAlign: "center",
+                    flexShrink: 0,
                   }}
                 >
-                  {v.photo_url ? (
-                    <img
-                      src={v.photo_url}
-                      alt={v.name}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        filter: v.should_blur_photo ? "blur(8px)" : "none",
-                      }}
-                    />
-                  ) : (
-                    (v.name || "?")[0].toUpperCase()
-                  )}
-                  {v.should_blur_photo && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        background: "rgba(0,0,0,0.3)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderRadius: "50%",
-                        fontSize: "18px",
-                      }}
-                    >
-                      🔒
-                    </div>
-                  )}
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: "700",
-                    color: pageHeading,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {v.name?.split(" ")[0] || "User"}
-                </div>
-                <div style={{ fontSize: "10px", color: pageMuted }}>
-                  {v.age ? `${v.age}y` : ""}
-                </div>
-              </Link>
-            ))}
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "60px",
+                      height: "60px",
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
+                      margin: "0 auto 6px",
+                      overflow: "hidden",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "22px",
+                      color: pageHeading,
+                      fontWeight: "800",
+                      border: `2px solid ${pageTheme.cardBorder}`,
+                    }}
+                  >
+                    {photoUrl ? (
+                      <img
+                        src={photoUrl}
+                        alt={v.name || "Viewer"}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          filter: v.should_blur_photo ? "blur(8px)" : "none",
+                        }}
+                        onError={(e) => {
+                          // Photo broken-a irundha, initials fallback
+                          e.target.style.display = "none";
+                          e.target.parentElement.innerHTML = `<span style="font-size:22px;font-weight:800;color:#8B0A2E;">${initial}</span>`;
+                        }}
+                      />
+                    ) : (
+                      initial
+                    )}
+                    {v.should_blur_photo && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "rgba(0,0,0,0.3)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: "50%",
+                          fontSize: "18px",
+                        }}
+                      >
+                        🔒
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      color: pageHeading,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {v.name?.split(" ")[0] || "User"}
+                  </div>
+                  <div style={{ fontSize: "10px", color: pageMuted }}>
+                    {v.age ? `${v.age}y` : ""}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
