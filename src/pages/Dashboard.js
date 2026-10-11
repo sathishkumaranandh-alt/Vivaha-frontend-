@@ -5,6 +5,7 @@ import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 import ProfileAnalytics from "../components/ProfileAnalytics";
 import ProfileCompletionCard from "../components/ProfileCompletionCard";
 import ProfileCard from "../components/ProfileCard";
+import HeroProfileSlider from "../components/HeroProfileSlider";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -318,6 +319,24 @@ function Dashboard() {
             </p>
           </div>
 
+          {/* ============================================ */}
+          {/* 🔥 FOR YOU — Hotstar Style Hero Slider */}
+          {/* ============================================ */}
+          {recent.length > 0 && (
+            <div style={{ marginBottom: "32px" }}>
+              <div style={S.sectionHead}>
+                <h2 style={S.sectionTitle}>🔥 For You</h2>
+                <Link to="/recommendations" style={S.viewAll}>
+                  View All →
+                </Link>
+              </div>
+              <HeroProfileSlider
+                profiles={recent.slice(0, 6)}
+                isMobile={isMobile}
+              />
+            </div>
+          )}
+
           <ProfileCompletionCard profile={profile || {}} isMobile={isMobile} />
 
           {user?.id && <ProfileAnalytics userId={user.id} isMobile={isMobile} />}
@@ -404,7 +423,7 @@ function Dashboard() {
 }
 
 /* ============================================ */
-/* RECOMMENDED CAROUSEL — Uses standard ProfileCard */
+/* RECOMMENDED CAROUSEL */
 /* ============================================ */
 function RecommendedCarousel({ profiles, isMobile }) {
   const scrollRef = useRef(null);
