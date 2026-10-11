@@ -5,7 +5,6 @@ import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 import ProfileAnalytics from "../components/ProfileAnalytics";
 import ProfileCompletionCard from "../components/ProfileCompletionCard";
 import ProfileCard from "../components/ProfileCard";
-import HeroProfileSlider from "../components/HeroProfileSlider";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -22,8 +21,6 @@ function Dashboard() {
     messages: 0,
   });
   const [recent, setRecent] = useState([]);
-  const [nearby, setNearby] = useState([]);
-  const [nearbyLoading, setNearbyLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
 
@@ -55,11 +52,9 @@ function Dashboard() {
         const profileRes = await fetch(
           `${BACKEND_URL}/profile/${user.id}?viewerId=${user.id}`
         );
-        let myProfile = null;
         if (profileRes.ok) {
           const data = await profileRes.json();
-          myProfile = data.profile;
-          setProfile(myProfile);
+          setProfile(data.profile);
         }
 
         const [intRes, shortRes, msgRes, matchRes] = await Promise.all([
@@ -88,37 +83,6 @@ function Dashboard() {
         if (planRes.ok) {
           const data = await planRes.json();
           setPlan((data.plan || "Free").toLowerCase());
-        }
-
-        // ============================================
-        // NEAR BY YOU — Fetch based on user's location
-        // ============================================
-        if (myProfile?.location && myProfile.location.trim()) {
-          setNearbyLoading(true);
-          try {
-            const gender = (myProfile.gender || "").toLowerCase() === "male"
-              ? "female"
-              : "male";
-            const params = new URLSearchParams();
-            params.append("location", myProfile.location);
-            params.append("gender", gender);
-            params.append("viewerId", user.id);
-
-            const nearbyRes = await fetch(
-              `${BACKEND_URL}/profile/search?${params.toString()}`
-            );
-            if (nearbyRes.ok) {
-              const nearbyData = await nearbyRes.json();
-              const list = (nearbyData.results || [])
-                .filter((p) => p.id !== user.id)
-                .slice(0, 8);
-              setNearby(list);
-            }
-          } catch (err) {
-            console.error("Nearby fetch error:", err);
-          } finally {
-            setNearbyLoading(false);
-          }
         }
       } catch (err) {
         console.error("Dashboard load error:", err);
@@ -352,47 +316,6 @@ function Dashboard() {
             </p>
           </div>
 
-          {/* ============================================ */}
-          {/* 📍 NEAR BY YOU — Hotstar Style with Peek */}
-          {/* ============================================ */}
-          {!nearbyLoading && nearby.length > 0 && profile?.location && (
-            <div
-              style={{
-                ...cardStyle,
-                marginBottom: "24px",
-                padding: isMobile ? "16px" : "24px",
-                background:
-                  "linear-gradient(135deg, #FFF9F5 0%, #FDF2F6 100%)",
-                overflow: "hidden",
-              }}
-            >
-              <div style={S.sectionHead}>
-                <div>
-                  <h2 style={S.sectionTitle}>📍 Near By You</h2>
-                  <p
-                    style={{
-                      color: pageMuted,
-                      fontSize: "12px",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    Profiles from{" "}
-                    <strong style={{ color: pageHeading }}>
-                      {profile.location}
-                    </strong>
-                  </p>
-                </div>
-                <Link
-                  to={`/search?location=${encodeURIComponent(profile.location)}`}
-                  style={S.viewAll}
-                >
-                  View All →
-                </Link>
-              </div>
-              <HeroProfileSlider profiles={nearby} isMobile={isMobile} />
-            </div>
-          )}
-
           <ProfileCompletionCard profile={profile || {}} isMobile={isMobile} />
 
           {user?.id && <ProfileAnalytics userId={user.id} isMobile={isMobile} />}
@@ -478,9 +401,6 @@ function Dashboard() {
   );
 }
 
-/* ============================================ */
-/* RECOMMENDED CAROUSEL */
-/* ============================================ */
 function RecommendedCarousel({ profiles, isMobile }) {
   const scrollRef = useRef(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
