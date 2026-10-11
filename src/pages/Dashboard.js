@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 import ProfileAnalytics from "../components/ProfileAnalytics";
@@ -11,7 +11,6 @@ const BACKEND_URL =
 
 function Dashboard() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [plan, setPlan] = useState("free");
