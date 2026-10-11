@@ -4,18 +4,10 @@ import supabase from "../supabaseClient";
 import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 import ProfileAnalytics from "../components/ProfileAnalytics";
 import ProfileCompletionCard from "../components/ProfileCompletionCard";
+import ProfileCard from "../components/ProfileCard";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
-
-const DEFAULT_AVATAR =
-  "https://ui-avatars.com/api/?background=8B0A2E&color=fff&size=256&bold=true&name=";
-
-function getAvatarFor(name, photoUrl) {
-  if (photoUrl) return photoUrl;
-  const encoded = encodeURIComponent(name || "Member");
-  return `${DEFAULT_AVATAR}${encoded}`;
-}
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -389,15 +381,7 @@ function Dashboard() {
               </p>
             </div>
           ) : (
-            <RecommendedCarousel
-              profiles={recent}
-              isMobile={isMobile}
-              pageLink={pageLink}
-              pageHeading={pageHeading}
-              pageMuted={pageMuted}
-              cardStyle={cardStyle}
-              fromPath={fromPath}
-            />
+            <RecommendedCarousel profiles={recent} isMobile={isMobile} />
           )}
 
           <div style={S.quote}>
@@ -422,17 +406,9 @@ function Dashboard() {
 }
 
 /* ============================================ */
-/* RECOMMENDED CAROUSEL */
+/* RECOMMENDED CAROUSEL — Uses standard ProfileCard */
 /* ============================================ */
-function RecommendedCarousel({
-  profiles,
-  isMobile,
-  pageLink,
-  pageHeading,
-  pageMuted,
-  cardStyle,
-  fromPath,
-}) {
+function RecommendedCarousel({ profiles, isMobile }) {
   const scrollRef = useRef(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
   const [showRightFade, setShowRightFade] = useState(true);
@@ -446,13 +422,13 @@ function RecommendedCarousel({
 
   const scroll = (dir) => {
     if (!scrollRef.current) return;
-    const cardW = isMobile ? 220 : 260;
+    const cardW = isMobile ? 150 : 190;
     scrollRef.current.scrollBy({ left: dir * cardW * 2, behavior: "smooth" });
   };
 
   if (!profiles || profiles.length === 0) return null;
 
-  const cardWidth = isMobile ? "220px" : "260px";
+  const cardWidth = isMobile ? "150px" : "190px";
 
   return (
     <div style={{ position: "relative" }} className="vivah-carousel-wrap">
@@ -462,7 +438,7 @@ function RecommendedCarousel({
         onScroll={handleScroll}
         style={{
           display: "flex",
-          gap: "10px",
+          gap: 0,
           overflowX: "auto",
           scrollSnapType: "x mandatory",
           paddingBottom: "10px",
@@ -479,14 +455,7 @@ function RecommendedCarousel({
               scrollSnapAlign: "start",
             }}
           >
-            <RecommendedCard
-              user={u}
-              pageLink={pageLink}
-              pageHeading={pageHeading}
-              pageMuted={pageMuted}
-              cardStyle={cardStyle}
-              fromPath={fromPath}
-            />
+            <ProfileCard user={u} isMobile={isMobile} />
           </div>
         ))}
       </div>
@@ -581,155 +550,6 @@ function RecommendedCarousel({
           </button>
         </>
       )}
-    </div>
-  );
-}
-
-/* ============================================ */
-/* RECOMMENDED CARD */
-/* ============================================ */
-function RecommendedCard({
-  user,
-  pageLink,
-  pageHeading,
-  pageMuted,
-  cardStyle,
-  fromPath,
-}) {
-  const hasPhoto = user.photo_url;
-  const avatar = getAvatarFor(user.name, hasPhoto);
-  const blurred = user.should_blur_photo;
-
-  return (
-    <div
-      style={{
-        ...cardStyle,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        padding: 0,
-        transition: "transform 0.25s ease, box-shadow 0.25s ease",
-        cursor: "pointer",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-4px)";
-        e.currentTarget.style.boxShadow = "0 12px 28px rgba(139,10,46,0.15)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = cardStyle.boxShadow || "none";
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          aspectRatio: "1 / 1",
-          background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
-          overflow: "hidden",
-        }}
-      >
-        <img
-          src={avatar}
-          alt={user.name || "Member"}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            filter: blurred ? "blur(14px)" : "none",
-            transition: "transform 0.4s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.08)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-          }}
-        />
-
-        {blurred && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "rgba(0,0,0,0.25)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "26px",
-            }}
-          >
-            🔒
-          </div>
-        )}
-
-        {user.is_verified && (
-          <div
-            style={{
-              position: "absolute",
-              top: 8,
-              left: 8,
-              background: "#10B981",
-              color: "white",
-              fontSize: "9px",
-              fontWeight: 700,
-              padding: "3px 8px",
-              borderRadius: "8px",
-            }}
-          >
-            ✓ VERIFIED
-          </div>
-        )}
-      </div>
-
-      <div style={{ padding: "10px 12px 12px" }}>
-        <div
-          style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: "15px",
-            fontWeight: 700,
-            color: pageHeading,
-            marginBottom: "2px",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {user.name || "Anonymous"}
-        </div>
-        <div
-          style={{
-            fontSize: "11px",
-            color: pageMuted,
-            marginBottom: "8px",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {[user.age ? `${user.age} yrs` : "", user.location || ""]
-            .filter(Boolean)
-            .join(" · ")}
-        </div>
-        <Link
-          to={`/profile/${user.id}`}
-          state={{ from: fromPath }}
-          style={{
-            display: "block",
-            textAlign: "center",
-            background: pageLink,
-            color: "white",
-            padding: "8px",
-            borderRadius: "8px",
-            textDecoration: "none",
-            fontWeight: 700,
-            fontSize: "12px",
-            fontFamily: "inherit",
-          }}
-        >
-          {blurred ? "🔒 View" : "View Profile →"}
-        </Link>
-      </div>
     </div>
   );
 }
