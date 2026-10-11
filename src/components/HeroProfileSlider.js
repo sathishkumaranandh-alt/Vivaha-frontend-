@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const AUTO_SLIDE_INTERVAL = 4000;
+const AUTO_SLIDE_INTERVAL = 7000;
 
 function getAvatarFor(name, photoUrl) {
   if (photoUrl) return photoUrl;
