@@ -5,6 +5,7 @@ import { useCommunities } from "../utils/communities";
 import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 import ProfileCard from "../components/ProfileCard";
 import BackButton from "../components/BackButton";
+import HeroProfileSlider from "../components/HeroProfileSlider";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -17,6 +18,9 @@ function ProfileSearch() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [myCommunity, setMyCommunity] = useState("");
   const [myGender, setMyGender] = useState("");
+  const [myLocation, setMyLocation] = useState("");
+  const [nearbyProfiles, setNearbyProfiles] = useState([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
 
   const [pageTheme, setPageTheme] = useState(getPageTheme("search"));
 
@@ -56,18 +60,22 @@ function ProfileSearch() {
     return () => window.removeEventListener("theme-refresh", handler);
   }, []);
 
+  // ============================================
+  // LOAD USER PROFILE + NEARBY PROFILES
+  // ============================================
   useEffect(() => {
     async function loadMyProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase
         .from("users")
-        .select("community, gender")
+        .select("community, gender, location")
         .eq("id", user.id)
         .single();
       if (data) {
         setMyCommunity(data.community || "");
         setMyGender(data.gender || "");
+        setMyLocation(data.location || "");
 
         const hasURLParams = searchParams.toString().length > 0;
         if (!hasURLParams) {
@@ -79,6 +87,36 @@ function ProfileSearch() {
           };
           setFilters(newFilters);
           syncURL(newFilters, false);
+        }
+
+        // ============================================
+        // NEARBY PROFILES — Based on user's location
+        // ============================================
+        if (data.location && data.location.trim()) {
+          setNearbyLoading(true);
+          try {
+            const defaultLookFor = data.gender === "male" ? "female" : "male";
+            const params = new URLSearchParams();
+            params.append("location", data.location);
+            params.append("gender", defaultLookFor);
+            params.append("viewerId", user.id);
+
+            const nearbyRes = await fetch(
+              `${BACKEND_URL}/profile/search?${params.toString()}`
+            );
+            if (nearbyRes.ok) {
+              const nearbyData = await nearbyRes.json();
+              // Filter out user himself + slice
+              const list = (nearbyData.results || [])
+                .filter((p) => p.id !== user.id)
+                .slice(0, 8);
+              setNearbyProfiles(list);
+            }
+          } catch (err) {
+            console.error("Nearby fetch error:", err);
+          } finally {
+            setNearbyLoading(false);
+          }
         }
       }
     }
@@ -147,7 +185,6 @@ function ProfileSearch() {
     syncURL(newFilters, newVal);
   };
 
-  // Per-page theme shortcuts
   const pageBg = pageTheme.bg;
   const pageHeading = pageTheme.heading;
   const pageBody = pageTheme.body;
@@ -251,12 +288,29 @@ function ProfileSearch() {
       fontSize: baseSize,
       color: pageMuted,
     },
-    // Desktop grid
     desktopGrid: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
       gap: "14px",
       width: "100%",
+    },
+    sectionHead: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "baseline",
+      marginBottom: "14px",
+    },
+    sectionTitle: {
+      fontFamily: "'Playfair Display', serif",
+      fontSize: isMobile ? "20px" : "24px",
+      color: pageHeading,
+      margin: 0,
+    },
+    viewAll: {
+      color: pageLink,
+      fontSize: "13px",
+      fontWeight: 600,
+      textDecoration: "none",
     },
   };
 
@@ -278,6 +332,43 @@ function ProfileSearch() {
         <h1 style={S.h1}>🔍 Search Profiles</h1>
         <p style={S.sub}>Find your perfect match</p>
       </div>
+
+      {/* ============================================ */}
+      {/* 📍 NEAR BY YOU — Hotstar Style Hero Slider */}
+      {/* ============================================ */}
+      {!nearbyLoading && nearbyProfiles.length > 0 && (
+        <div
+          style={{
+            ...cardStyle,
+            marginBottom: "24px",
+            padding: isMobile ? "16px" : "24px",
+            background:
+              "linear-gradient(135deg, #FFF9F5 0%, #FDF2F6 100%)",
+          }}
+        >
+          <div style={S.sectionHead}>
+            <div>
+              <h2 style={S.sectionTitle}>📍 Near By You</h2>
+              <p
+                style={{
+                  color: pageMuted,
+                  fontSize: "12px",
+                  margin: "4px 0 0 0",
+                }}
+              >
+                Profiles from{" "}
+                <strong style={{ color: pageHeading }}>
+                  {myLocation}
+                </strong>
+              </p>
+            </div>
+          </div>
+          <HeroProfileSlider
+            profiles={nearbyProfiles}
+            isMobile={isMobile}
+          />
+        </div>
+      )}
 
       <div style={S.layout}>
         <aside style={S.sidebar}>
@@ -416,14 +507,8 @@ function ProfileSearch() {
                   : ""}
               </div>
 
-              {/* ============================================ */}
-              {/* MOBILE: Carousel | DESKTOP: Grid */}
-              {/* ============================================ */}
               {isMobile ? (
-                <SearchCarouselMobile
-                  results={results}
-                  isMobile={isMobile}
-                />
+                <SearchCarouselMobile results={results} isMobile={isMobile} />
               ) : (
                 <div style={S.desktopGrid}>
                   {results.map((u) => (
@@ -439,9 +524,7 @@ function ProfileSearch() {
   );
 }
 
-/* ============================================ */
-/* MOBILE CAROUSEL (only used on mobile) */
-/* ============================================ */
+/* MOBILE CAROUSEL */
 function SearchCarouselMobile({ results }) {
   const scrollRef = useRef(null);
 
