@@ -122,7 +122,6 @@ function Dashboard() {
   const headingSizeMobile = `${Math.round(pageTheme.headingSize * 0.85)}px`;
 
   const cardStyle = getCardStyle(pageTheme);
-  const fromPath = location.pathname + location.search;
 
   const S = {
     page: {
