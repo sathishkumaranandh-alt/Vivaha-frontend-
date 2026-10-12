@@ -16,7 +16,6 @@ function ProfileSearch() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [myCommunity, setMyCommunity] = useState("");
-  const [myGender, setMyGender] = useState("");
   const [adminSettings, setAdminSettings] = useState({});
 
   // NEW: Smart UI states
