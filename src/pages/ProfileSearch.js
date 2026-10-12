@@ -57,7 +57,6 @@ function ProfileSearch() {
     return () => window.removeEventListener("theme-refresh", handler);
   }, []);
 
-  // Load admin settings
   useEffect(() => {
     fetch(`${BACKEND_URL}/settings`)
       .then((r) => r.json())
@@ -167,18 +166,29 @@ function ProfileSearch() {
 
   const cardStyle = getCardStyle(pageTheme);
 
-  // Parse admin looking-for options
-  const lookingOptions = (adminSettings.search_looking_options ||
-    "Bride (Female),Groom (Male)"
-  )
-    .split(",")
-    .map((o) => {
-      const t = o.trim();
-      return {
-        label: t,
-        value: t.toLowerCase().includes("female") ? "female" : "male",
-      };
-    });
+  const lookingOptions = adminSettings.search_looking_options
+    ? adminSettings.search_looking_options
+        .split(",")
+        .map((o) => {
+          const t = o.trim();
+          if (!t) return null;
+          return {
+            label: t,
+            value: t.toLowerCase().includes("female") ? "female" : "male",
+          };
+        })
+        .filter(Boolean)
+    : [
+        { label: "Bride (Female)", value: "female" },
+        { label: "Groom (Male)", value: "male" },
+      ];
+
+  const locationOptions = adminSettings.search_location_options
+    ? adminSettings.search_location_options
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean)
+    : [];
 
   const S = {
     page: {
@@ -301,7 +311,6 @@ function ProfileSearch() {
 
       <div style={S.layout}>
         <aside style={S.sidebar}>
-          {/* Looking For */}
           {adminSettings.search_show_looking_for !== "false" && (
             <>
               <label style={S.label}>Looking For</label>
@@ -334,7 +343,6 @@ function ProfileSearch() {
             </>
           )}
 
-          {/* Age */}
           {adminSettings.search_show_age !== "false" && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <div>
@@ -360,21 +368,40 @@ function ProfileSearch() {
             </div>
           )}
 
-          {/* Location */}
           {adminSettings.search_show_location !== "false" && (
             <>
               <label style={S.label}>Location</label>
-              <input
-                style={S.input}
-                placeholder="City"
-                value={filters.location}
-                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                onBlur={() => syncURL(filters, showAllCommunities)}
-              />
+              {locationOptions.length > 0 ? (
+                <select
+                  style={S.input}
+                  value={filters.location}
+                  onChange={(e) => {
+                    const newFilters = { ...filters, location: e.target.value };
+                    setFilters(newFilters);
+                    syncURL(newFilters, showAllCommunities);
+                  }}
+                >
+                  <option value="">Any Location</option>
+                  {locationOptions.map((loc) => (
+                    <option key={loc} value={loc}>
+                      {loc}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  style={S.input}
+                  placeholder="City"
+                  value={filters.location}
+                  onChange={(e) =>
+                    setFilters({ ...filters, location: e.target.value })
+                  }
+                  onBlur={() => syncURL(filters, showAllCommunities)}
+                />
+              )}
             </>
           )}
 
-          {/* Community */}
           {adminSettings.search_show_community !== "false" && (
             <>
               {myCommunity && (
