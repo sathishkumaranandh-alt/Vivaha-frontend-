@@ -353,11 +353,53 @@ function Onboarding() {
     letterSpacing: "0.5px",
   };
 
-  const renderCoreField = (field) => {
-    const { field_key, label, type, is_required, options } = field;
-    const value = profile[field_key] ?? "";
-    const opts = Array.isArray(options) && options.length > 0 ? options : null;
+    const renderCoreField = (field) => {
+    const { field_key, label, type, is_required } = field;
+    let value = profile[field_key] ?? "";
+    let options = Array.isArray(field.options) && field.options.length > 0 ? field.options : null;
     const resolvedType = type || "text";
+
+    // ============================================
+    // GENDER SPECIAL HANDLING
+    // Force select with Male/Female options
+    // Normalize value to match options (case-insensitive)
+    // ============================================
+    if (field_key === "gender") {
+      const genderOptions = options && options.length > 0
+        ? options
+        : ["Male", "Female"];
+
+      // Normalize existing value to match one of the options
+      if (value) {
+        const lowerVal = String(value).toLowerCase();
+        const matched = genderOptions.find(
+          (o) => String(o).toLowerCase() === lowerVal
+        );
+        if (matched) value = matched;
+      }
+
+      const selectValue = value;
+      return (
+        <div key={field_key}>
+          <label style={labelStyle}>
+            {label} {is_required && <span style={{ color: "#dc2626" }}>*</span>}
+          </label>
+          <select
+            value={selectValue}
+            onChange={(e) => updateField(field_key, e.target.value.toLowerCase())}
+            style={inputStyle}
+          >
+            <option value="">Select {label}</option>
+            {genderOptions.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+    // ============================================
+    // END GENDER SPECIAL HANDLING
+    // ============================================
 
     let inputEl;
     if (resolvedType === "select" && opts) {
