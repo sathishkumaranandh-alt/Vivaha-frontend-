@@ -6,7 +6,8 @@ import { toast } from "../utils/toast";
 import usePlan from "../utils/usePlan";
 import ProfileCard from "../components/ProfileCard";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+const BACKEND_URL =
+  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 function AdvancedSearch() {
   const { communities } = useCommunities();
@@ -16,6 +17,7 @@ function AdvancedSearch() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+  const [adminSettings, setAdminSettings] = useState({});
 
   const [filters, setFilters] = useState({
     gender: "female",
@@ -40,6 +42,13 @@ function AdvancedSearch() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/settings`)
+      .then((r) => r.json())
+      .then((data) => setAdminSettings(data.settings || {}))
+      .catch(console.error);
+  }, []);
+
   const handleSearch = async () => {
     if (!userId) return;
     setLoading(true);
@@ -49,7 +58,9 @@ function AdvancedSearch() {
         if (v !== "" && v !== false) params.append(k, v);
       });
 
-      const res = await fetch(`${BACKEND_URL}/premium/advanced-search?${params.toString()}`);
+      const res = await fetch(
+        `${BACKEND_URL}/premium/advanced-search?${params.toString()}`
+      );
       const data = await res.json();
 
       if (res.status === 403) {
@@ -95,16 +106,55 @@ function AdvancedSearch() {
     },
   };
 
-  if (planLoading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading...</div>;
+  if (planLoading)
+    return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading...</div>;
+
+  const incomeOptions = (
+    adminSettings.adv_income_options ||
+    "Below ₹3 Lakh,₹3 - ₹5 Lakh,₹5 - ₹10 Lakh,₹10 - ₹20 Lakh,₹20 Lakh+"
+  )
+    .split(",")
+    .map((o) => o.trim());
+
+  const educationOptions = (
+    adminSettings.adv_education_options ||
+    "B.Tech,MBA,MBBS,MCA,B.Com,B.Sc,M.Sc,Ph.D"
+  )
+    .split(",")
+    .map((o) => o.trim());
+
+  const maritalOptions = (
+    adminSettings.adv_marital_options ||
+    "Never Married,Divorced,Widowed,Separated"
+  )
+    .split(",")
+    .map((o) => o.trim());
+
+  const foodOptions = (
+    adminSettings.adv_food_options ||
+    "Vegetarian,Non-Vegetarian,Eggetarian"
+  )
+    .split(",")
+    .map((o) => o.trim());
 
   return (
-        <div style={S.page}>
+    <div style={S.page}>
       <BackButton />
       <div style={S.header}>
         <h1 style={S.h1}>🔍 Advanced Search</h1>
         <p style={S.sub}>
           Find your perfect match · Your plan:{" "}
-          <strong style={{ color: plan === "Platinum" ? "#9f1239" : plan === "Gold" ? "#92400e" : "#666", textTransform: "capitalize" }}>
+          <strong
+            style={{
+              color:
+                plan === "Platinum"
+                  ? "#9f1239"
+                  : plan === "Gold"
+                  ? "#92400e"
+                  : "#666",
+              textTransform: "capitalize",
+            }}
+          >
             {plan}
           </strong>
         </p>
@@ -115,84 +165,232 @@ function AdvancedSearch() {
           <div style={S.section}>
             <div style={S.sectionTitle}>Basic Filters</div>
 
-            <label style={S.label}>Looking For</label>
-            <select style={S.input} value={filters.gender} onChange={(e) => setFilters({ ...filters, gender: e.target.value })}>
-              <option value="female">Bride</option>
-              <option value="male">Groom</option>
-            </select>
+            {adminSettings.search_show_looking_for !== "false" && (
+              <>
+                <label style={S.label}>Looking For</label>
+                <select
+                  style={S.input}
+                  value={filters.gender}
+                  onChange={(e) => setFilters({ ...filters, gender: e.target.value })}
+                >
+                  <option value="female">Bride</option>
+                  <option value="male">Groom</option>
+                </select>
+              </>
+            )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-              <div><label style={S.label}>Age From</label><input type="number" style={S.input} value={filters.age_min} onChange={(e) => setFilters({ ...filters, age_min: e.target.value })} /></div>
-              <div><label style={S.label}>Age To</label><input type="number" style={S.input} value={filters.age_max} onChange={(e) => setFilters({ ...filters, age_max: e.target.value })} /></div>
-            </div>
+            {adminSettings.search_show_age !== "false" && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <div>
+                  <label style={S.label}>Age From</label>
+                  <input
+                    type="number"
+                    style={S.input}
+                    value={filters.age_min}
+                    onChange={(e) => setFilters({ ...filters, age_min: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label style={S.label}>Age To</label>
+                  <input
+                    type="number"
+                    style={S.input}
+                    value={filters.age_max}
+                    onChange={(e) => setFilters({ ...filters, age_max: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
 
-            <label style={S.label}>Location</label>
-            <input style={S.input} placeholder="City" value={filters.location} onChange={(e) => setFilters({ ...filters, location: e.target.value })} />
+            {adminSettings.search_show_location !== "false" && (
+              <>
+                <label style={S.label}>Location</label>
+                <input
+                  style={S.input}
+                  placeholder="City"
+                  value={filters.location}
+                  onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+                />
+              </>
+            )}
 
-            <label style={S.label}>Community</label>
-            <select style={S.input} value={filters.community} onChange={(e) => setFilters({ ...filters, community: e.target.value })}>
-              <option value="">Any Community</option>
-              {communities.map((c) => (
-                <option key={c.slug} value={c.slug}>{c.name}</option>
-              ))}
-            </select>
+            {adminSettings.search_show_community !== "false" && (
+              <>
+                <label style={S.label}>Community</label>
+                <select
+                  style={S.input}
+                  value={filters.community}
+                  onChange={(e) => setFilters({ ...filters, community: e.target.value })}
+                >
+                  <option value="">Any Community</option>
+                  {communities.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
           </div>
 
           <div style={S.section}>
             <div style={S.sectionTitle}>
-              Premium Filters {!canUseAdvanced && <span style={S.premiumBadge}>⭐ UPGRADE</span>}
+              Premium Filters{" "}
+              {!canUseAdvanced && <span style={S.premiumBadge}>⭐ UPGRADE</span>}
             </div>
 
             {!canUseAdvanced && (
               <div style={S.upgradeBanner}>
-                🔒 Advanced filters are available on <strong>Gold</strong> and <strong>Platinum</strong> plans.
+                🔒 Advanced filters are available on <strong>Gold</strong> and{" "}
+                <strong>Platinum</strong> plans.
                 <br />
-                <Link to="/subscription" style={S.upgradeBtn}>⭐ Upgrade Now</Link>
+                <Link to="/subscription" style={S.upgradeBtn}>
+                  ⭐ Upgrade Now
+                </Link>
               </div>
             )}
 
-            <label style={S.label}>Education</label>
-            <input style={canUseAdvanced ? S.input : S.inputLocked} placeholder={canUseAdvanced ? "e.g. B.Tech, MBA" : "Premium only"} value={filters.education} onChange={(e) => canUseAdvanced && setFilters({ ...filters, education: e.target.value })} disabled={!canUseAdvanced} />
+            {adminSettings.adv_show_education !== "false" && (
+              <>
+                <label style={S.label}>Education</label>
+                <select
+                  style={canUseAdvanced ? S.input : S.inputLocked}
+                  value={filters.education}
+                  onChange={(e) =>
+                    canUseAdvanced && setFilters({ ...filters, education: e.target.value })
+                  }
+                  disabled={!canUseAdvanced}
+                >
+                  <option value="">Any Education</option>
+                  {educationOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
 
-            <label style={S.label}>Income Range</label>
-            <select style={canUseAdvanced ? S.input : S.inputLocked} value={filters.income} onChange={(e) => canUseAdvanced && setFilters({ ...filters, income: e.target.value })} disabled={!canUseAdvanced}>
-              <option value="">Any Income</option>
-              <option value="Below ₹3 Lakh">Below ₹3 Lakh</option>
-              <option value="₹3 - ₹5 Lakh">₹3 - ₹5 Lakh</option>
-              <option value="₹5 - ₹10 Lakh">₹5 - ₹10 Lakh</option>
-              <option value="₹10 - ₹20 Lakh">₹10 - ₹20 Lakh</option>
-              <option value="₹20 Lakh+">₹20 Lakh+</option>
-            </select>
+            {adminSettings.adv_show_income !== "false" && (
+              <>
+                <label style={S.label}>Income Range</label>
+                <select
+                  style={canUseAdvanced ? S.input : S.inputLocked}
+                  value={filters.income}
+                  onChange={(e) =>
+                    canUseAdvanced && setFilters({ ...filters, income: e.target.value })
+                  }
+                  disabled={!canUseAdvanced}
+                >
+                  <option value="">Any Income</option>
+                  {incomeOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
 
-            <label style={S.label}>Marital Status</label>
-            <select style={canUseAdvanced ? S.input : S.inputLocked} value={filters.marital_status} onChange={(e) => canUseAdvanced && setFilters({ ...filters, marital_status: e.target.value })} disabled={!canUseAdvanced}>
-              <option value="">Any</option>
-              <option value="Never Married">Never Married</option>
-              <option value="Divorced">Divorced</option>
-              <option value="Widowed">Widowed</option>
-              <option value="Separated">Separated</option>
-            </select>
+            {adminSettings.adv_show_marital !== "false" && (
+              <>
+                <label style={S.label}>Marital Status</label>
+                <select
+                  style={canUseAdvanced ? S.input : S.inputLocked}
+                  value={filters.marital_status}
+                  onChange={(e) =>
+                    canUseAdvanced &&
+                    setFilters({ ...filters, marital_status: e.target.value })
+                  }
+                  disabled={!canUseAdvanced}
+                >
+                  <option value="">Any</option>
+                  {maritalOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
 
-            <label style={S.label}>Food Preference</label>
-            <select style={canUseAdvanced ? S.input : S.inputLocked} value={filters.food_pref} onChange={(e) => canUseAdvanced && setFilters({ ...filters, food_pref: e.target.value })} disabled={!canUseAdvanced}>
-              <option value="">Any</option>
-              <option value="Vegetarian">Vegetarian</option>
-              <option value="Non-Vegetarian">Non-Vegetarian</option>
-              <option value="Eggetarian">Eggetarian</option>
-            </select>
+            {adminSettings.adv_show_food !== "false" && (
+              <>
+                <label style={S.label}>Food Preference</label>
+                <select
+                  style={canUseAdvanced ? S.input : S.inputLocked}
+                  value={filters.food_pref}
+                  onChange={(e) =>
+                    canUseAdvanced &&
+                    setFilters({ ...filters, food_pref: e.target.value })
+                  }
+                  disabled={!canUseAdvanced}
+                >
+                  <option value="">Any</option>
+                  {foodOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
 
-            <label style={{ ...S.label, display: "flex", alignItems: "center", gap: "8px", cursor: canUseAdvanced ? "pointer" : "not-allowed" }}>
-              <input type="checkbox" checked={filters.has_horoscope} onChange={(e) => canUseAdvanced && setFilters({ ...filters, has_horoscope: e.target.checked })} disabled={!canUseAdvanced} style={{ accentColor: "#8B0A2E" }} />
-              Has Horoscope Details
-            </label>
+            {adminSettings.adv_show_horoscope !== "false" && (
+              <label
+                style={{
+                  ...S.label,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  cursor: canUseAdvanced ? "pointer" : "not-allowed",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.has_horoscope}
+                  onChange={(e) =>
+                    canUseAdvanced &&
+                    setFilters({ ...filters, has_horoscope: e.target.checked })
+                  }
+                  disabled={!canUseAdvanced}
+                  style={{ accentColor: "#8B0A2E" }}
+                />
+                Has Horoscope Details
+              </label>
+            )}
 
-            <label style={{ ...S.label, display: "flex", alignItems: "center", gap: "8px", cursor: canUseAdvanced ? "pointer" : "not-allowed", marginTop: "10px" }}>
-              <input type="checkbox" checked={filters.verified_only} onChange={(e) => canUseAdvanced && setFilters({ ...filters, verified_only: e.target.checked })} disabled={!canUseAdvanced} style={{ accentColor: "#8B0A2E" }} />
-              Verified Profiles Only
-            </label>
+            {adminSettings.adv_show_verified !== "false" && (
+              <label
+                style={{
+                  ...S.label,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  cursor: canUseAdvanced ? "pointer" : "not-allowed",
+                  marginTop: "10px",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.verified_only}
+                  onChange={(e) =>
+                    canUseAdvanced &&
+                    setFilters({ ...filters, verified_only: e.target.checked })
+                  }
+                  disabled={!canUseAdvanced}
+                  style={{ accentColor: "#8B0A2E" }}
+                />
+                Verified Profiles Only
+              </label>
+            )}
           </div>
 
-          <button onClick={handleSearch} disabled={loading} style={{ ...S.searchBtn, opacity: loading ? 0.6 : 1 }}>
+          <button
+            onClick={handleSearch}
+            disabled={loading}
+            style={{ ...S.searchBtn, opacity: loading ? 0.6 : 1 }}
+          >
             {loading ? "Searching..." : "🔍 Search"}
           </button>
         </aside>
@@ -201,19 +399,34 @@ function AdvancedSearch() {
           {!searched ? (
             <div style={{ ...S.card, textAlign: "center", padding: "60px 20px" }}>
               <div style={{ fontSize: "50px", marginBottom: "12px" }}>🔎</div>
-              <h3 style={{ color: "#8B0A2E", marginBottom: "8px" }}>Start Your Search</h3>
-              <p style={{ color: "#8a6b6b", fontSize: "13px" }}>Adjust filters and click Search to find matches.</p>
+              <h3 style={{ color: "#8B0A2E", marginBottom: "8px" }}>
+                Start Your Search
+              </h3>
+              <p style={{ color: "#8a6b6b", fontSize: "13px" }}>
+                Adjust filters and click Search to find matches.
+              </p>
             </div>
           ) : results.length === 0 ? (
             <div style={{ ...S.card, textAlign: "center", padding: "60px 20px" }}>
               <div style={{ fontSize: "50px", marginBottom: "12px" }}>😔</div>
-              <h3 style={{ color: "#8B0A2E", marginBottom: "8px" }}>No matches found</h3>
-              <p style={{ color: "#8a6b6b", fontSize: "13px" }}>Try loosening your filters.</p>
+              <h3 style={{ color: "#8B0A2E", marginBottom: "8px" }}>
+                No matches found
+              </h3>
+              <p style={{ color: "#8a6b6b", fontSize: "13px" }}>
+                Try loosening your filters.
+              </p>
             </div>
           ) : (
             <>
-              <div style={{ marginBottom: "16px", fontSize: "13px", color: "#8a6b6b" }}>
-                Found <strong>{results.length}</strong> profile{results.length !== 1 ? "s" : ""}
+              <div
+                style={{
+                  marginBottom: "16px",
+                  fontSize: "13px",
+                  color: "#8a6b6b",
+                }}
+              >
+                Found <strong>{results.length}</strong> profile
+                {results.length !== 1 ? "s" : ""}
               </div>
               <div style={S.grid}>
                 {results.map((u) => (
