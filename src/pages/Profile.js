@@ -363,8 +363,6 @@ function Profile() {
   const pageMuted = pageTheme.muted;
   const pageLink = pageTheme.link;
   const baseSize = `${pageTheme.baseSize}px`;
-  const headingSize = `${pageTheme.headingSize}px`;
-  const headingSizeMobile = `${Math.round(pageTheme.headingSize * 0.85)}px`;
   const cardStyle = getCardStyle(pageTheme);
 
   const labelStyle_dynamic = {
