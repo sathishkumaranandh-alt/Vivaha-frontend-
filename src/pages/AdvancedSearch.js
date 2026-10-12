@@ -109,33 +109,25 @@ function AdvancedSearch() {
   if (planLoading)
     return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading...</div>;
 
-  const incomeOptions = (
-    adminSettings.adv_income_options ||
-    "Below ₹3 Lakh,₹3 - ₹5 Lakh,₹5 - ₹10 Lakh,₹10 - ₹20 Lakh,₹20 Lakh+"
-  )
-    .split(",")
-    .map((o) => o.trim());
+  const incomeOptions = adminSettings.adv_income_options
+    ? adminSettings.adv_income_options.split(",").map((o) => o.trim()).filter(Boolean)
+    : [];
 
-  const educationOptions = (
-    adminSettings.adv_education_options ||
-    "B.Tech,MBA,MBBS,MCA,B.Com,B.Sc,M.Sc,Ph.D"
-  )
-    .split(",")
-    .map((o) => o.trim());
+  const educationOptions = adminSettings.adv_education_options
+    ? adminSettings.adv_education_options.split(",").map((o) => o.trim()).filter(Boolean)
+    : [];
 
-  const maritalOptions = (
-    adminSettings.adv_marital_options ||
-    "Never Married,Divorced,Widowed,Separated"
-  )
-    .split(",")
-    .map((o) => o.trim());
+  const maritalOptions = adminSettings.adv_marital_options
+    ? adminSettings.adv_marital_options.split(",").map((o) => o.trim()).filter(Boolean)
+    : [];
 
-  const foodOptions = (
-    adminSettings.adv_food_options ||
-    "Vegetarian,Non-Vegetarian,Eggetarian"
-  )
-    .split(",")
-    .map((o) => o.trim());
+  const foodOptions = adminSettings.adv_food_options
+    ? adminSettings.adv_food_options.split(",").map((o) => o.trim()).filter(Boolean)
+    : [];
+
+  const locationOptions = adminSettings.search_location_options
+    ? adminSettings.search_location_options.split(",").map((o) => o.trim()).filter(Boolean)
+    : [];
 
   return (
     <div style={S.page}>
@@ -205,12 +197,27 @@ function AdvancedSearch() {
             {adminSettings.search_show_location !== "false" && (
               <>
                 <label style={S.label}>Location</label>
-                <input
-                  style={S.input}
-                  placeholder="City"
-                  value={filters.location}
-                  onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                />
+                {locationOptions.length > 0 ? (
+                  <select
+                    style={S.input}
+                    value={filters.location}
+                    onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+                  >
+                    <option value="">Any Location</option>
+                    {locationOptions.map((loc) => (
+                      <option key={loc} value={loc}>
+                        {loc}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    style={S.input}
+                    placeholder="City"
+                    value={filters.location}
+                    onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+                  />
+                )}
               </>
             )}
 
@@ -253,86 +260,136 @@ function AdvancedSearch() {
             {adminSettings.adv_show_education !== "false" && (
               <>
                 <label style={S.label}>Education</label>
-                <select
-                  style={canUseAdvanced ? S.input : S.inputLocked}
-                  value={filters.education}
-                  onChange={(e) =>
-                    canUseAdvanced && setFilters({ ...filters, education: e.target.value })
-                  }
-                  disabled={!canUseAdvanced}
-                >
-                  <option value="">Any Education</option>
-                  {educationOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                {educationOptions.length > 0 ? (
+                  <select
+                    style={canUseAdvanced ? S.input : S.inputLocked}
+                    value={filters.education}
+                    onChange={(e) =>
+                      canUseAdvanced && setFilters({ ...filters, education: e.target.value })
+                    }
+                    disabled={!canUseAdvanced}
+                  >
+                    <option value="">Any Education</option>
+                    {educationOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    style={canUseAdvanced ? S.input : S.inputLocked}
+                    placeholder="e.g. B.Tech, MBA"
+                    value={filters.education}
+                    onChange={(e) =>
+                      canUseAdvanced && setFilters({ ...filters, education: e.target.value })
+                    }
+                    disabled={!canUseAdvanced}
+                  />
+                )}
               </>
             )}
 
             {adminSettings.adv_show_income !== "false" && (
               <>
                 <label style={S.label}>Income Range</label>
-                <select
-                  style={canUseAdvanced ? S.input : S.inputLocked}
-                  value={filters.income}
-                  onChange={(e) =>
-                    canUseAdvanced && setFilters({ ...filters, income: e.target.value })
-                  }
-                  disabled={!canUseAdvanced}
-                >
-                  <option value="">Any Income</option>
-                  {incomeOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                {incomeOptions.length > 0 ? (
+                  <select
+                    style={canUseAdvanced ? S.input : S.inputLocked}
+                    value={filters.income}
+                    onChange={(e) =>
+                      canUseAdvanced && setFilters({ ...filters, income: e.target.value })
+                    }
+                    disabled={!canUseAdvanced}
+                  >
+                    <option value="">Any Income</option>
+                    {incomeOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    style={canUseAdvanced ? S.input : S.inputLocked}
+                    placeholder="e.g. 5-10 Lakh"
+                    value={filters.income}
+                    onChange={(e) =>
+                      canUseAdvanced && setFilters({ ...filters, income: e.target.value })
+                    }
+                    disabled={!canUseAdvanced}
+                  />
+                )}
               </>
             )}
 
             {adminSettings.adv_show_marital !== "false" && (
               <>
                 <label style={S.label}>Marital Status</label>
-                <select
-                  style={canUseAdvanced ? S.input : S.inputLocked}
-                  value={filters.marital_status}
-                  onChange={(e) =>
-                    canUseAdvanced &&
-                    setFilters({ ...filters, marital_status: e.target.value })
-                  }
-                  disabled={!canUseAdvanced}
-                >
-                  <option value="">Any</option>
-                  {maritalOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                {maritalOptions.length > 0 ? (
+                  <select
+                    style={canUseAdvanced ? S.input : S.inputLocked}
+                    value={filters.marital_status}
+                    onChange={(e) =>
+                      canUseAdvanced &&
+                      setFilters({ ...filters, marital_status: e.target.value })
+                    }
+                    disabled={!canUseAdvanced}
+                  >
+                    <option value="">Any</option>
+                    {maritalOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    style={canUseAdvanced ? S.input : S.inputLocked}
+                    placeholder="e.g. Never Married"
+                    value={filters.marital_status}
+                    onChange={(e) =>
+                      canUseAdvanced &&
+                      setFilters({ ...filters, marital_status: e.target.value })
+                    }
+                    disabled={!canUseAdvanced}
+                  />
+                )}
               </>
             )}
 
             {adminSettings.adv_show_food !== "false" && (
               <>
                 <label style={S.label}>Food Preference</label>
-                <select
-                  style={canUseAdvanced ? S.input : S.inputLocked}
-                  value={filters.food_pref}
-                  onChange={(e) =>
-                    canUseAdvanced &&
-                    setFilters({ ...filters, food_pref: e.target.value })
-                  }
-                  disabled={!canUseAdvanced}
-                >
-                  <option value="">Any</option>
-                  {foodOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                {foodOptions.length > 0 ? (
+                  <select
+                    style={canUseAdvanced ? S.input : S.inputLocked}
+                    value={filters.food_pref}
+                    onChange={(e) =>
+                      canUseAdvanced &&
+                      setFilters({ ...filters, food_pref: e.target.value })
+                    }
+                    disabled={!canUseAdvanced}
+                  >
+                    <option value="">Any</option>
+                    {foodOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    style={canUseAdvanced ? S.input : S.inputLocked}
+                    placeholder="e.g. Vegetarian"
+                    value={filters.food_pref}
+                    onChange={(e) =>
+                      canUseAdvanced &&
+                      setFilters({ ...filters, food_pref: e.target.value })
+                    }
+                    disabled={!canUseAdvanced}
+                  />
+                )}
               </>
             )}
 
