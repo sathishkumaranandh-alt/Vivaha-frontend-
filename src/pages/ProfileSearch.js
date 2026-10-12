@@ -5,7 +5,6 @@ import { useCommunities } from "../utils/communities";
 import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 import ProfileCard from "../components/ProfileCard";
 import BackButton from "../components/BackButton";
-import HeroProfileSlider from "../components/HeroProfileSlider";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -18,9 +17,7 @@ function ProfileSearch() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [myCommunity, setMyCommunity] = useState("");
   const [myGender, setMyGender] = useState("");
-  const [myLocation, setMyLocation] = useState("");
-  const [nearbyProfiles, setNearbyProfiles] = useState([]);
-  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [adminSettings, setAdminSettings] = useState({});
 
   const [pageTheme, setPageTheme] = useState(getPageTheme("search"));
 
@@ -60,22 +57,26 @@ function ProfileSearch() {
     return () => window.removeEventListener("theme-refresh", handler);
   }, []);
 
-  // ============================================
-  // LOAD USER PROFILE + NEARBY PROFILES
-  // ============================================
+  // Load admin settings
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/settings`)
+      .then((r) => r.json())
+      .then((data) => setAdminSettings(data.settings || {}))
+      .catch(console.error);
+  }, []);
+
   useEffect(() => {
     async function loadMyProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase
         .from("users")
-        .select("community, gender, location")
+        .select("community, gender")
         .eq("id", user.id)
         .single();
       if (data) {
         setMyCommunity(data.community || "");
         setMyGender(data.gender || "");
-        setMyLocation(data.location || "");
 
         const hasURLParams = searchParams.toString().length > 0;
         if (!hasURLParams) {
@@ -87,36 +88,6 @@ function ProfileSearch() {
           };
           setFilters(newFilters);
           syncURL(newFilters, false);
-        }
-
-        // ============================================
-        // NEARBY PROFILES — Based on user's location
-        // ============================================
-        if (data.location && data.location.trim()) {
-          setNearbyLoading(true);
-          try {
-            const defaultLookFor = data.gender === "male" ? "female" : "male";
-            const params = new URLSearchParams();
-            params.append("location", data.location);
-            params.append("gender", defaultLookFor);
-            params.append("viewerId", user.id);
-
-            const nearbyRes = await fetch(
-              `${BACKEND_URL}/profile/search?${params.toString()}`
-            );
-            if (nearbyRes.ok) {
-              const nearbyData = await nearbyRes.json();
-              // Filter out user himself + slice
-              const list = (nearbyData.results || [])
-                .filter((p) => p.id !== user.id)
-                .slice(0, 8);
-              setNearbyProfiles(list);
-            }
-          } catch (err) {
-            console.error("Nearby fetch error:", err);
-          } finally {
-            setNearbyLoading(false);
-          }
         }
       }
     }
@@ -195,6 +166,19 @@ function ProfileSearch() {
   const headingSizeMobile = `${Math.round(pageTheme.headingSize * 0.85)}px`;
 
   const cardStyle = getCardStyle(pageTheme);
+
+  // Parse admin looking-for options
+  const lookingOptions = (adminSettings.search_looking_options ||
+    "Bride (Female),Groom (Male)"
+  )
+    .split(",")
+    .map((o) => {
+      const t = o.trim();
+      return {
+        label: t,
+        value: t.toLowerCase().includes("female") ? "female" : "male",
+      };
+    });
 
   const S = {
     page: {
@@ -294,24 +278,6 @@ function ProfileSearch() {
       gap: "14px",
       width: "100%",
     },
-    sectionHead: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "baseline",
-      marginBottom: "14px",
-    },
-    sectionTitle: {
-      fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "20px" : "24px",
-      color: pageHeading,
-      margin: 0,
-    },
-    viewAll: {
-      color: pageLink,
-      fontSize: "13px",
-      fontWeight: 600,
-      textDecoration: "none",
-    },
   };
 
   return (
@@ -333,134 +299,121 @@ function ProfileSearch() {
         <p style={S.sub}>Find your perfect match</p>
       </div>
 
-      {/* ============================================ */}
-      {/* 📍 NEAR BY YOU — Hotstar Style Hero Slider */}
-      {/* ============================================ */}
-      {!nearbyLoading && nearbyProfiles.length > 0 && (
-        <div
-          style={{
-            ...cardStyle,
-            marginBottom: "24px",
-            padding: isMobile ? "16px" : "24px",
-            background:
-              "linear-gradient(135deg, #FFF9F5 0%, #FDF2F6 100%)",
-          }}
-        >
-          <div style={S.sectionHead}>
-            <div>
-              <h2 style={S.sectionTitle}>📍 Near By You</h2>
-              <p
-                style={{
-                  color: pageMuted,
-                  fontSize: "12px",
-                  margin: "4px 0 0 0",
-                }}
-              >
-                Profiles from{" "}
-                <strong style={{ color: pageHeading }}>
-                  {myLocation}
-                </strong>
-              </p>
-            </div>
-          </div>
-          <HeroProfileSlider
-            profiles={nearbyProfiles}
-            isMobile={isMobile}
-          />
-        </div>
-      )}
-
       <div style={S.layout}>
         <aside style={S.sidebar}>
-          <label style={S.label}>Looking For</label>
-          <select
-            style={S.input}
-            value={filters.gender}
-            onChange={(e) => handleFilterChange("gender", e.target.value)}
-          >
-            <option value="female">Bride (Female)</option>
-            <option value="male">Groom (Male)</option>
-          </select>
+          {/* Looking For */}
+          {adminSettings.search_show_looking_for !== "false" && (
+            <>
+              <label style={S.label}>Looking For</label>
+              <select
+                style={S.input}
+                value={filters.gender}
+                onChange={(e) => handleFilterChange("gender", e.target.value)}
+              >
+                <option value="">Select</option>
+                {lookingOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
 
-          {myGender && (
-            <div
-              style={{
-                fontSize: "11px",
-                color: pageMuted,
-                marginTop: "-8px",
-                marginBottom: "12px",
-                fontStyle: "italic",
-              }}
-            >
-              Based on your profile ({myGender})
+              {myGender && (
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: pageMuted,
+                    marginTop: "-8px",
+                    marginBottom: "12px",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Based on your profile ({myGender})
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Age */}
+          {adminSettings.search_show_age !== "false" && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div>
+                <label style={S.label}>Age From</label>
+                <input
+                  type="number"
+                  style={S.input}
+                  value={filters.age_min}
+                  onChange={(e) => setFilters({ ...filters, age_min: e.target.value })}
+                  onBlur={() => syncURL(filters, showAllCommunities)}
+                />
+              </div>
+              <div>
+                <label style={S.label}>Age To</label>
+                <input
+                  type="number"
+                  style={S.input}
+                  value={filters.age_max}
+                  onChange={(e) => setFilters({ ...filters, age_max: e.target.value })}
+                  onBlur={() => syncURL(filters, showAllCommunities)}
+                />
+              </div>
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <div>
-              <label style={S.label}>Age From</label>
+          {/* Location */}
+          {adminSettings.search_show_location !== "false" && (
+            <>
+              <label style={S.label}>Location</label>
               <input
-                type="number"
                 style={S.input}
-                value={filters.age_min}
-                onChange={(e) => setFilters({ ...filters, age_min: e.target.value })}
+                placeholder="City"
+                value={filters.location}
+                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
                 onBlur={() => syncURL(filters, showAllCommunities)}
               />
-            </div>
-            <div>
-              <label style={S.label}>Age To</label>
-              <input
-                type="number"
-                style={S.input}
-                value={filters.age_max}
-                onChange={(e) => setFilters({ ...filters, age_max: e.target.value })}
-                onBlur={() => syncURL(filters, showAllCommunities)}
-              />
-            </div>
-          </div>
-
-          <label style={S.label}>Location</label>
-          <input
-            style={S.input}
-            placeholder="City"
-            value={filters.location}
-            onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-            onBlur={() => syncURL(filters, showAllCommunities)}
-          />
-
-          {myCommunity && (
-            <div style={S.notice}>
-              🏷️ Your community:{" "}
-              <strong style={{ textTransform: "capitalize" }}>
-                {myCommunity}
-              </strong>
-            </div>
+            </>
           )}
 
-          <label style={S.label}>Community</label>
-          <select
-            style={S.input}
-            value={filters.community}
-            onChange={(e) => handleCommunityChange(e.target.value)}
-            disabled={showAllCommunities}
-          >
-            <option value="">Select Community</option>
-            {communities.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          {/* Community */}
+          {adminSettings.search_show_community !== "false" && (
+            <>
+              {myCommunity && (
+                <div style={S.notice}>
+                  🏷️ Your community:{" "}
+                  <strong style={{ textTransform: "capitalize" }}>
+                    {myCommunity}
+                  </strong>
+                </div>
+              )}
 
-          <label style={S.checkboxRow}>
-            <input
-              type="checkbox"
-              checked={showAllCommunities}
-              onChange={toggleAllCommunities}
-              style={{ width: 16, height: 16, accentColor: pageLink }}
-            />
-            Show all communities
-          </label>
+              <label style={S.label}>Community</label>
+              <select
+                style={S.input}
+                value={filters.community}
+                onChange={(e) => handleCommunityChange(e.target.value)}
+                disabled={showAllCommunities}
+              >
+                <option value="">Select Community</option>
+                {communities.map((c) => (
+                  <option key={c.slug} value={c.slug}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+
+              {adminSettings.search_show_all_communities !== "false" && (
+                <label style={S.checkboxRow}>
+                  <input
+                    type="checkbox"
+                    checked={showAllCommunities}
+                    onChange={toggleAllCommunities}
+                    style={{ width: 16, height: 16, accentColor: pageLink }}
+                  />
+                  Show all communities
+                </label>
+              )}
+            </>
+          )}
 
           <button
             onClick={loadProfiles}
@@ -500,15 +453,10 @@ function ProfileSearch() {
                 Found{" "}
                 <strong style={{ color: pageHeading }}>{results.length}</strong>{" "}
                 profile{results.length !== 1 ? "s" : ""}
-                {showAllCommunities
-                  ? " (all communities)"
-                  : filters.community
-                  ? ` in ${filters.community}`
-                  : ""}
               </div>
 
               {isMobile ? (
-                <SearchCarouselMobile results={results} isMobile={isMobile} />
+                <SearchCarouselMobile results={results} />
               ) : (
                 <div style={S.desktopGrid}>
                   {results.map((u) => (
@@ -524,14 +472,10 @@ function ProfileSearch() {
   );
 }
 
-/* MOBILE CAROUSEL */
 function SearchCarouselMobile({ results }) {
   const scrollRef = useRef(null);
-
   if (!results || results.length === 0) return null;
-
   const cardWidth = "150px";
-
   return (
     <div
       ref={scrollRef}
