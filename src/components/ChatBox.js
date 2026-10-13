@@ -712,9 +712,9 @@ function MessageBubble({ message, isOwn, onImageClick }) {
               maxWidth: "240px",
             }}
           >
-            <img
-              src={message.image_url}
-              alt="Chat photo"
+          <img
+  src={message.image_url}
+  alt="Attachment"
               style={{
                 width: "100%",
                 height: "auto",
