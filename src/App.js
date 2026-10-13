@@ -37,6 +37,7 @@ import AdvancedSearch from "./pages/AdvancedSearch";
 import ScrollToTop from "./components/ScrollToTop";
 import Onboarding from "./pages/Onboarding";
 import Discover from "./pages/Discover";
+import ProfileDetail from "./pages/ProfileDetail";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -399,6 +400,14 @@ function App() {
   element={
     <ProtectedRoute>
       <Discover />
+    </ProtectedRoute>
+  }
+/>
+  <Route
+  path="/match/:id"
+  element={
+    <ProtectedRoute>
+      <ProfileDetail />
     </ProtectedRoute>
   }
 />
