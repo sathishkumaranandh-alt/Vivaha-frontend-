@@ -15,13 +15,6 @@ function ProfileDetail() {
   const [busy, setBusy] = useState(false);
   const [userId, setUserId] = useState(null);
   const [matchPopup, setMatchPopup] = useState(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const h = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", h);
-    return () => window.removeEventListener("resize", h);
-  }, []);
 
   useEffect(() => {
     async function load() {
@@ -160,7 +153,6 @@ function ProfileDetail() {
             )}
             <div style={gradientOverlayStyle} />
 
-            {/* Badges */}
             <div style={badgeTopLeftStyle}>
               {profile.is_verified && (
                 <span style={verifiedBadgeStyle}>✓ VERIFIED</span>
@@ -176,7 +168,6 @@ function ProfileDetail() {
               </div>
             )}
 
-            {/* Info overlay */}
             <div style={infoOverlayStyle}>
               <h1 style={nameStyle}>
                 {profile.name || "Anonymous"}
@@ -283,7 +274,6 @@ function ProfileDetail() {
         </div>
       </div>
 
-      {/* Match popup */}
       {matchPopup && (
         <MatchPopup profile={matchPopup} onClose={() => setMatchPopup(null)} />
       )}
@@ -342,7 +332,12 @@ const pageStyle = {
   background: "linear-gradient(180deg, #FFF9F5 0%, #FDF2F6 100%)",
   paddingBottom: "40px",
 };
-const containerStyle = { maxWidth: "480px", margin: "0 auto", padding: "16px" };
+
+const containerStyle = {
+  maxWidth: "480px",
+  margin: "0 auto",
+  padding: "16px",
+};
 
 const heroCardStyle = {
   position: "relative",
@@ -438,7 +433,12 @@ const nameStyle = {
   textShadow: "0 3px 14px rgba(0,0,0,0.9)",
 };
 
-const ageStyle = { fontWeight: 500, fontSize: "18px", opacity: 0.9, fontStyle: "italic" };
+const ageStyle = {
+  fontWeight: 500,
+  fontSize: "18px",
+  opacity: 0.9,
+  fontStyle: "italic",
+};
 
 const metaRowStyle = {
   display: "flex",
@@ -635,7 +635,11 @@ const matchPopupTitleStyle = {
   fontWeight: 900,
 };
 
-const matchPopupSubStyle = { color: "#8a6b6b", fontSize: "14px", marginBottom: "8px" };
+const matchPopupSubStyle = {
+  color: "#8a6b6b",
+  fontSize: "14px",
+  marginBottom: "8px",
+};
 
 const matchBtnPrimaryStyle = {
   background: "linear-gradient(135deg, #8B0A2E, #a01438)",
