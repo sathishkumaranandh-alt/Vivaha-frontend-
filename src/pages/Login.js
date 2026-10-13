@@ -18,7 +18,7 @@ function Login() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) navigate("/dashboard");
+      if (data?.user) navigate("/discover"); // 🔧 CHANGED
     });
   }, [navigate]);
 
@@ -40,7 +40,7 @@ function Login() {
 
       if (data?.user) {
         toast.success("Welcome back!");
-        navigate("/dashboard");
+        navigate("/discover"); // 🔧 CHANGED
       }
     } catch (err) {
       console.error(err);
