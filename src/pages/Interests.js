@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
@@ -176,7 +176,6 @@ function Interests() {
     },
   ];
 
-  const currentTab = tabs.find((t) => t.key === tab);
 
   return (
     <div style={pageBgStyle}>
