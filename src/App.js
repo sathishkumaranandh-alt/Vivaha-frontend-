@@ -36,6 +36,7 @@ import AdminPlans from "./pages/AdminPlans";
 import AdvancedSearch from "./pages/AdvancedSearch";
 import ScrollToTop from "./components/ScrollToTop";
 import Onboarding from "./pages/Onboarding";
+import Discover from "./pages/Discover";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -393,6 +394,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+              <Route
+  path="/discover"
+  element={
+    <ProtectedRoute>
+      <Discover />
+    </ProtectedRoute>
+  }
+/>
             <Route
               path="/admin/success-stories"
               element={<AdminSuccessStories />}
