@@ -5,7 +5,7 @@ import { toast } from "../utils/toast";
 import NotificationBell from "./NotificationBell";
 import { useCommunities } from "../utils/communities";
 
-const BACKEND_URL =
+const BACKEND_URL = 
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
 const DEFAULT_SETTINGS = {
