@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+
 
 const SWIPE_THRESHOLD = 100;
 const ROTATION_FACTOR = 0.08;
