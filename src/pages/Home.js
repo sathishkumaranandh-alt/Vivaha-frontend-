@@ -484,8 +484,6 @@ function Home() {
   const pageMuted = pageTheme.muted;
   const pageLink = pageTheme.link;
   const baseSize = `${pageTheme.baseSize}px`;
-  const headingSize = `${pageTheme.headingSize}px`;
-  const headingSizeMobile = `${Math.round(pageTheme.headingSize * 0.85)}px`;
 
   const howItWorks = [
     { icon: "📝", title: "Register Free", desc: "Create your profile in 2 minutes" },
