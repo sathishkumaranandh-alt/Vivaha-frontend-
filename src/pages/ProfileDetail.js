@@ -213,8 +213,6 @@ function ProfileDetail() {
     locked_by_paid_member,
     hidden_by_owner,
     owner_is_paid,
-    contact_masked,
-    contact_locked_reason,
     match_score,
     mother_tongue,
     photo_count,
