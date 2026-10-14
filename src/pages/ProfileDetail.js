@@ -224,7 +224,7 @@ function ProfileDetail() {
 
   const hasPhoto = !!photo_url;
   const nameTextColor = hasPhoto ? theme.nameColor : theme.noPhotoNameColor;
-  const bodyTextColor = hasPhoto ? theme.bodyColor : theme.noPhotoBodyColor;
+  
 
   // Same score color logic
   const getScoreColor = (s) => {
