@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 import BackButton from "../components/BackButton";
+import { usePhotoAccess } from "../utils/usePhotoAccess";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -10,6 +11,8 @@ const BACKEND_URL =
 function ProfileDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldBlur, blurAmount, canRequestPhoto } = usePhotoAccess();
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -97,6 +100,23 @@ function ProfileDetail() {
     }
   };
 
+  const handleRequestPhoto = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/photo-requests/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sender_id: userId,
+          receiver_id: id,
+        }),
+      });
+      if (res.ok) toast.success("📸 Photo request sent!");
+      else toast.error("Could not send request");
+    } catch {
+      toast.error("Network error");
+    }
+  };
+
   if (loading) {
     return (
       <div style={pageStyle}>
@@ -128,12 +148,15 @@ function ProfileDetail() {
     );
   }
 
+  // 🔒 CHECK if photo should be blurred
+  const locked = shouldBlur ? shouldBlur(profile) : false;
+
   return (
     <div style={pageStyle}>
       <div style={containerStyle}>
         <BackButton fallback="/discover" />
 
-        {/* HERO CARD — same Tinder style */}
+        {/* HERO CARD with photo lock */}
         <div style={heroCardStyle}>
           <div style={photoAreaStyle}>
             {profile.photo_url ? (
@@ -145,12 +168,36 @@ function ProfileDetail() {
                   height: "100%",
                   objectFit: "cover",
                   pointerEvents: "none",
+                  filter: locked ? `blur(${blurAmount ? blurAmount() : "20px"})` : "none",
+                  transform: locked ? "scale(1.1)" : "scale(1)",
+                  transition: "filter 0.4s ease, transform 0.4s ease",
                 }}
                 draggable={false}
               />
             ) : (
               <div style={placeholderStyle}>👤</div>
             )}
+
+            {/* 🔒 LOCK OVERLAY */}
+            {locked && profile.photo_url && (
+              <div style={lockOverlayStyle}>
+                <div style={{ fontSize: "52px", marginBottom: "10px" }}>🔒</div>
+                <h3 style={lockTitleStyle}>Photo Locked</h3>
+                <p style={lockSubStyle}>Upgrade to view full photos</p>
+                <button
+                  onClick={() => navigate("/subscription")}
+                  style={upgradeBtnStyle}
+                >
+                  ⭐ View Plans
+                </button>
+                {canRequestPhoto && canRequestPhoto() && (
+                  <button onClick={handleRequestPhoto} style={requestBtnStyle}>
+                    📸 Request Photo
+                  </button>
+                )}
+              </div>
+            )}
+
             <div style={gradientOverlayStyle} />
 
             <div style={badgeTopLeftStyle}>
@@ -232,7 +279,7 @@ function ProfileDetail() {
           <DetailSection title="Education & Career">
             <DetailRow label="Education" value={profile.education} />
             <DetailRow label="Occupation" value={profile.occupation} />
-            <DetailRow label="Annual Income" value={profile.income} />
+            {!locked && <DetailRow label="Annual Income" value={profile.income} />}
             <DetailRow label="Work Location" value={profile.work_location} />
           </DetailSection>
 
@@ -252,7 +299,7 @@ function ProfileDetail() {
             <DetailRow label="Family Status" value={profile.family_status} />
           </DetailSection>
 
-          {(profile.rashi || profile.nakshatram || profile.dosham) && (
+          {!locked && (profile.rashi || profile.nakshatram || profile.dosham) && (
             <DetailSection title="Horoscope">
               <DetailRow label="Rashi" value={profile.rashi} />
               <DetailRow label="Nakshatram" value={profile.nakshatram} />
@@ -605,6 +652,63 @@ const spinnerStyle = {
   margin: "0 auto",
 };
 
+// 🔒 PHOTO LOCK STYLES
+const lockOverlayStyle = {
+  position: "absolute",
+  inset: 0,
+  background: "rgba(0,0,0,0.6)",
+  backdropFilter: "blur(3px)",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 8,
+  padding: "20px",
+  textAlign: "center",
+};
+
+const lockTitleStyle = {
+  fontFamily: "'Playfair Display', serif",
+  color: "white",
+  fontSize: "20px",
+  margin: "0 0 6px 0",
+  fontWeight: 900,
+};
+
+const lockSubStyle = {
+  color: "rgba(255,255,255,0.85)",
+  fontSize: "13px",
+  margin: "0 0 18px 0",
+};
+
+const upgradeBtnStyle = {
+  background: "linear-gradient(135deg, #D4A017, #b8860b)",
+  color: "white",
+  border: "none",
+  padding: "12px 24px",
+  borderRadius: "12px",
+  fontSize: "14px",
+  fontWeight: 800,
+  cursor: "pointer",
+  fontFamily: "inherit",
+  boxShadow: "0 8px 24px rgba(212,160,23,0.5)",
+  marginBottom: "10px",
+};
+
+const requestBtnStyle = {
+  background: "rgba(255,255,255,0.15)",
+  backdropFilter: "blur(10px)",
+  color: "white",
+  border: "1px solid rgba(255,255,255,0.3)",
+  padding: "10px 20px",
+  borderRadius: "10px",
+  fontSize: "12px",
+  fontWeight: 700,
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+
+// MATCH POPUP
 const matchPopupBgStyle = {
   position: "fixed",
   inset: 0,
@@ -644,25 +748,4 @@ const matchPopupSubStyle = {
 const matchBtnPrimaryStyle = {
   background: "linear-gradient(135deg, #8B0A2E, #a01438)",
   color: "white",
-  border: "none",
-  padding: "14px",
-  borderRadius: "12px",
-  fontWeight: 800,
-  fontSize: "14px",
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const matchBtnSecondaryStyle = {
-  background: "white",
-  color: "#374151",
-  border: "1.5px solid #e5e7eb",
-  padding: "14px 20px",
-  borderRadius: "12px",
-  fontWeight: 700,
-  fontSize: "13px",
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-export default ProfileDetail;
+  border: "non
