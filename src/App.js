@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import supabase from "./supabaseClient";
 import Navbar from "./components/Navigation";
@@ -48,6 +48,8 @@ const HEARTBEAT_INTERVAL = 60000; // 60 seconds
 function App() {
   const [pageBg, setPageBg] = useState("#FFF9F5");
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [sessionReady, setSessionReady] = useState(false);
+  const currentUserIdRef = useRef(null);
 
   // ============================================
   // 1. BODY STYLES + SETTINGS FETCH
@@ -74,20 +76,25 @@ function App() {
   }, []);
 
   // ============================================
-  // 2. GET CURRENT USER (auth listener)
+  // 2. GET CURRENT USER (auth listener — reliable)
   // ============================================
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (mounted && user) setCurrentUserId(user.id);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      currentUserIdRef.current = session?.user?.id || null;
+      setCurrentUserId(session?.user?.id || null);
+      setSessionReady(true);
     });
 
+    // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        if (mounted) {
-          setCurrentUserId(session?.user?.id || null);
-        }
+        if (!mounted) return;
+        currentUserIdRef.current = session?.user?.id || null;
+        setCurrentUserId(session?.user?.id || null);
       }
     );
 
@@ -98,21 +105,17 @@ function App() {
   }, []);
 
   // ============================================
-  // 3. HEARTBEAT — Update last_seen every 60s
-  //    ✅ Uses apiFetch (JWT) — secure
+  // 3. HEARTBEAT — via apiFetch (JWT)
   // ============================================
   useEffect(() => {
-    if (!currentUserId) return;
+    if (!sessionReady || !currentUserId) return;
 
     let intervalId = null;
     let isActive = true;
 
-    // ✅ JWT-based heartbeat via apiFetch
     const sendHeartbeat = () => {
-      if (!isActive || !currentUserId) return;
-      apiFetch("/messages/heartbeat", {
-        method: "POST",
-      }).catch(() => {});
+      if (!isActive || !currentUserIdRef.current) return;
+      apiFetch("/messages/heartbeat", { method: "POST" }).catch(() => {});
     };
 
     const startHeartbeat = () => {
@@ -138,12 +141,12 @@ function App() {
       }
     };
 
-    // ⚠️ beforeunload: cannot use apiFetch (async blocked during unload)
-    // Use sendBeacon with legacy user_id — backend accepts both
+    // beforeunload — use sendBeacon with legacy user_id (can't use JWT)
     const handleBeforeUnload = () => {
-      if (!currentUserId) return;
+      const uid = currentUserIdRef.current;
+      if (!uid) return;
       const url = `${BACKEND_URL}/messages/heartbeat`;
-      const data = JSON.stringify({ user_id: currentUserId });
+      const data = JSON.stringify({ user_id: uid });
       if (navigator.sendBeacon) {
         navigator.sendBeacon(
           url,
@@ -164,11 +167,10 @@ function App() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [currentUserId]);
+  }, [currentUserId, sessionReady]);
 
   // ============================================
-  // 4. LOGOUT — Best-effort last_seen update
-  //    ⚠️ Token may be invalid post-signout, so we keep legacy fallback
+  // 4. LOGOUT — legacy fallback
   // ============================================
   useEffect(() => {
     if (!currentUserId) return;
@@ -176,8 +178,6 @@ function App() {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT" && currentUserId) {
-          // Best effort — token may already be revoked
-          // Use legacy body — backend accepts both paths
           fetch(`${BACKEND_URL}/messages/heartbeat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -213,210 +213,32 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/success-stories" element={<SuccessStories />} />
             <Route path="/login" element={<Login />} />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile/:id"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/search"
-              element={
-                <ProtectedRoute>
-                  <ProfileSearch />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/matches"
-              element={
-                <ProtectedRoute>
-                  <Matches />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/recommendations"
-              element={
-                <ProtectedRoute>
-                  <Recommendations />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/messages"
-              element={
-                <ProtectedRoute>
-                  <Messages />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/interests"
-              element={
-                <ProtectedRoute>
-                  <Interests />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/visitors"
-              element={
-                <ProtectedRoute>
-                  <Visitors />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/photo-requests"
-              element={
-                <ProtectedRoute>
-                  <PhotoRequests />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/contact-requests"
-              element={
-                <ProtectedRoute>
-                  <ContactRequests />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/boost"
-              element={
-                <ProtectedRoute>
-                  <Boost />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin-plans"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminPlans />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin-user-permissions/:userId"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminUserPermissions />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/advanced-search"
-              element={
-                <ProtectedRoute>
-                  <AdvancedSearch />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/subscription"
-              element={
-                <ProtectedRoute>
-                  <Subscription />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/subscription-dashboard"
-              element={
-                <ProtectedRoute>
-                  <SubscriptionDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <UserSettings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin-analytics"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminAnalytics />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin-communities"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminCommunities />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin-settings"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminSettings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin-form-builder"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminFormBuilder />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/discover"
-              element={
-                <ProtectedRoute>
-                  <Discover />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/match/:id"
-              element={
-                <ProtectedRoute>
-                  <ProfileDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/success-stories"
-              element={<AdminSuccessStories />}
-            />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/search" element={<ProtectedRoute><ProfileSearch /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
+            <Route path="/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/interests" element={<ProtectedRoute><Interests /></ProtectedRoute>} />
+            <Route path="/visitors" element={<ProtectedRoute><Visitors /></ProtectedRoute>} />
+            <Route path="/photo-requests" element={<ProtectedRoute><PhotoRequests /></ProtectedRoute>} />
+            <Route path="/contact-requests" element={<ProtectedRoute><ContactRequests /></ProtectedRoute>} />
+            <Route path="/boost" element={<ProtectedRoute><Boost /></ProtectedRoute>} />
+            <Route path="/admin-plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
+            <Route path="/admin-user-permissions/:userId" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUserPermissions /></ProtectedRoute>} />
+            <Route path="/advanced-search" element={<ProtectedRoute><AdvancedSearch /></ProtectedRoute>} />
+            <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+            <Route path="/subscription-dashboard" element={<ProtectedRoute><SubscriptionDashboard /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin-analytics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnalytics /></ProtectedRoute>} />
+            <Route path="/admin-communities" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommunities /></ProtectedRoute>} />
+            <Route path="/admin-settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
+            <Route path="/admin-form-builder" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFormBuilder /></ProtectedRoute>} />
+            <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
+            <Route path="/match/:id" element={<ProtectedRoute><ProfileDetail /></ProtectedRoute>} />
+            <Route path="/admin/success-stories" element={<AdminSuccessStories />} />
             <Route path="/onboarding" element={<Onboarding />} />
           </Routes>
         </div>
