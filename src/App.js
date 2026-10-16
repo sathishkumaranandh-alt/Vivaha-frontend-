@@ -192,8 +192,11 @@ function App() {
     };
   }, [currentUserId]);
 
-  return (
+    return (
     <Router>
+      <div style={{position:"fixed",top:0,left:0,right:0,background:"#dc2626",color:"white",textAlign:"center",fontSize:"11px",padding:"3px",zIndex:999999,fontWeight:"bold",fontFamily:"monospace",letterSpacing:"1px"}}>
+        🔥 CODE-V5 · {currentUserId ? "AUTH" : "GUEST"} · {sessionReady ? "READY" : "..."}
+      </div>
       <ScrollToTop />
 
       <div
