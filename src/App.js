@@ -6,6 +6,7 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import InstallAppButton from "./components/InstallAppButton";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import { apiFetch } from "./utils/api";
 
 import Home from "./pages/Home";
 import SuccessStories from "./pages/SuccessStories";
@@ -98,7 +99,7 @@ function App() {
 
   // ============================================
   // 3. HEARTBEAT — Update last_seen every 60s
-  //    Only when user is logged in + tab active
+  //    ✅ Uses apiFetch (JWT) — secure
   // ============================================
   useEffect(() => {
     if (!currentUserId) return;
@@ -106,19 +107,16 @@ function App() {
     let intervalId = null;
     let isActive = true;
 
+    // ✅ JWT-based heartbeat via apiFetch
     const sendHeartbeat = () => {
       if (!isActive || !currentUserId) return;
-      fetch(`${BACKEND_URL}/messages/heartbeat`, {
+      apiFetch("/messages/heartbeat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: currentUserId }),
       }).catch(() => {});
     };
 
     const startHeartbeat = () => {
-      // Send immediate heartbeat
       sendHeartbeat();
-      // Then every 60s
       if (intervalId) clearInterval(intervalId);
       intervalId = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
     };
@@ -130,7 +128,6 @@ function App() {
       }
     };
 
-    // Handle tab visibility — pause when hidden, resume when visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         isActive = true;
@@ -141,17 +138,20 @@ function App() {
       }
     };
 
-    // Handle window close/unload — update last_seen one final time
+    // ⚠️ beforeunload: cannot use apiFetch (async blocked during unload)
+    // Use sendBeacon with legacy user_id — backend accepts both
     const handleBeforeUnload = () => {
-      // Use sendBeacon for reliability on unload
+      if (!currentUserId) return;
       const url = `${BACKEND_URL}/messages/heartbeat`;
       const data = JSON.stringify({ user_id: currentUserId });
       if (navigator.sendBeacon) {
-        navigator.sendBeacon(url, new Blob([data], { type: "application/json" }));
+        navigator.sendBeacon(
+          url,
+          new Blob([data], { type: "application/json" })
+        );
       }
     };
 
-    // Start on mount
     if (document.visibilityState === "visible") {
       startHeartbeat();
     }
@@ -167,7 +167,8 @@ function App() {
   }, [currentUserId]);
 
   // ============================================
-  // 4. LOGOUT — Update last_seen on signout
+  // 4. LOGOUT — Best-effort last_seen update
+  //    ⚠️ Token may be invalid post-signout, so we keep legacy fallback
   // ============================================
   useEffect(() => {
     if (!currentUserId) return;
@@ -175,7 +176,8 @@ function App() {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT" && currentUserId) {
-          // Best effort — update last_seen (no need to await)
+          // Best effort — token may already be revoked
+          // Use legacy body — backend accepts both paths
           fetch(`${BACKEND_URL}/messages/heartbeat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -395,22 +397,22 @@ function App() {
                 </ProtectedRoute>
               }
             />
-              <Route
-  path="/discover"
-  element={
-    <ProtectedRoute>
-      <Discover />
-    </ProtectedRoute>
-  }
-/>
-  <Route
-  path="/match/:id"
-  element={
-    <ProtectedRoute>
-      <ProfileDetail />
-    </ProtectedRoute>
-  }
-/>
+            <Route
+              path="/discover"
+              element={
+                <ProtectedRoute>
+                  <Discover />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/match/:id"
+              element={
+                <ProtectedRoute>
+                  <ProfileDetail />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin/success-stories"
               element={<AdminSuccessStories />}
