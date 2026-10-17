@@ -5,8 +5,7 @@ import { toast } from "../utils/toast";
 import BackButton from "../components/BackButton";
 import { apiFetch } from "../utils/api";
 
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+
 
 const SWIPE_THRESHOLD = 100;
 const ROTATION_FACTOR = 0.08;
