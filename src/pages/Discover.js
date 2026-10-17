@@ -82,9 +82,7 @@ function Discover() {
       const myGender = (myProfile.gender || "").toLowerCase();
       const opposite = myGender === "male" ? "female" : "male";
       try {
-        const res = await fetch(
-          `${BACKEND_URL}/profile/search?gender=${opposite}&viewerId=${uid}`
-        );
+        const res = await apiFetch(`/profile/search?gender=${opposite}`);
         if (res.ok) {
           const data = await res.json();
           list = (data.results || []).filter((p) => p.id !== uid);
@@ -97,9 +95,7 @@ function Discover() {
 
     if (list.length === 0) {
       try {
-        const res = await fetch(
-          `${BACKEND_URL}/profile/search?viewerId=${uid}`
-        );
+        const res = await apiFetch(`/profile/search`);
         if (res.ok) {
           const data = await res.json();
           list = (data.results || []).filter((p) => p.id !== uid);
@@ -126,9 +122,7 @@ function Discover() {
 
         let myProfile = null;
         try {
-          const myRes = await fetch(
-            `${BACKEND_URL}/profile/${user.id}?viewerId=${user.id}`
-          );
+          const myRes = await apiFetch(`/profile/${user.id}`);
           if (myRes.ok) {
             const myData = await myRes.json();
             myProfile = myData.profile;
@@ -332,9 +326,7 @@ function Discover() {
     try {
       let myProfile = null;
       try {
-        const myRes = await fetch(
-          `${BACKEND_URL}/profile/${userId}?viewerId=${userId}`
-        );
+        const myRes = await apiFetch(`/profile/${userId}`);
         if (myRes.ok) {
           const myData = await myRes.json();
           myProfile = myData.profile;
