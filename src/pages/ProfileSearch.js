@@ -100,7 +100,7 @@ function ProfileSearch() {
   const loadProfiles = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      
       
 
       const params = new URLSearchParams();
