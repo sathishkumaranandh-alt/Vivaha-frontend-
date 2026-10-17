@@ -235,9 +235,7 @@ function Home() {
         let myProfile = null;
         if (user) {
           try {
-            const myRes = await fetch(
-              `${BACKEND_URL}/profile/${user.id}?viewerId=${user.id}`
-            );
+            const myRes = await apiFetch(`/profile/${user.id}`);
             if (myRes.ok) {
               const myData = await myRes.json();
               myProfile = myData.profile || null;
@@ -248,7 +246,7 @@ function Home() {
 
         const [settingsRes, featuredRes, storiesRes, statsRes] = await Promise.all([
           fetch(`${BACKEND_URL}/settings`),
-          fetch(`${BACKEND_URL}/profile/search?viewerId=${viewerId}`),
+          apiFetch(`/profile/search`),
           fetch(`${BACKEND_URL}/success-stories`),
           fetch(`${BACKEND_URL}/profile/admin/stats`).catch(() => null),
         ]);
