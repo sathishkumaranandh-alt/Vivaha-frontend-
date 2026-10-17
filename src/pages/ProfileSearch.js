@@ -101,7 +101,7 @@ function ProfileSearch() {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const viewerId = user?.id || "";
+      
 
       const params = new URLSearchParams();
       if (filters.gender) params.append("gender", filters.gender);
