@@ -6,7 +6,7 @@ import ProfileAnalytics from "../components/ProfileAnalytics";
 import ProfileCompletionCard from "../components/ProfileCompletionCard";
 import ProfileCard from "../components/ProfileCard";
 import HeroProfileSlider from "../components/HeroProfileSlider";
-
+import { apiFetch } from "../utils/api";
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
 
@@ -51,9 +51,7 @@ function Dashboard() {
         }
         setUser(user);
 
-        const profileRes = await fetch(
-          `${BACKEND_URL}/profile/${user.id}?viewerId=${user.id}`
-        );
+        const profileRes = await apiFetch(`/profile/${user.id}`);
         let myProfile = null;
         if (profileRes.ok) {
           const data = await profileRes.json();
@@ -80,9 +78,7 @@ function Dashboard() {
         // ============================================
         let recList = [];
         try {
-          const recRes = await fetch(
-            `${BACKEND_URL}/profile/recommendations/${user.id}`
-          );
+          const recRes = await apiFetch(`/profile/recommendations/${user.id}`);
           if (recRes.ok) {
             const data = await recRes.json();
             recList = data.recommendations || [];
