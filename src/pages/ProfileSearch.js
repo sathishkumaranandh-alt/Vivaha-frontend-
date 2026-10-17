@@ -5,6 +5,7 @@ import { useCommunities } from "../utils/communities";
 import { getPageTheme, getCardStyle } from "../utils/pageTheme";
 import ProfileCard from "../components/ProfileCard";
 import BackButton from "../components/BackButton";
+import { apiFetch } from "../utils/api";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -109,12 +110,9 @@ function ProfileSearch() {
       if (filters.location) params.append("location", filters.location);
       if (filters.community) params.append("community", filters.community);
       if (filters.religion) params.append("religion", filters.religion);
-      if (viewerId) params.append("viewerId", viewerId);
       if (showAllCommunities) params.append("allCommunities", "true");
 
-      const res = await fetch(
-        `${BACKEND_URL}/profile/search?${params.toString()}`
-      );
+      const res = await apiFetch(`/profile/search?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setResults(data.results || []);
