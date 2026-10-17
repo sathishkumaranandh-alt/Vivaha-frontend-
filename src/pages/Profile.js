@@ -134,7 +134,7 @@ function Profile() {
         setCurrentUserId(user.id);
         const targetId = id || user.id;
 
-        const res = await fetch(`${BACKEND_URL}/profile/${targetId}?viewerId=${user.id}`);
+        const res = await apiFetch(`/profile/${targetId}`);
         if (res.ok) {
           const data = await res.json();
           if (data.profile) {
@@ -196,7 +196,7 @@ function Profile() {
                 body: JSON.stringify({ viewerId: user.id, viewedId: targetId })
               }).catch(err => console.error("Failed to log view:", err));
 
-              fetch(`${BACKEND_URL}/profile/${user.id}?viewerId=${user.id}`)
+              apiFetch(`/profile/${user.id}`)
                 .then(r => r.json())
                 .then(viewerData => {
                   if (viewerData?.profile) {
