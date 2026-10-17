@@ -229,7 +229,7 @@ function Home() {
     async function load() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        const viewerId = user?.id || "";
+  
         setCurrentUser(user || null);
 
         let myProfile = null;
