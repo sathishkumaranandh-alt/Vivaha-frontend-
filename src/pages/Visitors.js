@@ -3,9 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import supabase from "../supabaseClient";
 import usePlan from "../utils/usePlan";
 import BackButton from "../components/BackButton";
-
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🔒 Added for JWT Auth
 
 function Visitors() {
   const navigate = useNavigate();
@@ -29,7 +27,10 @@ function Visitors() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate("/login"); return; }
-        const res = await fetch(`${BACKEND_URL}/visitors/list/${user.id}`);
+        
+        // 🔒 Changed to apiFetch and removed user.id from URL (Backend extracts from JWT)
+        const res = await apiFetch(`/visitors/list`);
+        
         if (res.ok) {
           const data = await res.json();
           setVisitors(data.visitors || []);
@@ -224,6 +225,7 @@ function Visitors() {
                     alignItems: "center",
                     gap: "6px",
                     marginBottom: "2px",
+                    flexWrap: "wrap",
                   }}
                 >
                   <div
