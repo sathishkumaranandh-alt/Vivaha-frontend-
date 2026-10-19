@@ -2,9 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import BackButton from "../components/BackButton";
-
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT Security
 
 function Subscription() {
   const navigate = useNavigate();
@@ -28,17 +26,15 @@ function Subscription() {
         }
         setUserId(user.id);
 
-        // Fetch plans
-        const plansRes = await fetch(`${BACKEND_URL}/subscriptions/plans`);
+        // Fetch plans (Public route, but apiFetch is safe)
+        const plansRes = await apiFetch(`/subscriptions/plans`);
         if (plansRes.ok) {
           const data = await plansRes.json();
           setPlans(data.plans || []);
         }
 
-        // Fetch current subscription
-        const subRes = await fetch(
-          `${BACKEND_URL}/subscriptions/user/${user.id}`
-        );
+        // 🛡️ SECURITY FIX: Switched to apiFetch & used /my-subscription (No user.id needed)
+        const subRes = await apiFetch(`/subscriptions/my-subscription`);
         if (subRes.ok) {
           const data = await subRes.json();
           setCurrentSub(data.subscription);
@@ -69,10 +65,10 @@ function Subscription() {
     try {
       setSubscribing(planId);
 
-      const res = await fetch(`${BACKEND_URL}/subscriptions/create`, {
+      // 🛡️ SECURITY FIX: Switched to apiFetch & removed user_id from body
+      const res = await apiFetch(`/subscriptions/create`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, plan: planId }),
+        body: JSON.stringify({ plan: planId }),
       });
 
       if (res.ok) {
