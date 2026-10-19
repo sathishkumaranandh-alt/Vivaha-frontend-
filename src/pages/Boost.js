@@ -4,8 +4,7 @@ import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 import usePlan from "../utils/usePlan";
 import BackButton from "../components/BackButton";
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT
 
 function Boost() {
   const navigate = useNavigate();
@@ -30,7 +29,8 @@ function Boost() {
       if (!user) { navigate("/login"); return; }
       setUserId(user.id);
       try {
-        const res = await fetch(`${BACKEND_URL}/boost/status/${user.id}`);
+        // 🛡️ SECURITY FIX: Switched to apiFetch & removed user.id from URL
+        const res = await apiFetch(`/boost/status`);
         if (res.ok) setStatus(await res.json());
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
@@ -44,13 +44,13 @@ function Boost() {
       if (!window.confirm("Activate free boost with your plan?")) return;
       setActivating(true);
       try {
-        const res = await fetch(`${BACKEND_URL}/boost/admin/grant/${userId}`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ days: 7 }),
+        // 🛡️ SECURITY FIX: Switched to claim-free route
+        const res = await apiFetch(`/boost/claim-free`, {
+          method: "POST"
         });
         if (res.ok) {
           toast.success("🚀 Free boost activated!");
-          const refresh = await fetch(`${BACKEND_URL}/boost/status/${userId}`);
+          const refresh = await apiFetch(`/boost/status`);
           if (refresh.ok) setStatus(await refresh.json());
         } else toast.error("Failed to activate boost");
       } catch { toast.error("Network error"); } finally { setActivating(false); }
@@ -59,14 +59,14 @@ function Boost() {
     if (!window.confirm(`Activate Profile Boost for ₹${status?.price || 199}?`)) return;
     setActivating(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/boost/activate`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+      // 🛡️ SECURITY FIX: Switched to apiFetch & removed userId from body
+      const res = await apiFetch(`/boost/activate`, {
+        method: "POST"
       });
       const data = await res.json();
       if (res.ok) {
         toast.success("🚀 Boost activated!");
-        const refresh = await fetch(`${BACKEND_URL}/boost/status/${userId}`);
+        const refresh = await apiFetch(`/boost/status`);
         if (refresh.ok) setStatus(await refresh.json());
       } else toast.error(data.error || "Failed");
     } catch { toast.error("Network error"); } finally { setActivating(false); }
