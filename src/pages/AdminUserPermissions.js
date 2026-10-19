@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { adminApiFetch } from "../utils/api"; // 🛡️ FIX: Added adminApiFetch
 
 const PERMISSION_FIELDS = [
   { key: "daily_interests", label: "Daily Interests Limit", type: "number" },
@@ -54,15 +53,15 @@ function AdminUserPermissions() {
 
         if (!userId) { navigate("/admin"); return; }
 
-        // Load target user
-        const userRes = await fetch(`${BACKEND_URL}/profile/admin/users/${userId}/details`);
+        // 🛡️ FIX: Changed to adminApiFetch
+        const userRes = await adminApiFetch(`/profile/admin/users/${userId}/details`);
         if (userRes.ok) {
           const data = await userRes.json();
           setUser(data.user);
         }
 
-        // Load their custom permissions
-        const permRes = await fetch(`${BACKEND_URL}/user-permissions/user/${userId}`);
+        // 🛡️ FIX: Changed to adminApiFetch
+        const permRes = await adminApiFetch(`/user-permissions/user/${userId}`);
         if (permRes.ok) {
           const data = await permRes.json();
           const custom = data.custom_permissions || {};
@@ -71,16 +70,16 @@ function AdminUserPermissions() {
           setCategory(data.category || "");
         }
 
-        // Load plan permissions (for showing plan default)
-        const planRes = await fetch(`${BACKEND_URL}/plans/user-plan/${userId}`);
+        // 🛡️ FIX: Changed to adminApiFetch
+        const planRes = await adminApiFetch(`/plans/user-plan/${userId}`);
         if (planRes.ok) {
           const data = await planRes.json();
           setPlanName(data.plan || "Free");
           setPlanPermissions(data.permissions || {});
         }
 
-        // Load categories
-        const catRes = await fetch(`${BACKEND_URL}/user-permissions/categories`);
+        // 🛡️ FIX: Changed to adminApiFetch
+        const catRes = await adminApiFetch(`/user-permissions/categories`);
         if (catRes.ok) {
           const data = await catRes.json();
           setCategories(data.categories || []);
@@ -102,7 +101,6 @@ function AdminUserPermissions() {
     setPermissions(prev => ({ ...prev, [key]: value }));
   };
 
-  // Clear a specific override — returns to plan default
   const clearOverride = (key) => {
     setPermissions(prev => {
       const next = { ...prev };
@@ -114,25 +112,20 @@ function AdminUserPermissions() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Clean permissions: remove false values that were never explicitly set
-      // This prevents stale 'false' data from blocking plan permissions
       const cleaned = {};
       Object.keys(permissions).forEach((key) => {
         const val = permissions[key];
-        // Keep TRUE values and numbers
         if (val === true || typeof val === "number") {
           cleaned[key] = val;
         }
-        // Keep FALSE only if it was in the original custom permissions
-        // (i.e., admin explicitly set it as override before)
         else if (val === false && originalPerms.hasOwnProperty(key)) {
           cleaned[key] = val;
         }
       });
 
-      const res = await fetch(`${BACKEND_URL}/user-permissions/user/${userId}`, {
+      // 🛡️ FIX: Changed to adminApiFetch & removed headers
+      const res = await adminApiFetch(`/user-permissions/user/${userId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ custom_permissions: cleaned, category }),
       });
       if (res.ok) {
@@ -149,7 +142,8 @@ function AdminUserPermissions() {
     if (!window.confirm("Reset to plan defaults? Custom overrides will be removed.")) return;
     setSaving(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/user-permissions/user/${userId}`, { method: "DELETE" });
+      // 🛡️ FIX: Changed to adminApiFetch
+      const res = await adminApiFetch(`/user-permissions/user/${userId}`, { method: "DELETE" });
       if (res.ok) {
         setPermissions({});
         setOriginalPerms({});
@@ -162,7 +156,8 @@ function AdminUserPermissions() {
   const applyCategory = async (catName) => {
     if (!catName) return;
     try {
-      const res = await fetch(`${BACKEND_URL}/user-permissions/apply-category/${userId}/${encodeURIComponent(catName)}`, { method: "POST" });
+      // 🛡️ FIX: Changed to adminApiFetch
+      const res = await adminApiFetch(`/user-permissions/apply-category/${userId}/${encodeURIComponent(catName)}`, { method: "POST" });
       if (res.ok) {
         const data = await res.json();
         const custom = data.user.custom_permissions || {};
