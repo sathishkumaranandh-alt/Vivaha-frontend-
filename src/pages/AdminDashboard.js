@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import supabase from "../supabaseClient";
-import { adminApiFetch } from "../utils/adminApi";
+import { adminApiFetch } from "../utils/api";
 
 function AdminDashboard() {
   const [stats, setStats] = useState(null);
