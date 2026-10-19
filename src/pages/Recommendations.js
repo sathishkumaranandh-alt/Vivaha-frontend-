@@ -3,9 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import BackButton from "../components/BackButton";
 import ProfileCard from "../components/ProfileCard";
-
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT Security
 
 function Recommendations() {
   const navigate = useNavigate();
@@ -25,12 +23,15 @@ function Recommendations() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
       try {
-        const res = await fetch(`${BACKEND_URL}/profile/recommendations/${user.id}`);
+        // 🛡️ SECURITY FIX: Switched to apiFetch
+        const res = await apiFetch(`/profile/recommendations/${user.id}`);
         if (res.ok) {
           const data = await res.json();
           setRecommendations(data.recommendations || []);
         }
-        const planRes = await fetch(`${BACKEND_URL}/plans/user-plan/${user.id}`);
+        
+        // 🛡️ SECURITY FIX: Switched to apiFetch
+        const planRes = await apiFetch(`/plans/user-plan/${user.id}`);
         if (planRes.ok) {
           const data = await planRes.json();
           setPlan((data.plan || "Free").toLowerCase());
