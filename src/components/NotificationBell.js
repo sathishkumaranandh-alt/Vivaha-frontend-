@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
-
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Added apiFetch for JWT
 
 function NotificationBell() {
   const navigate = useNavigate();
@@ -23,9 +21,10 @@ function NotificationBell() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const res = await fetch(
-        `${BACKEND_URL}/notifications/${user.id}?limit=15`
-      );
+      
+      // 🛡️ Switched to apiFetch
+      const res = await apiFetch(`/notifications/${user.id}?limit=15`);
+      
       if (res.ok) {
         const data = await res.json();
         const notifs = data.notifications || [];
@@ -61,7 +60,9 @@ function NotificationBell() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      await fetch(`${BACKEND_URL}/notifications/read-all/${user.id}`, {
+      
+      // 🛡️ Switched to apiFetch
+      await apiFetch(`/notifications/read-all/${user.id}`, {
         method: "PATCH",
       });
       setNotifications(notifications.map((n) => ({ ...n, is_read: true })));
@@ -71,7 +72,8 @@ function NotificationBell() {
 
   const markOneRead = async (id) => {
     try {
-      await fetch(`${BACKEND_URL}/notifications/read/${id}`, {
+      // 🛡️ Switched to apiFetch
+      await apiFetch(`/notifications/read/${id}`, {
         method: "PATCH",
       });
       setNotifications((prev) =>
