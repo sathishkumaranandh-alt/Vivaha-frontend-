@@ -5,9 +5,7 @@ import BackButton from "../components/BackButton";
 import { toast } from "../utils/toast";
 import usePlan from "../utils/usePlan";
 import ProfileCard from "../components/ProfileCard";
-
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT Security
 
 function AdvancedSearch() {
   const { communities } = useCommunities();
@@ -43,7 +41,8 @@ function AdvancedSearch() {
   }, []);
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/settings`)
+    // 🛡️ SECURITY FIX: Switched to apiFetch
+    apiFetch(`/settings`)
       .then((r) => r.json())
       .then((data) => setAdminSettings(data.settings || {}))
       .catch(console.error);
@@ -53,13 +52,15 @@ function AdvancedSearch() {
     if (!userId) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams({ viewerId: userId });
+      // 🛡️ SECURITY FIX: Removed viewerId
+      const params = new URLSearchParams();
       Object.entries(filters).forEach(([k, v]) => {
         if (v !== "" && v !== false) params.append(k, v);
       });
 
-      const res = await fetch(
-        `${BACKEND_URL}/premium/advanced-search?${params.toString()}`
+      // 🛡️ SECURITY FIX: Switched to apiFetch
+      const res = await apiFetch(
+        `/premium/advanced-search?${params.toString()}`
       );
       const data = await res.json();
 
