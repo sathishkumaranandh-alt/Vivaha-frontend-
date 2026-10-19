@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import supabase from "../supabaseClient";
-import { adminFetch } from "../utils/adminApi";
+import { adminApiFetch } from "../utils/adminApi";
 
 function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -49,22 +49,22 @@ function AdminDashboard() {
     })();
   }, []);
 
-  // 🔒 Use adminFetch — auto-includes admin_id
+  // 🔒 Use adminApiFetch — auto-includes admin_id
   const reload = async () => {
     const r = await Promise.all([
-      adminFetch("/profile/admin/stats")
+      adminApiFetch("/profile/admin/stats")
         .then((x) => (x.ok ? x.json() : null))
         .catch(() => null),
-      adminFetch("/profile/admin/users?limit=100")
+      adminApiFetch("/profile/admin/users?limit=100")
         .then((x) => (x.ok ? x.json() : null))
         .catch(() => null),
-      adminFetch("/reports/all")
+      adminApiFetch("/reports/all")
         .then((x) => (x.ok ? x.json() : null))
         .catch(() => null),
-      adminFetch("/subscriptions/admin/all")
+      adminApiFetch("/subscriptions/admin/all")
         .then((x) => (x.ok ? x.json() : null))
         .catch(() => null),
-      adminFetch("/subscriptions/admin/stats")
+      adminApiFetch("/subscriptions/admin/stats")
         .then((x) => (x.ok ? x.json() : null))
         .catch(() => null),
     ]);
@@ -78,7 +78,7 @@ function AdminDashboard() {
   const patch = async (path, body, id) => {
     setBusy(id);
     try {
-      const res = await adminFetch(path, {
+      const res = await adminApiFetch(path, {
         method: "PATCH",
         body: body ? JSON.stringify(body) : undefined,
       });
@@ -111,7 +111,7 @@ function AdminDashboard() {
   };
 
   const viewUser = async (id) => {
-    const r = await adminFetch(`/profile/admin/users/${id}/details`);
+    const r = await adminApiFetch(`/profile/admin/users/${id}/details`);
     if (r.ok) setSelectedUser((await r.json()).user);
   };
 
