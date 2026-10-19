@@ -2,9 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import supabase from "../supabaseClient";
 import BackButton from "../components/BackButton";
-
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT Security
 
 function Matches() {
   const [connections, setConnections] = useState([]);
@@ -29,10 +27,10 @@ function Matches() {
           return;
         }
 
-        // Fetch accepted interests (both directions)
+        // 🛡️ SECURITY FIX: Switched to apiFetch for both calls
         const [r1, r2] = await Promise.all([
-          fetch(`${BACKEND_URL}/interests/received/${user.id}?status=accepted`),
-          fetch(`${BACKEND_URL}/interests/sent/${user.id}?status=accepted`),
+          apiFetch(`/interests/received/${user.id}?status=accepted`),
+          apiFetch(`/interests/sent/${user.id}?status=accepted`),
         ]);
 
         let received = [];
