@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
-import { adminFetch } from "../utils/adminApi";
+import { adminApiFetch } from "../utils/api"; // 🛡️ FIX: Changed to adminApiFetch
 
 const PERMISSION_FIELDS = [
   { key: "daily_interests", label: "Daily Interests Limit", type: "number" },
@@ -74,7 +74,8 @@ function AdminPlans() {
       if (!profile || profile.role !== "admin") { navigate("/dashboard"); return; }
 
       try {
-        const res = await adminFetch("/plans/admin/all").catch(() => null);
+        // 🛡️ FIX: Changed to adminApiFetch
+        const res = await adminApiFetch("/plans/admin/all").catch(() => null);
         if (res && res.ok) {
           const data = await res.json();
           setPlans(data.plans || []);
@@ -89,7 +90,8 @@ function AdminPlans() {
   }, [navigate]);
 
   const reload = async () => {
-    const res = await adminFetch("/plans/admin/all").catch(() => null);
+    // 🛡️ FIX: Changed to adminApiFetch
+    const res = await adminApiFetch("/plans/admin/all").catch(() => null);
     if (res && res.ok) {
       const data = await res.json();
       setPlans(data.plans || []);
@@ -100,7 +102,8 @@ function AdminPlans() {
     if (!newPlan.name.trim()) return toast.error("Plan name is required");
     setSaving(true);
     try {
-      const res = await adminFetch("/plans", {
+      // 🛡️ FIX: Changed to adminApiFetch
+      const res = await adminApiFetch("/plans", {
         method: "POST",
         body: JSON.stringify({
           ...newPlan,
@@ -125,7 +128,8 @@ function AdminPlans() {
     if (!editingPlan) return;
     setSaving(true);
     try {
-      const res = await adminFetch(`/plans/${editingPlan.id}`, {
+      // 🛡️ FIX: Changed to adminApiFetch
+      const res = await adminApiFetch(`/plans/${editingPlan.id}`, {
         method: "PUT",
         body: JSON.stringify({
           name: editingPlan.name,
@@ -150,7 +154,8 @@ function AdminPlans() {
     if (plan.name === "Free") return toast.error("Free plan cannot be deleted");
     if (!window.confirm(`Delete plan "${plan.name}"?`)) return;
     try {
-      const res = await adminFetch(`/plans/${plan.id}`, { method: "DELETE" });
+      // 🛡️ FIX: Changed to adminApiFetch
+      const res = await adminApiFetch(`/plans/${plan.id}`, { method: "DELETE" });
       if (res.ok) {
         toast.success("Plan deleted");
         await reload();
