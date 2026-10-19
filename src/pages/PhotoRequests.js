@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 import BackButton from "../components/BackButton";
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT Security
 
 function PhotoRequests() {
   const navigate = useNavigate();
@@ -22,7 +21,9 @@ function PhotoRequests() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
-      const res = await fetch(`${BACKEND_URL}/photo-requests/incoming/${user.id}`);
+      
+      // 🛡️ SECURITY FIX: Switched to apiFetch
+      const res = await apiFetch(`/photo-requests/incoming/${user.id}`);
       if (res.ok) {
         const data = await res.json();
         setRequests(data.requests || []);
@@ -38,9 +39,9 @@ function PhotoRequests() {
 
   const handleRespond = async (id, status) => {
     try {
-      const res = await fetch(`${BACKEND_URL}/photo-requests/respond/${id}`, {
+      // 🛡️ SECURITY FIX: Switched to apiFetch
+      const res = await apiFetch(`/photo-requests/respond/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
       if (res.ok) {
