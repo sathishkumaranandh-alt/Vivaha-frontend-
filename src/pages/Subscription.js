@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import BackButton from "../components/BackButton";
-import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT Security
+import { apiFetch } from "../utils/api"; 
 
 function Subscription() {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [currentSub, setCurrentSub] = useState(null);
-  const [userId, setUserId] = useState(null);
+  // 🛡️ FIX: Removed userId state as it's no longer used
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState(null);
 
@@ -24,16 +24,16 @@ function Subscription() {
           navigate("/login");
           return;
         }
-        setUserId(user.id);
+        // 🛡️ FIX: Removed setUserId(user.id);
 
-        // Fetch plans (Public route, but apiFetch is safe)
+        // Fetch plans
         const plansRes = await apiFetch(`/subscriptions/plans`);
         if (plansRes.ok) {
           const data = await plansRes.json();
           setPlans(data.plans || []);
         }
 
-        // 🛡️ SECURITY FIX: Switched to apiFetch & used /my-subscription (No user.id needed)
+        // Fetch current subscription
         const subRes = await apiFetch(`/subscriptions/my-subscription`);
         if (subRes.ok) {
           const data = await subRes.json();
@@ -65,7 +65,6 @@ function Subscription() {
     try {
       setSubscribing(planId);
 
-      // 🛡️ SECURITY FIX: Switched to apiFetch & removed user_id from body
       const res = await apiFetch(`/subscriptions/create`, {
         method: "POST",
         body: JSON.stringify({ plan: planId }),
