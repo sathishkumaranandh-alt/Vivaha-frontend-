@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
-
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT Security
 
 function SubscriptionDashboard() {
   const navigate = useNavigate();
@@ -24,9 +22,8 @@ function SubscriptionDashboard() {
           return;
         }
 
-        const res = await fetch(
-          `${BACKEND_URL}/subscriptions/user/${user.id}`
-        );
+        // 🛡️ SECURITY FIX: Switched to apiFetch & used /my-subscription
+        const res = await apiFetch(`/subscriptions/my-subscription`);
         if (res.ok) {
           const data = await res.json();
           setSubscription(data.subscription);
@@ -52,14 +49,9 @@ function SubscriptionDashboard() {
     try {
       setCancelling(true);
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      const res = await fetch(`${BACKEND_URL}/subscriptions/cancel`, {
+      // 🛡️ SECURITY FIX: Switched to apiFetch & removed user_id from body
+      const res = await apiFetch(`/subscriptions/cancel`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user.id }),
       });
 
       if (res.ok) {
