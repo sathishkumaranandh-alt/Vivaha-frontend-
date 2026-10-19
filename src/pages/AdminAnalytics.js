@@ -12,7 +12,7 @@ import {
   ArcElement,
 } from "chart.js";
 import supabase from "../supabaseClient";
-import { adminFetch } from "../utils/adminApi";
+import { adminApiFetch } from "../utils/api"; // 🛡️ FIX: Changed to adminApiFetch
 
 // Register Chart.js components
 ChartJS.register(
@@ -63,10 +63,11 @@ function AdminAnalytics() {
 
   const loadData = async () => {
     try {
+      // 🛡️ FIX: Changed to adminApiFetch
       const [statsRes, subRes, usersRes] = await Promise.all([
-        adminFetch("/profile/admin/stats").catch(() => null),
-        adminFetch("/subscriptions/admin/stats").catch(() => null),
-        adminFetch("/profile/admin/users?limit=500").catch(() => null),
+        adminApiFetch("/profile/admin/stats").catch(() => null),
+        adminApiFetch("/subscriptions/admin/stats").catch(() => null),
+        adminApiFetch("/profile/admin/users?limit=500").catch(() => null),
       ]);
 
       if (statsRes && statsRes.ok) setUserStats(await statsRes.json());
