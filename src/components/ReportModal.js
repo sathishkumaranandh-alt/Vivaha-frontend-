@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import supabase from "../supabaseClient";
-
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT
 
 const REASONS = [
   { value: "fake_profile", label: "Fake Profile / Impersonation" },
@@ -38,11 +36,10 @@ function ReportModal({ reportedUserId, reportedUserName, onClose }) {
         return;
       }
 
-      const res = await fetch(`${BACKEND_URL}/reports/create`, {
+      // 🛡️ SECURITY FIX: Switched to apiFetch & removed reporter_id
+      const res = await apiFetch(`/reports/create`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reporter_id: user.id,
           reported_user_id: reportedUserId,
           reason,
           details: details.trim() || null,
