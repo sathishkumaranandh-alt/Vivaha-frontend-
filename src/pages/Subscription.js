@@ -2,13 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import BackButton from "../components/BackButton";
-import { apiFetch } from "../utils/api"; 
+import { apiFetch } from "../utils/api";
 
 function Subscription() {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [currentSub, setCurrentSub] = useState(null);
-  // 🛡️ FIX: Removed userId state as it's no longer used
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState(null);
 
@@ -24,7 +23,6 @@ function Subscription() {
           navigate("/login");
           return;
         }
-        // 🛡️ FIX: Removed setUserId(user.id);
 
         // Fetch plans
         const plansRes = await apiFetch(`/subscriptions/plans`);
@@ -48,39 +46,58 @@ function Subscription() {
     load();
   }, [navigate]);
 
-  const handleSubscribe = async (planId) => {
+  const handleSubscribe = async (planId, planPrice) => {
     if (planId === "free") {
       alert("You're already on the free plan.");
-      return;
-    }
-
-    if (
-      !window.confirm(
-        `Subscribe to ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan?\n\n(Simulated payment for testing)`
-      )
-    ) {
       return;
     }
 
     try {
       setSubscribing(planId);
 
-      const res = await apiFetch(`/subscriptions/create`, {
+      // 1. Create order in backend
+      const orderRes = await apiFetch('/payments/create-order', {
         method: "POST",
-        body: JSON.stringify({ plan: planId }),
+        body: JSON.stringify({ planName: planId, amount: planPrice }),
+      });
+      const orderData = await orderRes.json();
+      
+      if (!orderRes.ok) throw new Error(orderData.error);
+
+      // 2. Open Cashfree Checkout
+      const cashfree = window.Cashfree({
+        mode: orderData.cashfree_env === 'PRODUCTION' ? 'production' : 'sandbox',
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        alert("🎉 " + data.message);
-        setCurrentSub(data.subscription);
+      const checkoutResult = await cashfree.checkout({
+        paymentSessionId: orderData.payment_session_id,
+        redirectTarget: '_modal',
+      });
+
+      if (checkoutResult.error) {
+        alert('Payment cancelled or failed: ' + checkoutResult.error.message);
+        return;
+      }
+
+      // 3. Verify Payment in Backend
+      const verifyRes = await apiFetch('/payments/verify-payment', {
+        method: "POST",
+        body: JSON.stringify({
+          order_id: orderData.order_id,
+          planName: planId,
+        }),
+      });
+      const verifyData = await verifyRes.json();
+
+      if (verifyRes.ok) {
+        alert('🎉 ' + verifyData.message);
+        setCurrentSub(verifyData.subscription);
       } else {
-        const err = await res.json();
-        alert("Failed: " + (err.error || "Unknown error"));
+        alert('Verification failed: ' + verifyData.error);
       }
     } catch (err) {
       console.error("Subscribe error:", err);
-      alert("Network error. Please try again.");
+      alert("Payment initiation failed. Try again.");
     } finally {
       setSubscribing(null);
     }
@@ -100,7 +117,7 @@ function Subscription() {
 
   return (
     <div style={pageStyle}>
-    <BackButton />
+      <BackButton />
       {/* HEADER */}
       <div style={headerStyle}>
         <h1 style={titleStyle}>⭐ Choose Your Plan</h1>
@@ -143,7 +160,7 @@ function Subscription() {
             key={plan.id}
             plan={plan}
             isCurrent={plan.id === currentPlan}
-            onSubscribe={() => handleSubscribe(plan.id)}
+            onSubscribe={() => handleSubscribe(plan.id, plan.price)}
             loading={subscribing === plan.id}
           />
         ))}
@@ -152,8 +169,7 @@ function Subscription() {
       {/* COMPARISON NOTE */}
       <div style={noteStyle}>
         <p style={{ margin: 0, fontSize: "14px", color: "#666" }}>
-          💡 <strong>Note:</strong> This is a simulated payment system for
-          testing. Real payment integration (Razorpay) will be added in Phase 5.
+          💡 <strong>Note:</strong> Secure payments powered by Cashfree. Supports UPI, Cards, and NetBanking.
         </p>
       </div>
     </div>
