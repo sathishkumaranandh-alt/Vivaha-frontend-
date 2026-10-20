@@ -138,7 +138,10 @@ function Login() {
               </div>
               <div className="options-row">
                 <label className="remember"><input type="checkbox" /> Remember me</label>
-                <a href="#" onClick={(e) => e.preventDefault()}>Forgot Password?</a>
+                {/* 🛡️ FIX: Changed 'a' to 'button' to fix Vercel build error */}
+                <button type="button" onClick={(e) => e.preventDefault()} style={{ background: "none", border: "none", padding: 0, color: "#226d40", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: ".86rem" }}>
+                  Forgot Password?
+                </button>
               </div>
               <button className="primary-btn" type="submit" disabled={loading}>
                 {loading ? "Logging in..." : "Login →"}
