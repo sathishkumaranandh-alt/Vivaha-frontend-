@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
-import { useCommunities } from "../utils/communities";
 import { apiFetch } from "../utils/api";
 
 function getAge(dobString) {
@@ -13,64 +12,45 @@ function getAge(dobString) {
 
 function Register() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { communities } = useCommunities();
-  const [saving, setSaving] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [registrationAllowed, setRegistrationAllowed] = useState(true);
-  const [checkingSettings, setCheckingSettings] = useState(true);
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
-    name: "", gender: "", dob: "", community: "", mobile: "", email: "",
-    password: "", confirmPassword: "", terms: false, profile_for: "Myself",
-    marital_status: "Never Married", religion: "Hindu", mother_tongue: "Tamil",
+    name: "", gender: "", dob: "", email: "", mobile: "", password: "",
+    city: "", community: "", education: "", occupation: "",
+    pref_age_min: "21", pref_age_max: "35", pref_location: "", terms: false
   });
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => { if (data?.user) navigate("/dashboard"); });
-  }, [navigate]);
-
-  useEffect(() => {
-    apiFetch(`/settings`).then(res => res.json()).then(data => {
-        if (data.settings && data.settings.allow_registration === "false") setRegistrationAllowed(false);
-      }).catch(console.error).finally(() => setCheckingSettings(false));
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    const c = searchParams.get("community");
-    if (c) setForm((f) => ({ ...f, community: c }));
-  }, [searchParams]);
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  const validateStep = () => {
+    if (step === 1) {
+      if (!form.name || !form.gender || !form.dob || !form.email || !form.mobile || !form.password) return toast.error("Please fill all required fields");
+      if (getAge(form.dob) < 21) return toast.error("You must be at least 21 years old.");
+      if (form.mobile.length < 10) return toast.error("Valid 10-digit mobile is required");
+    }
+    if (step === 2) {
+      if (!form.city) return toast.error("Current city is required");
+    }
+    if (step === 3) {
+      if (!form.terms) return toast.error("Please agree to Terms & Privacy Policy");
+    }
+    return true;
+  };
+
+  const nextStep = () => { if (validateStep()) setStep(step + 1); };
+  const prevStep = () => { setStep(step - 1); };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!form.name.trim()) return toast.error("Full Name is required");
-    if (!form.gender) return toast.error("Gender is required");
-    if (!form.dob) return toast.error("Date of Birth is required");
-    if (getAge(form.dob) < 21) return toast.error("You must be at least 21 years old.");
-    if (!form.community) return toast.error("Community is required");
-    if (!form.mobile || form.mobile.length !== 10) return toast.error("Valid 10-digit mobile number is required");
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) return toast.error("Please enter a valid email address.");
-    if (form.password.length < 6) return toast.error("Password must be at least 6 characters");
-    if (form.password !== form.confirmPassword) return toast.error("Passwords don't match");
-    if (!form.terms) return toast.error("You must agree to the Terms & Privacy Policy");
-
-    setSaving(true);
+    if (!validateStep()) return;
+    setLoading(true);
     try {
       const res = await apiFetch(`/auth/signup`, {
         method: "POST",
         body: JSON.stringify({
-          email: form.email.trim(), password: form.password, community: form.community, caste: form.community, name: form.name.trim(), gender: form.gender, dob: form.dob, mobile: form.mobile, profile_for: form.profile_for, marital_status: form.marital_status, religion: form.religion, mother_tongue: form.mother_tongue, custom_fields: {}
+          email: form.email.trim(), password: form.password, name: form.name.trim(), gender: form.gender.toLowerCase(), dob: form.dob, mobile: form.mobile, community: form.community || "any", location: form.city, education: form.education, occupation: form.occupation, pref_age_min: parseInt(form.pref_age_min), pref_age_max: parseInt(form.pref_age_max), pref_location: form.pref_location, custom_fields: {}
         })
       });
 
@@ -82,183 +62,215 @@ function Register() {
       if (loginError) { navigate("/login"); } else { navigate("/onboarding"); }
     } catch (err) {
       toast.error(err.message || "Network error. Please try again.");
-    } finally { setSaving(false); }
+    } finally { setLoading(false); }
   };
 
-  if (checkingSettings) return <div style={{ padding: 60, textAlign: "center" }}>Loading...</div>;
-  if (!registrationAllowed) {
-    return (
-      <div style={styles.page}>
-        <div style={styles.glassCard}>
-          <div style={{ fontSize: 64, textAlign: "center", marginBottom: 16 }}>🚫</div>
-          <h2 style={{ color: "#8B0A2E", textAlign: "center" }}>Registration Closed</h2>
-          <p style={{ color: "#5c3030", textAlign: "center" }}>New registrations are currently paused.</p>
-          <Link to="/login" style={{ display: "block", textAlign: "center", marginTop: 16, color: "#8B0A2E", fontWeight: "bold" }}>← Back to Login</Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div style={styles.page}>
-      <div style={styles.bgGradient} />
-      <div style={{...styles.orb, top: '5%', right: '10%', background: '#D4A017'}} />
-      <div style={{...styles.orb, bottom: '10%', left: '5%', background: '#8B0A2E'}} />
+    <>
+      <style>{`
+        :root {
+          --green: #247443; --green-dark: #123f2c; --green-soft: #e4f0df;
+          --ink: #193a2d; --muted: #64766d; --white-glass: rgba(255,255,255,.64);
+          --glass-border: rgba(255,255,255,.88);
+        }
+        * { box-sizing: border-box; }
+        .auth-body {
+          margin: 0; min-height: 100vh; font-family: Inter, sans-serif;
+          color: var(--ink); background: radial-gradient(ellipse at 15% 12%, rgba(255,255,255,.9), transparent 32%),
+            radial-gradient(ellipse at 82% 18%, rgba(211,232,190,.8), transparent 30%),
+            radial-gradient(ellipse at 72% 90%, rgba(245,226,185,.72), transparent 34%),
+            linear-gradient(135deg, #eaf3df, #fff8e9 48%, #e4efdc);
+          overflow-x: hidden; display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .auth-body::before, .auth-body::after {
+          content: ""; position: fixed; z-index: -1; width: 360px; height: 360px; border-radius: 50%;
+          filter: blur(55px); opacity: .55; pointer-events: none;
+        }
+        .auth-body::before { background: #b7d6a7; top: -140px; left: -120px; }
+        .auth-body::after { background: #f2d9a9; right: -150px; bottom: -140px; }
+        button, input, select { font: inherit; }
+        .panel {
+          width: 100%; max-width: 600px; position: relative; display: flex; flex-direction: column; align-items: center;
+          justify-content: center; padding: 26px; border-radius: 30px; overflow: hidden; isolation: isolate;
+          background: linear-gradient(145deg, rgba(255,255,255,.26), rgba(255,255,255,.06)),
+            radial-gradient(ellipse at 50% 10%, rgba(255,255,255,.55), transparent 48%);
+          border: 1px solid rgba(255,255,255,.65);
+        }
+        .panel::before {
+          content: ""; position: absolute; inset: 0; z-index: -2;
+          background: linear-gradient(180deg, rgba(248,251,242,.78), rgba(229,241,220,.76)),
+            url("https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=85") center/cover;
+          filter: blur(1px) saturate(.7);
+        }
+        .brand { text-align: center; margin-bottom: 15px; position: relative; z-index: 1; }
+        .brand h1 { margin: 0; font-family: Georgia, serif; font-size: 3rem; letter-spacing: -1.5px; color: var(--green-dark); line-height: 1; }
+        .brand p { margin: 7px 0 0; color: #435b4e; font-size: .95rem; }
+        .glass-card {
+          width: 100%; padding: 24px; border-radius: 25px; background: rgba(255,255,255,.58);
+          border: 1px solid var(--glass-border); box-shadow: 0 22px 55px rgba(40,76,48,.16), inset 0 1px 0 rgba(255,255,255,.9);
+          backdrop-filter: blur(22px) saturate(135%); -webkit-backdrop-filter: blur(22px) saturate(135%);
+        }
+        h2 { margin: 0 0 8px; font: 700 2rem/1.15 Georgia, serif; color: var(--green-dark); text-align: center; }
+        .intro { margin: 0 0 20px; color: #5b6d63; text-align: center; font-size: 0.95rem; }
+        .steps { display: grid; grid-template-columns: repeat(3,1fr); margin-bottom: 21px; border-bottom: 1px solid rgba(65,110,75,.2); }
+        .step { position: relative; padding: 0 4px 14px; text-align: center; font-size: .78rem; color: #7b8b80; font-weight: 600; }
+        .step.active { color: #1f6d3d; font-weight: 750; }
+        .step.active::after { content: ""; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; border-radius: 5px; background: #287747; }
+        .field { margin-bottom: 15px; }
+        label { display: block; margin: 0 0 7px; font-size: .87rem; font-weight: 700; color: #294638; }
+        .required { color: #287943; }
+        .input-wrap { position: relative; }
+        .symbol { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #385b48; font-size: 1.05rem; pointer-events: none; }
+        input, select { width: 100%; height: 51px; padding: 0 15px 0 43px; color: #203d2f; background: rgba(255,255,255,.49); border: 1px solid rgba(255,255,255,.98); outline: 1px solid rgba(92,130,99,.13); border-radius: 13px; }
+        input:focus, select:focus { border-color: #6eaa7b; outline: 0; background: rgba(255,255,255,.82); box-shadow: 0 0 0 4px rgba(56,132,76,.12); }
+        select { padding-left: 15px; }
+        .password-input { padding-right: 48px; }
+        .toggle-password { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: #42624e; padding: 8px; border-radius: 8px; cursor: pointer; }
+        .row-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+        .phone-row { display: grid; grid-template-columns: 83px 1fr; gap: 8px; }
+        .phone-row select, .phone-row input { padding-left: 12px; }
+        .primary-btn { width: 100%; min-height: 51px; border: 1px solid rgba(255,255,255,.92); border-radius: 999px; color: #fff; font-weight: 750; background: linear-gradient(110deg, #5b9b50, #17633c); box-shadow: 0 9px 20px rgba(32,103,55,.22); margin-top: 10px; cursor: pointer; }
+        .step-actions { display: flex; gap: 10px; margin-top: 8px; }
+        .secondary-btn { min-height: 49px; padding: 0 20px; border: 1px solid #7ba889; border-radius: 999px; background: rgba(255,255,255,.45); color: #2b6540; font-weight: 700; cursor: pointer; }
+        .terms { display: flex; gap: 9px; align-items: flex-start; margin: 15px 0; color: #5c7062; font-size: .83rem; line-height: 1.45; }
+        .terms input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: #287747; flex-shrink: 0; padding: 0; }
+        .switch-copy { margin: 20px 0 0; text-align: center; color: #586c60; font-size: .88rem; }
+        .switch-copy a { color: #226d40; font-weight: 700; text-decoration: none; }
+        @media (max-width: 520px) {
+          .row-fields { grid-template-columns: 1fr; gap: 0; }
+        }
+      `}</style>
 
-      <div style={styles.glassCard}>
-        <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <div style={{ fontSize: "48px", marginBottom: "8px", filter: "drop-shadow(0px 8px 16px rgba(139,10,46,0.2))" }}>💍</div>
-          <h1 style={{ color: "#8B0A2E", margin: "0 0 4px 0", fontSize: isMobile ? "24px" : "28px", fontWeight: "800", fontFamily: "'Playfair Display', serif" }}>Create Your Profile</h1>
-          <p style={{ color: "#5c3030", margin: 0, fontSize: "14px", fontWeight: "500" }}>Start your journey to find the perfect soulmate</p>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
-            <div>
-              <label style={styles.label}>Full Name *</label>
-              <input type="text" placeholder="Your name" value={form.name} onChange={(e) => update("name", e.target.value)} style={styles.input} />
-            </div>
-            <div>
-              <label style={styles.label}>Mobile *</label>
-              <input type="tel" maxLength="10" placeholder="10 digit" value={form.mobile} onChange={(e) => update("mobile", e.target.value)} style={styles.input} />
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
-            <div>
-              <label style={styles.label}>Gender *</label>
-              <select value={form.gender} onChange={(e) => update("gender", e.target.value)} style={styles.input}>
-                <option value="">Select</option><option value="male">Male</option><option value="female">Female</option>
-              </select>
-            </div>
-            <div>
-              <label style={styles.label}>Date of Birth *</label>
-              <input type="date" value={form.dob} onChange={(e) => update("dob", e.target.value)} style={styles.input} />
-            </div>
-          </div>
-
-          <div>
-            <label style={styles.label}>Community *</label>
-            <select value={form.community} onChange={(e) => update("community", e.target.value)} style={styles.input}>
-              <option value="">Select Community</option>
-              {communities.map((c) => <option key={c.slug} value={c.slug}>{c.emoji || "👥"} {c.name}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label style={styles.label}>Email Address *</label>
-            <input type="email" placeholder="you@example.com" value={form.email} onChange={(e) => update("email", e.target.value)} style={styles.input} />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
-            <div style={{ position: "relative" }}>
-              <label style={styles.label}>Password *</label>
-              <input type={showPassword ? "text" : "password"} placeholder="Min 6 chars" value={form.password} onChange={(e) => update("password", e.target.value)} style={styles.input} />
-            </div>
-            <div style={{ position: "relative" }}>
-              <label style={styles.label}>Confirm Password *</label>
-              <input type={showPassword ? "text" : "password"} placeholder="Re-enter" value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} style={styles.input} />
-            </div>
-          </div>
+      <div className="auth-body">
+        <section className="panel">
+          <header className="brand">
+            <h1>Vivaha</h1>
+            <p>Find Your Life Partner</p>
+          </header>
           
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer", color: "#5c3030", marginTop: "4px" }}>
-            <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} style={{ width: 16, height: 16, accentColor: "#8B0A2E" }} />
-            <span>Show Passwords</span>
-          </label>
+          <h2>Create Your Account</h2>
+          <p className="intro">Join thousands of people looking for their life partner.</p>
+          
+          <div className="glass-card">
+            <div className="steps">
+              <div className={`step ${step === 1 ? "active" : ""}`}>1. Basic</div>
+              <div className={`step ${step === 2 ? "active" : ""}`}>2. Personal</div>
+              <div className={`step ${step === 3 ? "active" : ""}`}>3. Prefs</div>
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+              {step === 1 && (
+                <div>
+                  <div className="field">
+                    <label>Full Name <span className="required">*</span></label>
+                    <div className="input-wrap"><span className="symbol">♙</span><input type="text" placeholder="Your name" value={form.name} onChange={(e) => update("name", e.target.value)} required /></div>
+                  </div>
+                  <div className="row-fields">
+                    <div className="field">
+                      <label>Gender <span className="required">*</span></label>
+                      <select value={form.gender} onChange={(e) => update("gender", e.target.value)} required>
+                        <option value="">Select</option><option value="male">Male</option><option value="female">Female</option>
+                      </select>
+                    </div>
+                    <div className="field">
+                      <label>Date of Birth <span className="required">*</span></label>
+                      <div className="input-wrap"><span className="symbol">▦</span><input type="date" value={form.dob} onChange={(e) => update("dob", e.target.value)} required /></div>
+                    </div>
+                  </div>
+                  <div className="field">
+                    <label>Email <span className="required">*</span></label>
+                    <div className="input-wrap"><span className="symbol">✉</span><input type="email" placeholder="you@example.com" value={form.email} onChange={(e) => update("email", e.target.value)} required /></div>
+                  </div>
+                  <div className="field">
+                    <label>Mobile <span className="required">*</span></label>
+                    <div className="phone-row">
+                      <select><option value="+91">+91</option></select>
+                      <input type="tel" placeholder="10 digit" maxLength="10" value={form.mobile} onChange={(e) => update("mobile", e.target.value)} required />
+                    </div>
+                  </div>
+                  <div className="field">
+                    <label>Password <span className="required">*</span></label>
+                    <div className="input-wrap">
+                      <span className="symbol">♙</span>
+                      <input className="password-input" type={showPassword ? "text" : "password"} placeholder="Min 6 chars" value={form.password} onChange={(e) => update("password", e.target.value)} required minLength="6" />
+                      <button className="toggle-password" type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? "◎" : "◉"}</button>
+                    </div>
+                  </div>
+                  <div className="step-actions"><button className="primary-btn" type="button" onClick={nextStep}>Continue →</button></div>
+                </div>
+              )}
 
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer", color: "#4b5563", marginTop: "8px" }}>
-            <input type="checkbox" checked={form.terms} onChange={(e) => update("terms", e.target.checked)} style={{ width: 18, height: 18, accentColor: "#8B0A2E" }} />
-            <span>I agree to the <span style={{ color: "#8B0A2E", fontWeight: "bold" }}>Terms & Privacy Policy</span></span>
-          </label>
+              {step === 2 && (
+                <div>
+                  <div className="field">
+                    <label>Current City <span className="required">*</span></label>
+                    <div className="input-wrap"><span className="symbol">⌖</span><input type="text" placeholder="e.g. Chennai" value={form.city} onChange={(e) => update("city", e.target.value)} required /></div>
+                  </div>
+                  <div className="row-fields">
+                    <div className="field">
+                      <label>Community</label>
+                      <select value={form.community} onChange={(e) => update("community", e.target.value)}>
+                        <option value="">Select</option>
+                        <option value="Vanniyar">Vanniyar</option>
+                        <option value="Pillai">Pillai</option>
+                        <option value="Chettiar">Chettiar</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div className="field">
+                      <label>Education</label>
+                      <input type="text" placeholder="Your education" value={form.education} onChange={(e) => update("education", e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="field">
+                    <label>Occupation</label>
+                    <input type="text" placeholder="Your occupation" value={form.occupation} onChange={(e) => update("occupation", e.target.value)} />
+                  </div>
+                  <div className="step-actions">
+                    <button className="secondary-btn" type="button" onClick={prevStep}>Back</button>
+                    <button className="primary-btn" type="button" onClick={nextStep}>Continue →</button>
+                  </div>
+                </div>
+              )}
 
-          <button type="submit" disabled={saving} style={styles.btnNext}>
-            {saving ? "Creating Account..." : "Create Profile 💍"}
-          </button>
-        </form>
-
-        <p style={{ textAlign: "center", marginTop: "24px", fontSize: "14px", color: "#5c3030", fontWeight: "500" }}>
-          Already have an account? <Link to="/login" style={{ color: "#8B0A2E", fontWeight: "bold", textDecoration: "none" }}>Login</Link>
-        </p>
+              {step === 3 && (
+                <div>
+                  <div className="row-fields">
+                    <div className="field">
+                      <label>Partner age from</label>
+                      <select value={form.pref_age_min} onChange={(e) => update("pref_age_min", e.target.value)}>
+                        <option value="21">21</option><option value="23">23</option><option value="25">25</option><option value="28">28</option>
+                      </select>
+                    </div>
+                    <div className="field">
+                      <label>Partner age up to</label>
+                      <select value={form.pref_age_max} onChange={(e) => update("pref_age_max", e.target.value)}>
+                        <option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="field">
+                    <label>Preferred location</label>
+                    <input type="text" placeholder="Any city or state" value={form.pref_location} onChange={(e) => update("pref_location", e.target.value)} />
+                  </div>
+                  <label className="terms">
+                    <input type="checkbox" checked={form.terms} onChange={(e) => update("terms", e.target.checked)} required />
+                    <span>I agree to the Terms of Use and Privacy Policy. I confirm that the details provided are accurate.</span>
+                  </label>
+                  <div className="step-actions">
+                    <button className="secondary-btn" type="button" onClick={prevStep}>Back</button>
+                    <button className="primary-btn" type="submit" disabled={loading}>{loading ? "Creating..." : "Create Account ♡"}</button>
+                  </div>
+                </div>
+              )}
+            </form>
+            
+            <p className="switch-copy">Already have an account? <Link to="/login">Login</Link></p>
+          </div>
+        </section>
       </div>
-    </div>
+    </>
   );
 }
-
-const styles = {
-  page: { 
-    minHeight: "100vh", 
-    position: "relative", 
-    padding: "20px 16px", 
-    fontFamily: "'Inter', sans-serif", 
-    display: "flex", 
-    alignItems: "center", 
-    justifyContent: "center", 
-    overflow: "hidden" 
-  },
-  bgGradient: { 
-    position: "absolute", 
-    inset: 0, 
-    background: "linear-gradient(135deg, #FFF0F5 0%, #FDF2F6 50%, #FFF9F5 100%)", 
-    zIndex: -2 
-  },
-  orb: {
-    position: "absolute",
-    width: "300px",
-    height: "300px",
-    borderRadius: "50%",
-    filter: "blur(80px)",
-    opacity: 0.3,
-    zIndex: -1,
-    animation: "float 10s infinite alternate ease-in-out"
-  },
-  glassCard: { 
-    maxWidth: "500px", 
-    width: "100%", 
-    background: "rgba(255, 255, 255, 0.55)", 
-    backdropFilter: "blur(20px)", 
-    WebkitBackdropFilter: "blur(20px)",
-    borderRadius: "28px", 
-    padding: "32px 24px", 
-    boxShadow: "0 10px 40px rgba(139,10,46,0.08), inset 0 0 0 1px rgba(255,255,255,0.6)", 
-    border: "1px solid rgba(255,255,255,0.5)" 
-  },
-  label: { 
-    display: "block", 
-    fontSize: "11px", 
-    fontWeight: "800", 
-    color: "#8B0A2E", 
-    letterSpacing: "0.5px", 
-    textTransform: "uppercase", 
-    marginBottom: "6px" 
-  },
-  input: { 
-    width: "100%", 
-    padding: "14px 16px", 
-    border: "1px solid rgba(255,255,255,0.8)", 
-    borderRadius: "12px", 
-    fontSize: "14px", 
-    fontFamily: "inherit", 
-    outline: "none", 
-    background: "rgba(255, 255, 255, 0.6)", 
-    boxSizing: "border-box", 
-    transition: "all 0.3s", 
-    color: "#2D1B1B",
-    backdropFilter: "blur(5px)"
-  },
-  btnNext: { 
-    width: "100%", 
-    padding: "16px", 
-    borderRadius: "12px", 
-    background: "linear-gradient(135deg, #8B0A2E, #a01438)", 
-    color: "white", 
-    border: "none", 
-    fontWeight: "800", 
-    fontSize: "16px", 
-    cursor: "pointer", 
-    fontFamily: "inherit", 
-    boxShadow: "0 8px 24px rgba(139,10,46,0.3)", 
-    marginTop: "12px" 
-  },
-};
 
 export default Register;
