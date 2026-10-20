@@ -3,8 +3,7 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 import { useCommunities } from "../utils/communities";
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Secure API
 
 // Helper: Calculate age from DOB
 function getAge(dobString) {
@@ -21,6 +20,7 @@ function Register() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [registrationAllowed, setRegistrationAllowed] = useState(true);
   const [checkingSettings, setCheckingSettings] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -43,7 +43,7 @@ function Register() {
   }, [navigate]);
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/settings`)
+    apiFetch(`/settings`)
       .then(res => res.json())
       .then(settingsData => {
         if (settingsData.settings && settingsData.settings.allow_registration === "false") setRegistrationAllowed(false);
@@ -67,32 +67,35 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // 🛡️ Validations
     if (!form.name.trim()) return toast.error("Full Name is required");
     if (!form.gender) return toast.error("Gender is required");
     if (!form.dob) return toast.error("Date of Birth is required");
 
-    // AGE VALIDATION (Minimum 21)
     const age = getAge(form.dob);
     if (age < 21) return toast.error("You must be at least 21 years old to register.");
     if (age > 80) return toast.error("Please enter a valid Date of Birth.");
 
     if (!form.community) return toast.error("Community is required for matching");
     if (!form.mobile || form.mobile.length !== 10) return toast.error("Valid 10-digit mobile number is required");
-    if (!form.email.trim()) return toast.error("Email is required");
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) return toast.error("Please enter a valid email address.");
+    
     if (form.password.length < 6) return toast.error("Password must be at least 6 characters");
     if (form.password !== form.confirmPassword) return toast.error("Passwords don't match");
     if (!form.terms) return toast.error("You must agree to the Terms & Privacy Policy");
 
     setSaving(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/auth/signup`, {
+      const res = await apiFetch(`/auth/signup`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: form.email.trim(),
           password: form.password,
           community: form.community,
-          caste: form.community, // NEW: sync caste with community slug
+          caste: form.community,
           name: form.name.trim(),
           gender: form.gender,
           dob: form.dob,
@@ -110,16 +113,16 @@ function Register() {
 
       toast.success("🎉 Account Created! Let's complete your profile.");
 
+      // Auto Login after signup
       const { error: loginError } = await supabase.auth.signInWithPassword({
         email: form.email.trim(), password: form.password,
       });
 
-            if (loginError) {
+      if (loginError) {
         toast.error("Please log in.");
         navigate("/login");
       } else {
-        navigate("/onboarding");   // ✅ NEW
-            
+        navigate("/onboarding"); 
       }
     } catch (err) {
       console.error(err);
@@ -128,6 +131,7 @@ function Register() {
   };
 
   if (checkingSettings) return <div style={{ padding: 60, textAlign: "center" }}>Loading...</div>;
+  
   if (!registrationAllowed) {
     return (
       <div style={styles.page}>
@@ -143,32 +147,44 @@ function Register() {
 
   return (
     <div style={styles.page}>
+      {/* Background Gradient */}
+      <div style={styles.bgGradient} />
+      
       <div style={styles.card}>
         <div style={{ textAlign: "center", marginBottom: "28px" }}>
-          <div style={{ fontSize: "42px", marginBottom: "4px" }}>💍</div>
-          <h1 style={{ color: "#8B0A2E", margin: "0 0 4px 0", fontSize: isMobile ? "22px" : "24px", fontWeight: "800", fontFamily: "'Playfair Display', serif" }}>Create Your Profile</h1>
-          <p style={{ color: "#9ca3af", margin: 0, fontSize: "13px" }}>It takes less than 30 seconds to start</p>
+          <div style={{ fontSize: "48px", marginBottom: "8px", filter: "drop-shadow(0px 8px 16px rgba(139,10,46,0.2))" }}>💍</div>
+          <h1 style={{ color: "#8B0A2E", margin: "0 0 4px 0", fontSize: isMobile ? "24px" : "28px", fontWeight: "800", fontFamily: "'Playfair Display', serif" }}>Create Your Profile</h1>
+          <p style={{ color: "#8a6b6b", margin: 0, fontSize: "14px" }}>Start your journey to find the perfect soulmate</p>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <div><label style={styles.label}>Full Name *</label><input type="text" placeholder="Enter name" value={form.name} onChange={(e) => update("name", e.target.value)} style={styles.input} /></div>
-            <div><label style={styles.label}>Mobile Number *</label><input type="tel" maxLength="10" placeholder="10 digit number" value={form.mobile} onChange={(e) => update("mobile", e.target.value)} style={styles.input} /></div>
+            <div>
+              <label style={styles.label}>Full Name *</label>
+              <input type="text" placeholder="Your name" value={form.name} onChange={(e) => update("name", e.target.value)} style={styles.input} />
+            </div>
+            <div>
+              <label style={styles.label}>Mobile *</label>
+              <input type="tel" maxLength="10" placeholder="10 digit" value={form.mobile} onChange={(e) => update("mobile", e.target.value)} style={styles.input} />
+            </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
             <div>
               <label style={styles.label}>Gender *</label>
               <select value={form.gender} onChange={(e) => update("gender", e.target.value)} style={styles.input}>
-                <option value="">Select Gender</option>
+                <option value="">Select</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
               </select>
             </div>
-            <div><label style={styles.label}>Date of Birth *</label><input type="date" value={form.dob} onChange={(e) => update("dob", e.target.value)} style={styles.input} /></div>
+            <div>
+              <label style={styles.label}>Date of Birth *</label>
+              <input type="date" value={form.dob} onChange={(e) => update("dob", e.target.value)} style={styles.input} />
+            </div>
           </div>
 
-          <div style={{ marginTop: "16px" }}>
+          <div>
             <label style={styles.label}>Community *</label>
             <select value={form.community} onChange={(e) => update("community", e.target.value)} style={styles.input}>
               <option value="">Select Community</option>
@@ -176,16 +192,30 @@ function Register() {
             </select>
           </div>
 
-          <div style={{ marginTop: "16px" }}><label style={styles.label}>Email Address *</label><input type="email" placeholder="you@example.com" value={form.email} onChange={(e) => update("email", e.target.value)} style={styles.input} /></div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" }}>
-            <div><label style={styles.label}>Password *</label><input type="password" placeholder="Min 6 chars" value={form.password} onChange={(e) => update("password", e.target.value)} style={styles.input} /></div>
-            <div><label style={styles.label}>Confirm Password *</label><input type="password" placeholder="Re-enter" value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} style={styles.input} /></div>
+          <div>
+            <label style={styles.label}>Email Address *</label>
+            <input type="email" placeholder="you@example.com" value={form.email} onChange={(e) => update("email", e.target.value)} style={styles.input} />
           </div>
 
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "24px", fontSize: "14px", cursor: "pointer", color: "#4b5563" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div style={{ position: "relative" }}>
+              <label style={styles.label}>Password *</label>
+              <input type={showPassword ? "text" : "password"} placeholder="Min 6 chars" value={form.password} onChange={(e) => update("password", e.target.value)} style={styles.input} />
+            </div>
+            <div style={{ position: "relative" }}>
+              <label style={styles.label}>Confirm Password *</label>
+              <input type={showPassword ? "text" : "password"} placeholder="Re-enter" value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} style={styles.input} />
+            </div>
+          </div>
+          
+          <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer", color: "#555", marginTop: "4px" }}>
+            <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} style={{ width: 16, height: 16, accentColor: "#8B0A2E" }} />
+            <span>Show Passwords</span>
+          </label>
+
+          <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", cursor: "pointer", color: "#4b5563", marginTop: "8px" }}>
             <input type="checkbox" checked={form.terms} onChange={(e) => update("terms", e.target.checked)} style={{ width: 18, height: 18, accentColor: "#8B0A2E" }} />
-            <span>I agree to the Terms & Privacy Policy</span>
+            <span>I agree to the <span style={{ color: "#8B0A2E", fontWeight: "bold" }}>Terms & Privacy Policy</span></span>
           </label>
 
           <button type="submit" disabled={saving} style={styles.btnNext}>
@@ -193,7 +223,7 @@ function Register() {
           </button>
         </form>
 
-        <p style={{ textAlign: "center", marginTop: "20px", fontSize: "14px", color: "#666" }}>
+        <p style={{ textAlign: "center", marginTop: "24px", fontSize: "14px", color: "#666" }}>
           Already have an account? <Link to="/login" style={{ color: "#8B0A2E", fontWeight: "bold", textDecoration: "none" }}>Login</Link>
         </p>
       </div>
@@ -202,11 +232,12 @@ function Register() {
 }
 
 const styles = {
-  page: { minHeight: "100vh", background: "linear-gradient(135deg, #fdf2f6 0%, #fff9f5 100%)", padding: "40px 16px", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", display: "flex", alignItems: "flex-start", justifyContent: "center" },
-  card: { maxWidth: "480px", width: "100%", background: "white", borderRadius: "24px", padding: "32px 24px", boxShadow: "0 20px 60px rgba(139,10,46,0.12)", border: "1px solid #f8e8ed" },
-  label: { display: "block", fontSize: "12px", fontWeight: "700", color: "#6b7280", letterSpacing: "0.4px", textTransform: "uppercase", marginBottom: "6px" },
-  input: { width: "100%", padding: "14px 16px", border: "1.5px solid #e5e7eb", borderRadius: "12px", fontSize: "15px", fontFamily: "inherit", outline: "none", background: "#fafafa", boxSizing: "border-box", transition: "all 0.2s", color: "#1f2937" },
-  btnNext: { width: "100%", padding: "16px", borderRadius: "12px", background: "linear-gradient(135deg, #8B0A2E, #a01438)", color: "white", border: "none", fontWeight: "700", fontSize: "16px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 8px 20px rgba(139,10,46,0.3)", marginTop: "24px" },
+  page: { minHeight: "100vh", position: "relative", padding: "40px 16px", fontFamily: "'Inter', sans-serif", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  bgGradient: { position: "absolute", inset: 0, background: "linear-gradient(135deg, #FDF2F6 0%, #FFF9F5 100%)", zIndex: -1 },
+  card: { maxWidth: "480px", width: "100%", background: "rgba(255, 255, 255, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", padding: "32px 24px", boxShadow: "0 20px 60px rgba(139,10,46,0.1)", border: "1px solid rgba(255,255,255,0.5)" },
+  label: { display: "block", fontSize: "11px", fontWeight: "800", color: "#8a6b6b", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: "6px" },
+  input: { width: "100%", padding: "14px 16px", border: "1.5px solid #f0e0e0", borderRadius: "12px", fontSize: "14px", fontFamily: "inherit", outline: "none", background: "#FFF9F5", boxSizing: "border-box", transition: "all 0.3s", color: "#2D1B1B" },
+  btnNext: { width: "100%", padding: "16px", borderRadius: "12px", background: "linear-gradient(135deg, #8B0A2E, #a01438)", color: "white", border: "none", fontWeight: "800", fontSize: "16px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 8px 24px rgba(139,10,46,0.3)", marginTop: "12px" },
 };
 
 export default Register;
