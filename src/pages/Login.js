@@ -9,13 +9,13 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user) navigate("/dashboard");
     });
-    const handleResize = () => setIsMobile(window.innerWidth < 900);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [navigate]);
@@ -42,91 +42,69 @@ function Login() {
   };
 
   return (
-    <div style={styles.container}>
-      {/* LEFT SIDE: Romantic Image (Hidden on Mobile) */}
-      {!isMobile && (
-        <div style={styles.leftPanel}>
-          <img 
-            src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=2000&auto=format&fit=crop" 
-            alt="Wedding" 
-            style={styles.bgImage} 
-          />
-          <div style={styles.overlay} />
-          <div style={styles.quoteContainer}>
-            <h2 style={styles.quoteTitle}>"Two souls, one heart."</h2>
-            <p style={styles.quoteText}>Begin your forever with Vivaha Matrimony.</p>
-          </div>
+    <div style={styles.page}>
+      {/* Background with rich gradient for glass effect */}
+      <div style={styles.bgGradient} />
+      
+      {/* Floating Orbs for background texture */}
+      <div style={{...styles.orb, top: '10%', left: '15%', background: '#D4A017'}} />
+      <div style={{...styles.orb, bottom: '20%', right: '10%', background: '#8B0A2E'}} />
+
+      <div style={styles.glassCard}>
+        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+          <div style={{ fontSize: "52px", marginBottom: "12px", filter: "drop-shadow(0px 8px 16px rgba(139,10,46,0.2))" }}>♥</div>
+          <h1 style={{ color: "#8B0A2E", margin: "0 0 6px 0", fontSize: isMobile ? "26px" : "30px", fontWeight: "800", fontFamily: "'Playfair Display', serif" }}>Welcome Back</h1>
+          <p style={{ color: "#5c3030", margin: 0, fontSize: "14px", fontWeight: "500" }}>Login to find your perfect match</p>
         </div>
-      )}
 
-      {/* RIGHT SIDE: Login Form */}
-      <div style={styles.rightPanel}>
-        <div style={styles.formWrapper}>
-          
-          <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px", marginBottom: "40px" }}>
-            <div style={styles.logoCircle}>♥</div>
-            <div>
-              <div style={styles.logoText}>Vivaha</div>
-              <div style={styles.logoSub}>MATRIMONY</div>
-            </div>
-          </Link>
-
-          <h1 style={styles.h1}>Welcome Back</h1>
-          <p style={styles.subtitle}>Please sign in to continue your journey.</p>
-
-          <form onSubmit={handleLogin} style={styles.form}>
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Email Address</label>
-              <div style={styles.inputWrapper}>
-                <span style={styles.icon}>✉️</span>
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={styles.input}
-                  required
-                />
-              </div>
-            </div>
-
-            <div style={styles.inputGroup}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                <label style={{...styles.label, marginBottom: 0}}>Password</label>
-                <Link to="/forgot-password" style={styles.forgotLink}>Forgot password?</Link>
-              </div>
-              <div style={styles.inputWrapper}>
-                <span style={styles.icon}>🔒</span>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={styles.input}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={styles.eyeBtn}
-                >
-                  {showPassword ? "👁️" : "👁️‍🗨️"}
-                </button>
-              </div>
-            </div>
-
-            <button type="submit" disabled={loading} style={styles.submitBtn}>
-              {loading ? "Signing in..." : "Sign In"}
-            </button>
-          </form>
-
-          <p style={styles.footerText}>
-            New to Vivaha? <Link to="/register" style={styles.footerLink}>Create an account</Link>
-          </p>
-
-          <div style={styles.securityBadge}>
-            <span>🛡️</span> 256-bit SSL Secure Connection
+        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div>
+            <label style={styles.label}>Email Address</label>
+            <input 
+              type="email" 
+              placeholder="you@example.com" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              style={styles.input} 
+              required
+            />
           </div>
+
+          <div style={{ position: "relative" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <label style={{...styles.label, marginBottom: 0}}>Password</label>
+              <Link to="/forgot-password" style={{ fontSize: "12px", color: "#8B0A2E", fontWeight: "bold", textDecoration: "none" }}>Forgot?</Link>
+            </div>
+            <input 
+              type={showPassword ? "text" : "password"} 
+              placeholder="Enter your password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              style={styles.input} 
+              required
+            />
+            <button 
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{ position: "absolute", right: "12px", top: "38px", background: "none", border: "none", cursor: "pointer", fontSize: "16px", opacity: 0.7 }}
+            >
+              {showPassword ? "👁️" : "👁️‍🗨️"}
+            </button>
+          </div>
+
+          <button type="submit" disabled={loading} style={styles.btnLogin}>
+            {loading ? "Logging in..." : "Login Securely →"}
+          </button>
+        </form>
+
+        <p style={{ textAlign: "center", fontSize: "14px", color: "#5c3030", margin: "24px 0 0 0", fontWeight: "500" }}>
+          Don't have an account? <Link to="/register" style={{ color: "#8B0A2E", fontWeight: "bold", textDecoration: "none" }}>Register Free</Link>
+        </p>
+        
+        <div style={{ textAlign: "center", marginTop: "24px" }}>
+          <span style={{ fontSize: "11px", color: "#8a6b6b", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontWeight: "600" }}>
+            🔒 Secure 256-bit SSL Encrypted Connection
+          </span>
         </div>
       </div>
     </div>
@@ -134,32 +112,80 @@ function Login() {
 }
 
 const styles = {
-  container: { display: "flex", minHeight: "100vh", background: "#FFF" },
-  leftPanel: { flex: 1, position: "relative", display: "flex", alignItems: "flex-end", padding: "60px" },
-  bgImage: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" },
-  overlay: { position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(107, 7, 34, 0.9), rgba(107, 7, 34, 0.2))" },
-  quoteContainer: { position: "relative", zIndex: 2, color: "#FFF" },
-  quoteTitle: { fontFamily: "'Playfair Display', serif", fontSize: "36px", fontWeight: "700", margin: "0 0 10px 0", fontStyle: "italic" },
-  quoteText: { fontSize: "16px", opacity: 0.9, margin: 0 },
-  rightPanel: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px", background: "#FFFDFB" },
-  formWrapper: { width: "100%", maxWidth: "420px" },
-  logoCircle: { width: "42px", height: "42px", borderRadius: "50%", background: "#8B0A2E", color: "#D4A017", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" },
-  logoText: { fontFamily: "'Playfair Display', serif", fontSize: "20px", fontWeight: "900", color: "#8B0A2E", lineHeight: 1 },
-  logoSub: { fontSize: "9px", color: "#D4A017", fontWeight: "700", letterSpacing: "2px" },
-  h1: { fontFamily: "'Playfair Display', serif", fontSize: "32px", color: "#2D1B1B", margin: "0 0 8px 0" },
-  subtitle: { color: "#8a6b6b", fontSize: "15px", marginBottom: "32px" },
-  form: { display: "flex", flexDirection: "column", gap: "20px" },
-  inputGroup: { display: "flex", flexDirection: "column" },
-  label: { fontSize: "12px", fontWeight: "800", color: "#555", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" },
-  inputWrapper: { display: "flex", alignItems: "center", background: "#FFF", border: "1.5px solid #EAE3D9", borderRadius: "12px", padding: "0 16px", transition: "border 0.3s", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" },
-  icon: { fontSize: "16px", opacity: 0.6, marginRight: "12px" },
-  input: { flex: 1, padding: "16px 0", border: "none", outline: "none", fontSize: "15px", color: "#2D1B1B", background: "transparent", fontFamily: "inherit" },
-  eyeBtn: { background: "none", border: "none", cursor: "pointer", fontSize: "16px", opacity: 0.6 },
-  forgotLink: { fontSize: "12px", color: "#8B0A2E", fontWeight: "700", textDecoration: "none" },
-  submitBtn: { background: "linear-gradient(135deg, #8B0A2E, #6B0722)", color: "#FFF", border: "none", padding: "16px", borderRadius: "12px", fontSize: "16px", fontWeight: "800", cursor: "pointer", marginTop: "10px", boxShadow: "0 8px 20px rgba(139,10,46,0.25)", transition: "transform 0.2s" },
-  footerText: { textAlign: "center", marginTop: "32px", color: "#666", fontSize: "14px" },
-  footerLink: { color: "#8B0A2E", fontWeight: "800", textDecoration: "none" },
-  securityBadge: { display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginTop: "40px", fontSize: "11px", color: "#aaa", fontWeight: "600" }
+  page: { 
+    minHeight: "100vh", 
+    position: "relative", 
+    padding: "20px 16px", 
+    fontFamily: "'Inter', sans-serif", 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    overflow: "hidden" 
+  },
+  bgGradient: { 
+    position: "absolute", 
+    inset: 0, 
+    background: "linear-gradient(135deg, #FFF0F5 0%, #FDF2F6 50%, #FFF9F5 100%)", 
+    zIndex: -2 
+  },
+  orb: {
+    position: "absolute",
+    width: "300px",
+    height: "300px",
+    borderRadius: "50%",
+    filter: "blur(80px)",
+    opacity: 0.3,
+    zIndex: -1,
+    animation: "float 10s infinite alternate ease-in-out"
+  },
+  glassCard: { 
+    maxWidth: "440px", 
+    width: "100%", 
+    background: "rgba(255, 255, 255, 0.55)", 
+    backdropFilter: "blur(20px)", 
+    WebkitBackdropFilter: "blur(20px)",
+    borderRadius: "28px", 
+    padding: "36px 28px", 
+    boxShadow: "0 10px 40px rgba(139,10,46,0.08), inset 0 0 0 1px rgba(255,255,255,0.6)", 
+    border: "1px solid rgba(255,255,255,0.5)" 
+  },
+  label: { 
+    display: "block", 
+    fontSize: "11px", 
+    fontWeight: "800", 
+    color: "#8B0A2E", 
+    letterSpacing: "0.5px", 
+    textTransform: "uppercase", 
+    marginBottom: "6px" 
+  },
+  input: { 
+    width: "100%", 
+    padding: "14px 16px", 
+    border: "1px solid rgba(255,255,255,0.8)", 
+    borderRadius: "12px", 
+    fontSize: "14px", 
+    fontFamily: "inherit", 
+    outline: "none", 
+    background: "rgba(255, 255, 255, 0.6)", 
+    boxSizing: "border-box", 
+    transition: "all 0.3s", 
+    color: "#2D1B1B",
+    backdropFilter: "blur(5px)"
+  },
+  btnLogin: { 
+    width: "100%", 
+    padding: "16px", 
+    borderRadius: "12px", 
+    background: "linear-gradient(135deg, #8B0A2E, #a01438)", 
+    color: "white", 
+    border: "none", 
+    fontWeight: "800", 
+    fontSize: "16px", 
+    cursor: "pointer", 
+    fontFamily: "inherit", 
+    boxShadow: "0 8px 24px rgba(139,10,46,0.3)", 
+    marginTop: "8px" 
+  },
 };
 
 export default Login;
