@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import supabase from "../supabaseClient";
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "./api"; // 🛡️ Added for JWT
 
 const FREE_PERMISSIONS = {
   daily_interests: 5,
@@ -35,8 +34,8 @@ export function usePlan() {
         if (!user) { setLoading(false); return; }
         setUserId(user.id);
 
-        // Get plan permissions
-        const res = await fetch(`${BACKEND_URL}/plans/user-plan/${user.id}`);
+        // 🛡️ SECURITY FIX: Switched to apiFetch & removed user.id from URL
+        const res = await apiFetch(`/plans/user-plan/${user.id}`);
         let planPerms = {};
         let planName = "Free";
         if (res.ok) {
@@ -45,8 +44,8 @@ export function usePlan() {
           planPerms = data.permissions || {};
         }
 
-        // Get custom permissions
-        const customRes = await fetch(`${BACKEND_URL}/user-permissions/user/${user.id}`);
+        // 🛡️ SECURITY FIX: Switched to apiFetch & used the new secure route
+        const customRes = await apiFetch(`/user-permissions/my-permissions`);
         let rawCustom = {};
         let category = null;
         if (customRes.ok) {
@@ -57,9 +56,6 @@ export function usePlan() {
 
         // ============================================
         // SMART MERGE (same as backend logic):
-        // Start with defaults + plan permissions
-        // Then apply ONLY custom TRUE values + numbers
-        // Custom FALSE values are IGNORED (plan decides)
         // ============================================
         const merged = { ...FREE_PERMISSIONS, ...planPerms };
 
@@ -68,7 +64,6 @@ export function usePlan() {
           if (val === true || typeof val === "number") {
             merged[key] = val;
           }
-          // Custom FALSE values are ignored — plan permission wins
         });
 
         setPlan(category ? `${planName} · ${category}` : planName);
