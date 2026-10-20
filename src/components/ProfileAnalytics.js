@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getPageTheme, getCardStyle } from "../utils/pageTheme";
-
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
+import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT
 
 // Helper — multiple possible field names-a support panna
 function getPhotoUrl(user) {
@@ -32,12 +30,12 @@ function ProfileAnalytics({ userId, isMobile }) {
 
   useEffect(() => {
     if (!userId) return;
-    fetch(`${BACKEND_URL}/profile/analytics/${userId}`)
+    // 🛡️ SECURITY FIX: Switched to apiFetch
+    apiFetch(`/profile/analytics/${userId}`)
       .then((r) => r.json())
       .then((data) => {
         setStats(data.stats || {});
         setRecentViewers(data.recentViewers || []);
-        // Debug log — browser console la API response print aagum
         console.log("[ProfileAnalytics] recentViewers:", data.recentViewers);
       })
       .catch((err) => console.error("Analytics fetch error:", err))
@@ -51,7 +49,6 @@ function ProfileAnalytics({ userId, isMobile }) {
   const pageMuted = pageTheme.muted;
   const cardStyle = getCardStyle(pageTheme);
 
-  // Current page path — Back button correct-a work aagum
   const fromPath = location.pathname + location.search;
 
   const statCards = [
@@ -201,9 +198,8 @@ function ProfileAnalytics({ userId, isMobile }) {
                           filter: v.should_blur_photo ? "blur(8px)" : "none",
                         }}
                         onError={(e) => {
-                          // Photo broken-a irundha, initials fallback
-                          e.target.style.display = "none";
-                          e.target.parentElement.innerHTML = `<span style="font-size:22px;font-weight:800;color:#8B0A2E;">${initial}</span>`;
+                          // 🛡️ SECURITY FIX: Replaced innerHTML with standard fallback URL
+                          e.target.src = `https://ui-avatars.com/api/?name=${initial}&background=FDF2F6&color=8B0A2E&bold=true`;
                         }}
                       />
                     ) : (
