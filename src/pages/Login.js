@@ -60,9 +60,11 @@ function Login() {
         .auth-body::before { background: #b7d6a7; top: -140px; left: -120px; }
         .auth-body::after { background: #f2d9a9; right: -150px; bottom: -140px; }
         button, input, select { font: inherit; }
+        
+        /* 🛡️ FIX: Increased max-width from 500px to 650px */
         .panel {
-          width: 100%; max-width: 500px; position: relative; display: flex; flex-direction: column; align-items: center;
-          justify-content: center; padding: 26px; border-radius: 30px; overflow: hidden; isolation: isolate;
+          width: 100%; max-width: 650px; position: relative; display: flex; flex-direction: column; align-items: center;
+          justify-content: center; padding: 30px; border-radius: 30px; overflow: hidden; isolation: isolate;
           background: linear-gradient(145deg, rgba(255,255,255,.26), rgba(255,255,255,.06)),
             radial-gradient(ellipse at 50% 10%, rgba(255,255,255,.55), transparent 48%);
           border: 1px solid rgba(255,255,255,.65);
@@ -76,8 +78,9 @@ function Login() {
         .brand { text-align: center; margin-bottom: 20px; position: relative; z-index: 1; }
         .brand h1 { margin: 0; font-family: Georgia, serif; font-size: 3rem; letter-spacing: -1.5px; color: var(--green-dark); line-height: 1; }
         .brand p { margin: 7px 0 0; color: #435b4e; font-size: .95rem; }
+        
         .glass-card {
-          width: 100%; padding: 28px; border-radius: 25px; background: rgba(255,255,255,.58);
+          width: 100%; padding: 30px 40px; border-radius: 25px; background: rgba(255,255,255,.58);
           border: 1px solid var(--glass-border); box-shadow: 0 22px 55px rgba(40,76,48,.16), inset 0 1px 0 rgba(255,255,255,.9);
           backdrop-filter: blur(22px) saturate(135%); -webkit-backdrop-filter: blur(22px) saturate(135%);
         }
@@ -104,6 +107,11 @@ function Login() {
         .switch-copy { margin: 20px 0 0; text-align: center; color: #586c60; font-size: .88rem; }
         .forgot-btn { background: none; border: none; padding: 0; color: #226d40; font-weight: 700; cursor: pointer; font-family: inherit; font-size: .86rem; }
         .forgot-btn:hover { text-decoration: underline; }
+        
+        @media (max-width: 768px) {
+          .glass-card { padding: 24px 20px; }
+          .panel { padding: 20px; }
+        }
       `}</style>
 
       <div className="auth-body">
