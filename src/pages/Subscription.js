@@ -62,7 +62,11 @@ function Subscription() {
       });
       const orderData = await orderRes.json();
       
-      if (!orderRes.ok) throw new Error(orderData.error);
+      if (!orderRes.ok) {
+        // 🛡️ FIX: Show actual error from backend
+        alert("Cashfree Error: " + (orderData.error || "Unknown error"));
+        throw new Error(orderData.error);
+      }
 
       // 2. Open Cashfree Checkout
       const cashfree = window.Cashfree({
@@ -97,7 +101,7 @@ function Subscription() {
       }
     } catch (err) {
       console.error("Subscribe error:", err);
-      alert("Payment initiation failed. Try again.");
+      // We already alerted the user above, so just console log here
     } finally {
       setSubscribing(null);
     }
