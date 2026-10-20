@@ -21,11 +21,9 @@ function Register() {
   const [registrationAllowed, setRegistrationAllowed] = useState(true);
   const [checkingSettings, setCheckingSettings] = useState(true);
 
-  // 🛡️ Old Register Details Only
   const [form, setForm] = useState({
     name: "", gender: "", dob: "", community: "", mobile: "", email: "",
     password: "", confirmPassword: "", terms: false,
-    // Default values for backend
     profile_for: "Myself", marital_status: "Never Married", religion: "Hindu", mother_tongue: "Tamil"
   });
 
@@ -55,7 +53,6 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validations
     if (!form.name.trim()) return toast.error("Full Name is required");
     if (!form.gender) return toast.error("Gender is required");
     if (!form.dob) return toast.error("Date of Birth is required");
@@ -75,19 +72,7 @@ function Register() {
       const res = await apiFetch(`/auth/signup`, {
         method: "POST",
         body: JSON.stringify({
-          email: form.email.trim(),
-          password: form.password,
-          community: form.community,
-          caste: form.community,
-          name: form.name.trim(),
-          gender: form.gender.toLowerCase(),
-          dob: form.dob,
-          mobile: form.mobile,
-          profile_for: form.profile_for,
-          marital_status: form.marital_status,
-          religion: form.religion,
-          mother_tongue: form.mother_tongue,
-          custom_fields: {}
+          email: form.email.trim(), password: form.password, community: form.community, caste: form.community, name: form.name.trim(), gender: form.gender.toLowerCase(), dob: form.dob, mobile: form.mobile, profile_for: form.profile_for, marital_status: form.marital_status, religion: form.religion, mother_tongue: form.mother_tongue, custom_fields: {}
         })
       });
 
@@ -147,9 +132,11 @@ function Register() {
         .auth-body::before { background: #b7d6a7; top: -140px; left: -120px; }
         .auth-body::after { background: #f2d9a9; right: -150px; bottom: -140px; }
         button, input, select { font: inherit; }
+        
+        /* 🛡️ FIX: Increased max-width from 580px to 850px */
         .panel {
-          width: 100%; max-width: 580px; position: relative; display: flex; flex-direction: column; align-items: center;
-          justify-content: center; padding: 26px; border-radius: 30px; overflow: hidden; isolation: isolate;
+          width: 100%; max-width: 850px; position: relative; display: flex; flex-direction: column; align-items: center;
+          justify-content: center; padding: 30px; border-radius: 30px; overflow: hidden; isolation: isolate;
           background: linear-gradient(145deg, rgba(255,255,255,.26), rgba(255,255,255,.06)),
             radial-gradient(ellipse at 50% 10%, rgba(255,255,255,.55), transparent 48%);
           border: 1px solid rgba(255,255,255,.65);
@@ -163,8 +150,10 @@ function Register() {
         .brand { text-align: center; margin-bottom: 15px; position: relative; z-index: 1; }
         .brand h1 { margin: 0; font-family: Georgia, serif; font-size: 3rem; letter-spacing: -1.5px; color: var(--green-dark); line-height: 1; }
         .brand p { margin: 7px 0 0; color: #435b4e; font-size: .95rem; }
+        
+        /* Glass card scales with the wider panel */
         .glass-card {
-          width: 100%; padding: 26px; border-radius: 25px; background: rgba(255,255,255,.58);
+          width: 100%; padding: 30px 40px; border-radius: 25px; background: rgba(255,255,255,.58);
           border: 1px solid var(--glass-border); box-shadow: 0 22px 55px rgba(40,76,48,.16), inset 0 1px 0 rgba(255,255,255,.9);
           backdrop-filter: blur(22px) saturate(135%); -webkit-backdrop-filter: blur(22px) saturate(135%);
         }
@@ -175,8 +164,8 @@ function Register() {
         h2 { margin: 0 0 8px; font: 700 2rem/1.15 Georgia, serif; color: var(--green-dark); text-align: center; }
         .intro { margin: 0 0 20px; color: #5b6d63; text-align: center; font-size: 0.95rem; }
         
-        .row-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin-bottom: 15px; }
-        .field { margin-bottom: 15px; }
+        .row-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .field { margin-bottom: 16px; }
         .field:last-child { margin-bottom: 0; }
         
         label { display: block; margin: 0 0 7px; font-size: .87rem; font-weight: 700; color: #294638; }
@@ -199,9 +188,14 @@ function Register() {
         .switch-copy { margin: 20px 0 0; text-align: center; color: #586c60; font-size: .88rem; }
         .switch-copy a { color: #226d40; font-weight: 700; text-decoration: none; }
         
+        @media (max-width: 768px) {
+          .glass-card { padding: 24px 20px; }
+          .panel { padding: 20px; }
+        }
+        
         @media (max-width: 520px) {
           .row-fields { grid-template-columns: 1fr; gap: 0; }
-          .row-fields .field { margin-bottom: 15px; }
+          .row-fields .field { margin-bottom: 16px; }
         }
       `}</style>
 
