@@ -1,8 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
-// TEMPORARY HARDCODED FOR TESTING
-const supabaseUrl = "https://mphbzgppiiiheubvrsmd.supabase.co";
-const supabaseKey = "sb_publishable_HCw0B6kraLfjKW9LEc-6Yg_26WtU7XY";
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
