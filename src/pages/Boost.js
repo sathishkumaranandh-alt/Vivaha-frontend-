@@ -4,7 +4,7 @@ import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 import usePlan from "../utils/usePlan";
 import BackButton from "../components/BackButton";
-import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT
+import { apiFetch } from "../utils/api";
 
 function Boost() {
   const navigate = useNavigate();
@@ -29,8 +29,7 @@ function Boost() {
       if (!user) { navigate("/login"); return; }
       setUserId(user.id);
       try {
-        // 🛡️ SECURITY FIX: Switched to apiFetch & removed user.id from URL
-        const res = await apiFetch(`/boost/status`);
+        const res = await apiFetch(`/boost/status/${user.id}`);
         if (res.ok) setStatus(await res.json());
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
@@ -40,36 +39,79 @@ function Boost() {
 
   const handleActivate = async () => {
     if (!userId) return;
+    
+    // ============================================
+    // FREE BOOST (Plan based)
+    // ============================================
     if (hasFreeBoost) {
       if (!window.confirm("Activate free boost with your plan?")) return;
       setActivating(true);
       try {
-        // 🛡️ SECURITY FIX: Switched to claim-free route
-        const res = await apiFetch(`/boost/claim-free`, {
-          method: "POST"
-        });
+        const res = await apiFetch(`/boost/claim-free`, { method: "POST" });
         if (res.ok) {
           toast.success("🚀 Free boost activated!");
-          const refresh = await apiFetch(`/boost/status`);
+          const refresh = await apiFetch(`/boost/status/${userId}`);
           if (refresh.ok) setStatus(await refresh.json());
-        } else toast.error("Failed to activate boost");
+        } else {
+          const data = await res.json();
+          toast.error(data.error || "Failed to activate boost");
+        }
       } catch { toast.error("Network error"); } finally { setActivating(false); }
       return;
     }
-    if (!window.confirm(`Activate Profile Boost for ₹${status?.price || 199}?`)) return;
+
+    // ============================================
+    // PAID BOOST (Cashfree Payment)
+    // ============================================
+    const price = status?.price || 199;
+    if (!window.confirm(`Activate Profile Boost for ₹${price}?`)) return;
+    
     setActivating(true);
     try {
-      // 🛡️ SECURITY FIX: Switched to apiFetch & removed userId from body
-      const res = await apiFetch(`/boost/activate`, {
-        method: "POST"
+      // 1. Create Order
+      const orderRes = await apiFetch('/payments/create-boost-order', {
+        method: "POST",
+        body: JSON.stringify({ amount: price }),
       });
-      const data = await res.json();
-      if (res.ok) {
+      const orderData = await orderRes.json();
+      
+      if (!orderRes.ok) {
+        alert("Cashfree Error: " + (orderData.error || "Unknown error"));
+        throw new Error(orderData.error);
+      }
+
+      // 2. Open Checkout
+      const cashfree = window.Cashfree({
+        mode: orderData.cashfree_env === 'PRODUCTION' ? 'production' : 'sandbox',
+      });
+
+      const checkoutResult = await cashfree.checkout({
+        paymentSessionId: orderData.payment_session_id,
+        redirectTarget: '_modal',
+      });
+
+      if (checkoutResult.error) {
+        alert('Payment cancelled or failed: ' + checkoutResult.error.message);
+        return;
+      }
+
+      // 3. Verify Payment
+      const verifyRes = await apiFetch('/payments/verify-boost-payment', {
+        method: "POST",
+        body: JSON.stringify({ order_id: orderData.order_id }),
+      });
+      const verifyData = await verifyRes.json();
+
+      if (verifyRes.ok) {
         toast.success("🚀 Boost activated!");
-        const refresh = await apiFetch(`/boost/status`);
+        const refresh = await apiFetch(`/boost/status/${userId}`);
         if (refresh.ok) setStatus(await refresh.json());
-      } else toast.error(data.error || "Failed");
-    } catch { toast.error("Network error"); } finally { setActivating(false); }
+      } else {
+        alert('Verification failed: ' + verifyData.error);
+      }
+    } catch (err) {
+      console.error("Boost error:", err);
+    } finally { setActivating(false); }
   };
 
   if (loading || planLoading) return <div style={{ padding: "80px 20px", textAlign: "center" }}>Loading...</div>;
