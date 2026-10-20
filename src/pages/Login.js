@@ -94,14 +94,16 @@ function Login() {
         input:focus { border-color: #6eaa7b; outline: 0; background: rgba(255,255,255,.82); box-shadow: 0 0 0 4px rgba(56,132,76,.12); }
         .password-input { padding-right: 48px; }
         .toggle-password { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: #42624e; padding: 8px; border-radius: 8px; cursor: pointer; }
-        .options-row { display: flex; justify-content: space-between; margin: 2px 0 20px; font-size: .86rem; }
-        .remember { display: flex; align-items: center; gap: 8px; color: #52675a; }
-        .remember input { width: 17px; height: 17px; accent-color: #287846; padding: 0; margin: 0; }
+        .options-row { display: flex; justify-content: space-between; margin: 2px 0 20px; font-size: .86rem; align-items: center; }
+        .remember { display: flex; align-items: center; gap: 8px; color: #52675a; cursor: pointer; }
+        .remember input { width: 17px; height: 17px; accent-color: #287846; padding: 0; margin: 0; cursor: pointer; }
         a { color: #226d40; font-weight: 700; text-decoration: none; }
         .primary-btn { width: 100%; min-height: 51px; border: 1px solid rgba(255,255,255,.92); border-radius: 999px; color: #fff; font-weight: 750; background: linear-gradient(110deg, #5b9b50, #17633c); box-shadow: 0 9px 20px rgba(32,103,55,.22); cursor: pointer; }
         .divider { display: flex; align-items: center; gap: 12px; margin: 19px 0; color: #66796d; font-size: .83rem; }
         .divider::before, .divider::after { content: ""; height: 1px; flex: 1; background: rgba(74,111,83,.25); }
         .switch-copy { margin: 20px 0 0; text-align: center; color: #586c60; font-size: .88rem; }
+        .forgot-btn { background: none; border: none; padding: 0; color: #226d40; font-weight: 700; cursor: pointer; font-family: inherit; font-size: .86rem; }
+        .forgot-btn:hover { text-decoration: underline; }
       `}</style>
 
       <div className="auth-body">
@@ -138,8 +140,7 @@ function Login() {
               </div>
               <div className="options-row">
                 <label className="remember"><input type="checkbox" /> Remember me</label>
-                {/* 🛡️ FIX: Changed 'a' to 'button' to fix Vercel build error */}
-                <button type="button" onClick={(e) => e.preventDefault()} style={{ background: "none", border: "none", padding: 0, color: "#226d40", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: ".86rem" }}>
+                <button type="button" className="forgot-btn" onClick={(e) => e.preventDefault()}>
                   Forgot Password?
                 </button>
               </div>
