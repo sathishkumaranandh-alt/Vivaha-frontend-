@@ -30,9 +30,6 @@ export async function apiFetch(path, options = {}) {
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
-    console.log(`✅ apiFetch[${path}] TOKEN: YES`);
-  } else {
-    console.warn(`❌ apiFetch[${path}] TOKEN: NO`);
   }
 
   const url = path.startsWith("http") ? path : `${BACKEND_URL}${path}`;
@@ -43,7 +40,6 @@ export async function apiFetch(path, options = {}) {
       headers,
     });
 
-    console.log(`📡 apiFetch[${path}] STATUS: ${res.status}`);
 
     if (!res.ok) {
       const clone = res.clone();
