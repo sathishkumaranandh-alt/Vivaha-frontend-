@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
-import { getPageTheme, getCardStyle } from "../utils/pageTheme";
+import { getPageTheme } from "../utils/pageTheme";
 import ProfileAnalytics from "../components/ProfileAnalytics";
 import ProfileCompletionCard from "../components/ProfileCompletionCard";
 import ProfileCard from "../components/ProfileCard";
