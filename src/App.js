@@ -238,7 +238,7 @@ function App() {
             <Route path="/admin-form-builder" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFormBuilder /></ProtectedRoute>} />
             <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
             <Route path="/match/:id" element={<ProtectedRoute><ProfileDetail /></ProtectedRoute>} />
-            <Route path="/admin/success-stories" element={<AdminSuccessStories />} />
+            <Route path="/admin/success-stories" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSuccessStories /></ProtectedRoute>} />
             <Route path="/onboarding" element={<Onboarding />} />
           </Routes>
         </div>
