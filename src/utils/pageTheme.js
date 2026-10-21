@@ -1,98 +1,80 @@
-const CACHE_KEY = "vivaha_home_settings_v1";
-
-const DEFAULT_THEME = {
-  bg: "#FFF9F5",
-  heading: "#8B0A2E",
-  body: "#2D1B1B",
-  muted: "#8a6b6b",
-  link: "#8B0A2E",
-  baseSize: "14",
-  headingSize: "26",
-  // Box theme defaults
-  cardBg: "#ffffff",
-  cardBorder: "#f0e0e0",
-  cardBorderWidth: "1",
-  cardRadius: "14",
-  cardPadding: "20",
-  cardShadow: "40",
-  // Label / Value
-  labelColor: "#8a6b6b",
-  labelSize: "12",
-  labelWeight: "500",
-  valueColor: "#2D1B1B",
-  valueSize: "12",
-  valueWeight: "600",
+const DEFAULT_THEMES = {
+  home: { bg: "#FFF9F5", heading: "#8B0A2E", body: "#2D1B1B", muted: "#8a6b6b", link: "#8B0A2E", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "#f0e0e0", cardRadius: 14, cardShadow: 40 },
+  search: { bg: "#FFF9F5", heading: "#8B0A2E", body: "#2D1B1B", muted: "#8a6b6b", link: "#8B0A2E", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "#f0e0e0", cardRadius: 14, cardShadow: 40 },
+  dashboard: { bg: "#FFF9F5", heading: "#8B0A2E", body: "#2D1B1B", muted: "#8a6b6b", link: "#8B0A2E", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "#f0e0e0", cardRadius: 14, cardShadow: 40 },
+  profile: { bg: "#FFF9F5", heading: "#8B0A2E", body: "#2D1B1B", muted: "#8a6b6b", link: "#8B0A2E", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "#f0e0e0", cardRadius: 14, cardShadow: 40 },
 };
 
-export function getPageTheme(pageName) {
+// 🛡️ Helper: Convert Hex color to RGBA for transparency
+const hexToRgba = (hex, alpha) => {
+  if (!hex) return `rgba(255, 255, 255, ${alpha})`;
+  // If it's already rgb or rgba, just return a safe fallback
+  if (hex.includes('rgb')) return `rgba(255, 255, 255, ${alpha})`; 
+  
+  let c = hex.substring(1);      
+  if (c.length === 3) {
+    c = c.split('').map(char => char + char).join('');
+  }
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  return `rgba(${r || 255}, ${g || 255}, ${b || 255}, ${alpha})`;
+};
+
+export function getPageTheme(pageKey = "home") {
+  const defaultTheme = DEFAULT_THEMES[pageKey] || DEFAULT_THEMES.home;
+  
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    const s = raw ? JSON.parse(raw) : {};
-    const p = `page_${pageName}_`;
-    return {
-      bg: s[p + "bg"] || DEFAULT_THEME.bg,
-      heading: s[p + "heading_color"] || DEFAULT_THEME.heading,
-      body: s[p + "body_color"] || DEFAULT_THEME.body,
-      muted: s[p + "muted_color"] || DEFAULT_THEME.muted,
-      link: s[p + "link_color"] || DEFAULT_THEME.link,
-      baseSize: parseInt(s[p + "base_size"] || DEFAULT_THEME.baseSize) || 14,
-      headingSize: parseInt(s[p + "heading_size"] || DEFAULT_THEME.headingSize) || 26,
-      // Box theme
-      cardBg: s[p + "card_bg"] || DEFAULT_THEME.cardBg,
-      cardBorder: s[p + "card_border"] || DEFAULT_THEME.cardBorder,
-      cardBorderWidth: parseInt(s[p + "card_border_width"] || DEFAULT_THEME.cardBorderWidth) || 0,
-      cardRadius: parseInt(s[p + "card_radius"] || DEFAULT_THEME.cardRadius) || 0,
-      cardPadding: parseInt(s[p + "card_padding"] || DEFAULT_THEME.cardPadding) || 0,
-      cardShadow: parseInt(s[p + "card_shadow"] || DEFAULT_THEME.cardShadow) || 0,
-      // Label / Value
-      labelColor: s[p + "label_color"] || DEFAULT_THEME.labelColor,
-      labelSize: parseInt(s[p + "label_size"] || DEFAULT_THEME.labelSize) || 12,
-      labelWeight: s[p + "label_weight"] || DEFAULT_THEME.labelWeight,
-      valueColor: s[p + "value_color"] || DEFAULT_THEME.valueColor,
-      valueSize: parseInt(s[p + "value_size"] || DEFAULT_THEME.valueSize) || 12,
-      valueWeight: s[p + "value_weight"] || DEFAULT_THEME.valueWeight,
-    };
+    const raw = localStorage.getItem("vivaha_home_settings_v1");
+    const settings = raw ? JSON.parse(raw) : {};
+
+    // Read base theme settings
+    const bg = settings[`page_${pageKey}_bg`] || settings.global_page_bg || defaultTheme.bg;
+    const heading = settings[`page_${pageKey}_heading_color`] || defaultTheme.heading;
+    const body = settings[`page_${pageKey}_body_color`] || defaultTheme.body;
+    const muted = settings[`page_${pageKey}_muted_color`] || defaultTheme.muted;
+    const link = settings[`page_${pageKey}_link_color`] || defaultTheme.link;
     
-  } catch {
-    return DEFAULT_THEME;
+    const baseSize = parseInt(settings[`page_${pageKey}_base_size`] || defaultTheme.baseSize);
+    const headingSize = parseInt(settings[`page_${pageKey}_heading_size`] || defaultTheme.headingSize);
+
+    const cardBg = settings[`page_${pageKey}_card_bg`] || defaultTheme.cardBg;
+    const cardBorder = settings[`page_${pageKey}_card_border`] || defaultTheme.cardBorder;
+    const cardRadius = parseInt(settings[`page_${pageKey}_card_radius`] || defaultTheme.cardRadius);
+    const cardShadow = parseInt(settings[`page_${pageKey}_card_shadow`] || defaultTheme.cardShadow);
+
+    // 🛡️ GLASS EFFECT SETTINGS (Dynamic)
+    const isGlassEnabled = settings[`page_${pageKey}_glass_enabled`] === "true";
+    const glassBlur = parseInt(settings[`page_${pageKey}_glass_blur`] || "15");
+    const glassOpacity = parseInt(settings[`page_${pageKey}_glass_opacity`] || "50") / 100;
+    
+    // Convert the Admin-selected Card Background into transparent glass
+    const dynamicGlassBg = hexToRgba(cardBg, glassOpacity);
+
+    return {
+      bg, heading, body, muted, link, baseSize, headingSize, cardBg, cardBorder, cardRadius, cardShadow,
+      isGlass: isGlassEnabled,
+      glassStyles: {
+        background: dynamicGlassBg,
+        backdropFilter: `blur(${glassBlur}px) saturate(130%)`,
+        WebkitBackdropFilter: `blur(${glassBlur}px) saturate(130%)`,
+        border: "1px solid rgba(255, 255, 255, 0.4)",
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.05)"
+      }
+    };
+  } catch (err) {
+    return { ...defaultTheme, isGlass: false, glassStyles: {} };
   }
 }
 
-// Helper to build card style object from theme
 export function getCardStyle(theme) {
-  const shadowValue = theme.cardShadow || 0;
-  let boxShadow = "none";
-  if (shadowValue > 0) {
-    const blur = Math.round(shadowValue / 3);
-    const yOffset = Math.round(shadowValue / 8);
-    const spread = Math.round(shadowValue / 15);
-    boxShadow = `0 ${yOffset}px ${blur}px -${spread}px rgba(139,10,46,0.12)`;
-  }
   return {
-    background: theme.cardBg,
-    border: `${theme.cardBorderWidth}px solid ${theme.cardBorder}`,
+    background: theme.isGlass ? theme.glassStyles.background : theme.cardBg,
     borderRadius: `${theme.cardRadius}px`,
-    padding: `${theme.cardPadding}px`,
-    boxShadow,
+    border: theme.isGlass ? theme.glassStyles.border : `1px solid ${theme.cardBorder}`,
+    boxShadow: theme.isGlass ? theme.glassStyles.boxShadow : `0 ${theme.cardShadow / 8}px ${theme.cardShadow / 3}px rgba(139,10,46,0.1)`,
+    backdropFilter: theme.isGlass ? theme.glassStyles.backdropFilter : "none",
+    WebkitBackdropFilter: theme.isGlass ? theme.glassStyles.WebkitBackdropFilter : "none",
+    padding: "24px",
   };
 }
-
-export const CONFIGURABLE_PAGES = [
-  { key: "home", label: "🏠 Home" },
-  { key: "search", label: "🔍 Search" },
-  { key: "advanced_search", label: "⚙️ Advanced Search" },
-  { key: "dashboard", label: "📊 Dashboard" },
-  { key: "matches", label: "💕 Matches" },
-  { key: "interests", label: "💌 Interests" },
-  { key: "messages", label: "💬 Messages" },
-  { key: "visitors", label: "👀 Visitors" },
-  { key: "photo_requests", label: "📩 Photo Requests" },
-  { key: "contact_requests", label: "📞 Contact Requests" },
-  { key: "profile", label: "👤 Profile" },
-  { key: "user_settings", label: "⚙️ Settings" },
-  { key: "recommendations", label: "✨ Recommendations" },
-  { key: "success_stories", label: "💑 Success Stories" },
-  { key: "boost", label: "🚀 Boost" },
-  { key: "pricing", label: "⭐ Pricing" },
-  { key: "admin", label: "👑 Admin Dashboard" },
-];
