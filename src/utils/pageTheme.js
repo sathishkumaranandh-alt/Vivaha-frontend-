@@ -1,14 +1,27 @@
+// 🛡️ Exporting CONFIGURABLE_PAGES so AdminSettings can use it
+export const CONFIGURABLE_PAGES = [
+  { key: "home", label: "🏠 Home Page" },
+  { key: "search", label: "🔍 Search Page" },
+  { key: "dashboard", label: "📊 Dashboard" },
+  { key: "profile", label: "👤 Profile Page" },
+  { key: "messages", label: "💬 Messages" },
+  { key: "interests", label: "💌 Interests" },
+  { key: "subscription", label: "⭐ Subscription" },
+  { key: "boost", label: "🚀 Boost Profile" },
+  { key: "visitors", label: "👀 Visitors" },
+];
+
 const DEFAULT_THEMES = {
   home: { bg: "#FFF9F5", heading: "#8B0A2E", body: "#2D1B1B", muted: "#8a6b6b", link: "#8B0A2E", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "#f0e0e0", cardRadius: 14, cardShadow: 40 },
   search: { bg: "#FFF9F5", heading: "#8B0A2E", body: "#2D1B1B", muted: "#8a6b6b", link: "#8B0A2E", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "#f0e0e0", cardRadius: 14, cardShadow: 40 },
   dashboard: { bg: "#FFF9F5", heading: "#8B0A2E", body: "#2D1B1B", muted: "#8a6b6b", link: "#8B0A2E", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "#f0e0e0", cardRadius: 14, cardShadow: 40 },
   profile: { bg: "#FFF9F5", heading: "#8B0A2E", body: "#2D1B1B", muted: "#8a6b6b", link: "#8B0A2E", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "#f0e0e0", cardRadius: 14, cardShadow: 40 },
+  // Add defaults for other pages as needed
 };
 
 // 🛡️ Helper: Convert Hex color to RGBA for transparency
 const hexToRgba = (hex, alpha) => {
   if (!hex) return `rgba(255, 255, 255, ${alpha})`;
-  // If it's already rgb or rgba, just return a safe fallback
   if (hex.includes('rgb')) return `rgba(255, 255, 255, ${alpha})`; 
   
   let c = hex.substring(1);      
@@ -77,4 +90,4 @@ export function getCardStyle(theme) {
     WebkitBackdropFilter: theme.isGlass ? theme.glassStyles.WebkitBackdropFilter : "none",
     padding: "24px",
   };
-}
+  }
