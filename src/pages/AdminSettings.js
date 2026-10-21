@@ -807,4 +807,4 @@ const S = {
   positionGroupTitle: { fontSize: 13, fontWeight: 700, color: "#8B0A2E", marginBottom: 12 },
 };
 
-export default AdminSettings;
+export default AdminSettings; 
