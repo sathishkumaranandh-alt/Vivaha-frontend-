@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { getPageTheme } from "../utils/pageTheme";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -15,6 +16,9 @@ const DEFAULT_SETTINGS = {
 
 function Footer() {
   const year = new Date().getFullYear();
+  const loc = useLocation();
+  const pageKey = loc.pathname === "/" ? "home" : loc.pathname.split("/")[1] || "home";
+  const pageBg = getPageTheme(pageKey).bg;
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   useEffect(() => {
@@ -33,7 +37,7 @@ function Footer() {
   };
 
   return (
-    <>
+    <div style={{ background: `radial-gradient(circle 360px at 0% 30%, rgba(251,191,36,0.26), transparent), radial-gradient(circle 360px at 100% 80%, rgba(251,113,133,0.22), transparent), ${pageBg}`, width: "100%" }}>
       {/* ===== STRIP ABOVE FOOTER ===== */}
       <div style={stripStyle}>
         <div style={stripInnerStyle}>
@@ -144,7 +148,7 @@ function Footer() {
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 
