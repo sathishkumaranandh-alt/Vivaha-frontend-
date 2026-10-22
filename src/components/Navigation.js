@@ -206,7 +206,7 @@ function Navigation() {
       <nav
         style={{
           ...navStyle,
-          background: "rgba(255, 246, 248, 0.82)",
+          background: settings.global_navbar_bg || "white",
         }}
       >
         <h2
@@ -222,6 +222,8 @@ function Navigation() {
       </nav>
     );
   }
+
+  const isHomePage = window.location.pathname === "/";
 
   const mainLinks = [
     { to: "/", label: "Home" },
@@ -273,9 +275,14 @@ function Navigation() {
   return (
     <nav
       ref={navRef}
+      className={isHomePage ? "vivaha-home-glass-nav" : undefined}
       style={{
         ...navStyle,
-        background: "rgba(255, 246, 248, 0.82)",
+        background: isHomePage ? "rgba(255, 255, 255, 0.66)" : (settings.global_navbar_bg || "white"),
+        backdropFilter: isHomePage ? "blur(20px) saturate(160%)" : "none",
+        WebkitBackdropFilter: isHomePage ? "blur(20px) saturate(160%)" : "none",
+        borderBottom: isHomePage ? "1px solid rgba(255,255,255,0.78)" : navStyle.borderBottom,
+        boxShadow: isHomePage ? "0 8px 28px rgba(190,24,93,0.08)" : navStyle.boxShadow,
         zIndex: 9999,
       }}
     >
@@ -290,7 +297,7 @@ function Navigation() {
             gap: "10px",
           }}
         >
-          <div style={logoCircleStyle}>♥</div>
+          <div style={isHomePage ? { ...logoCircleStyle, background: "linear-gradient(135deg, #E91663, #F472B6)", color: "#FFFFFF", boxShadow: "0 5px 14px rgba(233,22,99,0.22)" } : logoCircleStyle}>♥</div>
           <div style={{ lineHeight: 1.1 }}>
             <div
               style={{
@@ -642,9 +649,7 @@ function Navigation() {
 // ============================================
 const navStyle = {
   background: "white",
-  backdropFilter: "blur(16px)",
-  WebkitBackdropFilter: "blur(16px)",
-  borderBottom: "1px solid rgba(255,255,255,0.6)",
+  borderBottom: "1px solid #f0e0e0",
   padding: "14px 24px",
   position: "sticky",
   top: 0,
