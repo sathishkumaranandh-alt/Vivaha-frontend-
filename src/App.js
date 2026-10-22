@@ -200,7 +200,7 @@ function App() {
         style={{
           minHeight: "100vh",
           width: "100vw",
-          background: pageBg,
+          background: `radial-gradient(circle 380px at 0% 14%, rgba(251,113,133,0.28), transparent), radial-gradient(circle 420px at 100% 32%, rgba(251,191,36,0.30), transparent), radial-gradient(circle 380px at 0% 52%, rgba(52,211,153,0.28), transparent), radial-gradient(circle 420px at 100% 72%, rgba(251,113,133,0.24), transparent), radial-gradient(circle 380px at 0% 92%, rgba(251,191,36,0.28), transparent), ${pageBg}`,
           overflowX: "hidden",
           margin: 0,
           padding: 0,
@@ -250,4 +250,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
