@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { getPageTheme } from "../utils/pageTheme";
+import { Link } from "react-router-dom";
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -14,11 +13,12 @@ const DEFAULT_SETTINGS = {
   global_footer_bg: "#1a0510",
 };
 
+// 🪟 Midnight Wine glass footer
+const FOOTER_BG =
+  "radial-gradient(circle 320px at 0% 20%, rgba(225,29,72,0.45), transparent), radial-gradient(circle 340px at 100% 70%, rgba(212,160,23,0.35), transparent), radial-gradient(circle 300px at 40% 100%, rgba(125,45,146,0.45), transparent), #1a0610";
+
 function Footer() {
   const year = new Date().getFullYear();
-  const loc = useLocation();
-  const pageKey = loc.pathname === "/" ? "home" : loc.pathname.split("/")[1] || "home";
-  const pageBg = getPageTheme(pageKey).bg;
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ function Footer() {
   };
 
   return (
-    <div style={{ background: `radial-gradient(circle 360px at 0% 30%, rgba(251,191,36,0.26), transparent), radial-gradient(circle 360px at 100% 80%, rgba(251,113,133,0.22), transparent), ${pageBg}`, width: "100%" }}>
+    <div style={{ background: FOOTER_BG, width: "100%" }}>
       {/* ===== STRIP ABOVE FOOTER ===== */}
       <div style={stripStyle}>
         <div style={stripInnerStyle}>
@@ -125,7 +125,7 @@ function Footer() {
                 <span style={contactIconStyle}>📍</span>
                 {settings.contact_address}
               </p>
-              <p style={{ ...contactLineStyle, marginTop: "12px", fontSize: "11px", color: "#8a6b6b" }}>
+              <p style={{ ...contactLineStyle, marginTop: "12px", fontSize: "11px", color: "#c9a9b2" }}>
                 <span style={contactIconStyle}>🕐</span>
                 {settings.support_hours}
               </p>
@@ -152,31 +152,31 @@ function Footer() {
   );
 }
 
-const stripStyle = { background: "rgba(255,255,255,0.4)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", padding: "8px 16px", textAlign: "center", borderTop: "1px solid rgba(255,255,255,0.7)", width: "100%", boxSizing: "border-box" };
+const stripStyle = { background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", padding: "8px 16px", textAlign: "center", borderTop: "1px solid rgba(255,255,255,0.22)", width: "100%", boxSizing: "border-box" };
 const stripInnerStyle = { maxWidth: "1000px", margin: "0 auto", display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", flexWrap: "wrap" };
-const stripItemStyle = { fontFamily: "'Playfair Display', serif", fontSize: "12px", color: "#8B0A2E", fontWeight: 700, letterSpacing: "0.3px", fontStyle: "italic" };
-const stripDividerStyle = { color: "rgba(139, 10, 46, 0.35)", fontSize: "12px" };
-const footerStyle = { background: "rgba(255,255,255,0.35)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderTop: "1px solid rgba(255,255,255,0.7)", color: "#2D1B1B", padding: "20px 16px 10px", width: "100%", boxSizing: "border-box" };
+const stripItemStyle = { fontFamily: "'Playfair Display', serif", fontSize: "12px", color: "#f7c85a", fontWeight: 700, letterSpacing: "0.3px", fontStyle: "italic" };
+const stripDividerStyle = { color: "rgba(247, 200, 90, 0.4)", fontSize: "12px" };
+const footerStyle = { background: "rgba(255,255,255,0.07)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", borderTop: "1px solid rgba(255,255,255,0.22)", color: "#fff1f4", padding: "20px 16px 10px", width: "100%", boxSizing: "border-box" };
 const footerInnerStyle = { maxWidth: "1200px", margin: "0 auto", width: "100%" };
 const columnsStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "16px 20px", marginBottom: "14px" };
 const brandRowStyle = { display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" };
 const brandCircleStyle = { width: "32px", height: "32px", borderRadius: "50%", background: "#8B0A2E", display: "flex", alignItems: "center", justifyContent: "center", color: "#D4A017", fontSize: "15px", fontWeight: "bold", flexShrink: 0 };
-const brandNameStyle = { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 900, color: "#8B0A2E", letterSpacing: "-0.3px", lineHeight: 1.1 };
-const brandTagStyle = { fontSize: "8px", color: "#b8860b", fontWeight: 700, letterSpacing: "2px", marginTop: "2px" };
-const brandDescStyle = { color: "#6f5560", fontSize: "12px", lineHeight: 1.5, margin: "0 0 8px 0", maxWidth: "320px" };
+const brandNameStyle = { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 900, color: "#f7c85a", letterSpacing: "-0.3px", lineHeight: 1.1 };
+const brandTagStyle = { fontSize: "8px", color: "#d4a017", fontWeight: 700, letterSpacing: "2px", marginTop: "2px" };
+const brandDescStyle = { color: "#e4c3cc", fontSize: "12px", lineHeight: 1.5, margin: "0 0 8px 0", maxWidth: "320px" };
 const miniBadgesStyle = { display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" };
-const miniBadgeStyle = { background: "rgba(212, 160, 23, 0.15)", border: "1px solid rgba(212, 160, 23, 0.4)", color: "#92400e", fontSize: "10px", fontWeight: 600, padding: "3px 9px", borderRadius: "20px" };
+const miniBadgeStyle = { background: "rgba(212, 160, 23, 0.16)", border: "1px solid rgba(212, 160, 23, 0.45)", color: "#f7c85a", fontSize: "10px", fontWeight: 600, padding: "3px 9px", borderRadius: "20px" };
 const socialRowStyle = { display: "flex", gap: "8px" };
-const socialBtnStyle = { width: "30px", height: "30px", borderRadius: "50%", background: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.9)", color: "#8B0A2E", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "bold", cursor: "pointer", fontFamily: "inherit" };
-const colTitleStyle = { color: "#a16207", fontSize: "10px", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", margin: "0 0 6px 0" };
-const colLinkStyle = { display: "block", color: "#5c3a42", textDecoration: "none", fontSize: "12px", marginBottom: "5px" };
-const colButtonStyle = { display: "block", background: "transparent", border: "none", color: "#5c3a42", fontSize: "12px", marginBottom: "5px", padding: 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" };
-const contactLineStyle = { display: "flex", alignItems: "center", gap: "6px", color: "#5c3a42", fontSize: "12px", margin: "0 0 5px 0", lineHeight: 1.4 };
+const socialBtnStyle = { width: "30px", height: "30px", borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.3)", color: "#fff1f4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "bold", cursor: "pointer", fontFamily: "inherit" };
+const colTitleStyle = { color: "#f7c85a", fontSize: "10px", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", margin: "0 0 6px 0" };
+const colLinkStyle = { display: "block", color: "#e4c3cc", textDecoration: "none", fontSize: "12px", marginBottom: "5px" };
+const colButtonStyle = { display: "block", background: "transparent", border: "none", color: "#e4c3cc", fontSize: "12px", marginBottom: "5px", padding: 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" };
+const contactLineStyle = { display: "flex", alignItems: "center", gap: "6px", color: "#e4c3cc", fontSize: "12px", margin: "0 0 5px 0", lineHeight: 1.4 };
 const contactIconStyle = { fontSize: "13px", flexShrink: 0 };
-const bottomStripStyle = { borderTop: "1px solid rgba(139,10,46,0.12)", paddingTop: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" };
-const copyrightStyle = { color: "#8a6b6b", fontSize: "11px", margin: 0, letterSpacing: "0.2px" };
+const bottomStripStyle = { borderTop: "1px solid rgba(255,255,255,0.18)", paddingTop: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" };
+const copyrightStyle = { color: "#c9a9b2", fontSize: "11px", margin: 0, letterSpacing: "0.2px" };
 const bottomLinksStyle = { display: "flex", alignItems: "center", gap: "10px" };
-const bottomLinkBtnStyle = { background: "transparent", border: "none", color: "#8a6b6b", fontSize: "12px", cursor: "pointer", fontFamily: "inherit", padding: 0 };
-const bottomDividerStyle = { color: "rgba(139,10,46,0.3)", fontSize: "10px" };
+const bottomLinkBtnStyle = { background: "transparent", border: "none", color: "#c9a9b2", fontSize: "12px", cursor: "pointer", fontFamily: "inherit", padding: 0 };
+const bottomDividerStyle = { color: "rgba(255,255,255,0.3)", fontSize: "10px" };
 
 export default Footer;
