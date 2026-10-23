@@ -1,0 +1,142 @@
+/* ============================================================
+   VIVAHA GLASS THEME — "Sunset Candy" (Theme B)
+   Change the :root tokens below to re-theme the whole site.
+   ============================================================ */
+:root {
+  --vg-text: #3b1d3f;
+  --vg-text-rgb: 59, 29, 63;
+  --vg-muted: #6b3f6e;
+  --vg-accent: #be185d;
+  --vg-accent-rgb: 190, 24, 93;
+  --vg-accent-hover: #9d174d;
+  --vg-gold: #9a3412;
+  --vg-on-brand: #ffffff;
+  --vg-brand: linear-gradient(135deg, #be185d 0%, #7c3aed 100%);
+  --vg-brand-soft: rgba(190, 24, 93, 0.65);
+  --vg-glass: rgba(255, 255, 255, 0.45);
+  --vg-glass-in: rgba(255, 255, 255, 0.35);
+  --vg-soft: rgba(255, 255, 255, 0.55);
+  --vg-pop: rgba(255, 255, 255, 0.92);
+  --vg-border: rgba(255, 255, 255, 0.75);
+  --vg-shadow: 0 8px 32px rgba(190, 24, 93, 0.12);
+  --vg-blur: blur(14px) saturate(160%);
+  --vg-nav-h: 72px;
+}
+
+html {
+  background: transparent !important;
+  scroll-behavior: auto !important; /* smooth scroll made new pages slide up from the footer */
+}
+
+body {
+  background-color: #ffe4e6 !important;
+  color: var(--vg-text);
+  min-height: 100vh;
+}
+
+/* Full-page sunset gradient with soft colour orbs (fixed while scrolling) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 10% 14%, rgba(251, 113, 133, 0.5), transparent 42%),
+    radial-gradient(circle at 92% 38%, rgba(253, 186, 116, 0.5), transparent 40%),
+    radial-gradient(circle at 18% 92%, rgba(167, 139, 250, 0.5), transparent 44%),
+    linear-gradient(135deg, #ffe4e6 0%, #e0e7ff 100%);
+}
+
+/* ---------- page layout: navbar / main / footer ---------- */
+#root { background: transparent !important; }
+.vivaha-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  background: transparent !important;
+}
+.vivaha-app > * { flex-shrink: 0; }
+/* main grows, so the footer always sits at the bottom of the screen */
+.vivaha-main { flex: 1 0 auto; width: 100%; min-width: 0; }
+
+/* login / register fill the space between navbar and footer */
+.vivaha-main .auth-body {
+  min-height: calc(100vh - var(--vg-nav-h));
+  background: transparent !important;
+}
+.vivaha-main .auth-body::before { background: #fb7185 !important; }
+.vivaha-main .auth-body::after  { background: #a78bfa !important; }
+html:root {
+  --green: #be185d;
+  --green-dark: #831843;
+  --green-soft: #fce7f3;
+  --ink: #3b1d3f;
+  --muted: #6b3f6e;
+}
+
+/* loading spinner used by ProtectedRoute */
+.vg-spinner {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid rgba(190, 24, 93, 0.2);
+  border-top-color: var(--vg-accent);
+  animation: vg-spin 0.8s linear infinite;
+}
+@keyframes vg-spin { to { transform: rotate(360deg); } }
+
+/* ---------- glass surfaces (set by utils/glassTheme.js) ---------- */
+[data-vg-bg="glass"] {
+  background: var(--vg-glass) !important;
+  -webkit-backdrop-filter: var(--vg-blur);
+  backdrop-filter: var(--vg-blur);
+  box-shadow: var(--vg-shadow) !important;
+}
+[data-vg-bg="glass-in"] { background: var(--vg-glass-in) !important; }
+[data-vg-bg="soft"]     { background: var(--vg-soft) !important; }
+[data-vg-bg="pop"] {
+  background: var(--vg-pop) !important;
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 40px rgba(190, 24, 93, 0.2) !important;
+}
+[data-vg-bg="clear"]      { background: transparent !important; }
+[data-vg-bg="brand"]      { background: var(--vg-brand) !important; }
+[data-vg-bg="brand-soft"] { background: var(--vg-brand-soft) !important; }
+/* a fixed modal inside a blurred parent would break — drop blur on such parents */
+[data-vg-nb] { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* ---------- text / link colours ---------- */
+[data-vg-fg="text"]    { color: var(--vg-text) !important; }
+[data-vg-fg="muted"]   { color: var(--vg-muted) !important; }
+[data-vg-fg="accent"]  { color: var(--vg-accent) !important; }
+[data-vg-fg="gold"]    { color: var(--vg-gold) !important; }
+[data-vg-fg="onbrand"] { color: var(--vg-on-brand) !important; }
+a[data-vg-fg="accent"]:hover { color: var(--vg-accent-hover) !important; }
+
+/* ---------- borders ---------- */
+[data-vg-bd="light"]  { border-color: var(--vg-border) !important; }
+[data-vg-bd="accent"] { border-color: var(--vg-accent) !important; }
+
+/* ---------- global defaults ---------- */
+a { color: var(--vg-accent); }
+a:hover { color: var(--vg-accent-hover); }
+::placeholder { color: #7a4a6d; opacity: 1; }
+::selection { background: rgba(190, 24, 93, 0.22); }
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--vg-accent);
+  outline-offset: 1px;
+}
+
+/* ---------- mobile alignment helpers ---------- */
+@media (max-width: 768px) {
+  /* wide tables (admin lists) scroll sideways instead of being cut off */
+  .vivaha-main table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .vg-strip-div { display: none; }
+}
