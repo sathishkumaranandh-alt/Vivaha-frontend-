@@ -36,6 +36,7 @@ import Boost from "./pages/Boost";
 import AdminPlans from "./pages/AdminPlans";
 import AdvancedSearch from "./pages/AdvancedSearch";
 import ScrollToTop from "./components/ScrollToTop";
+import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import Discover from "./pages/Discover";
 import ProfileDetail from "./pages/ProfileDetail";
@@ -46,13 +47,12 @@ const BACKEND_URL =
 const HEARTBEAT_INTERVAL = 60000; // 60 seconds
 
 function App() {
-  const [pageBg, setPageBg] = useState("#FFF9F5");
   const [currentUserId, setCurrentUserId] = useState(null);
   const [sessionReady, setSessionReady] = useState(false);
   const currentUserIdRef = useRef(null);
 
   // ============================================
-  // 1. BODY STYLES + SETTINGS FETCH
+  // 1. BODY STYLES (page background comes from styles/glass-theme.css)
   // ============================================
   useEffect(() => {
     document.body.style.margin = "0";
@@ -61,18 +61,6 @@ function App() {
     document.documentElement.style.padding = "0";
     document.body.style.overflowX = "hidden";
     document.documentElement.style.overflowX = "hidden";
-
-    fetch(`${BACKEND_URL}/settings`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.settings && data.settings.global_page_bg) {
-          setPageBg(data.settings.global_page_bg);
-          document.body.style.backgroundColor = data.settings.global_page_bg;
-          document.documentElement.style.backgroundColor =
-            data.settings.global_page_bg;
-        }
-      })
-      .catch(console.error);
   }, []);
 
   // ============================================
@@ -192,22 +180,13 @@ function App() {
     };
   }, [currentUserId]);
 
-    return (
+  return (
     <Router>
       <ScrollToTop />
 
-      <div
-        style={{
-          minHeight: "100vh",
-          width: "100vw",
-          background: `radial-gradient(circle 380px at 0% 14%, rgba(251,113,133,0.28), transparent), radial-gradient(circle 420px at 100% 32%, rgba(251,191,36,0.30), transparent), radial-gradient(circle 380px at 0% 52%, rgba(52,211,153,0.28), transparent), radial-gradient(circle 420px at 100% 72%, rgba(251,113,133,0.24), transparent), radial-gradient(circle 380px at 0% 92%, rgba(251,191,36,0.28), transparent), ${pageBg}`,
-          overflowX: "hidden",
-          margin: 0,
-          padding: 0,
-        }}
-      >
+      <div className="vivaha-app" style={{ margin: 0, padding: 0 }}>
         <Navbar />
-        <div style={{ width: "100%", margin: 0, padding: 0 }}>
+        <div className="vivaha-main">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/register" element={<Register />} />
@@ -240,6 +219,7 @@ function App() {
             <Route path="/match/:id" element={<ProtectedRoute><ProfileDetail /></ProtectedRoute>} />
             <Route path="/admin/success-stories" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSuccessStories /></ProtectedRoute>} />
             <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
         <Footer />
