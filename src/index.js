@@ -2,9 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import './index.css';
 import "./styles/global.css";
+import "./styles/glass-theme.css";
+import { initGlassTheme } from "./utils/glassTheme";
 import App from "./App";
 import ErrorBoundary from "./ErrorBoundary";
 import ToastContainer from "./components/ToastContainer";
+
+initGlassTheme();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
