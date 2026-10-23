@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import supabase from "../supabaseClient";
+import { apiFetch } from "../utils/api"; // 🛡️ Profile writes go through the backend (JWT + whitelist)
 
 function ImageUpload({ userId, currentPhotoUrl, onUploadSuccess }) {
   const [uploading, setUploading] = useState(false);
@@ -65,13 +66,12 @@ function ImageUpload({ userId, currentPhotoUrl, onUploadSuccess }) {
 
       const publicUrl = urlData.publicUrl;
 
-      // Save the URL to the user's profile
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ photo_url: publicUrl })
-        .eq("id", userId);
-
-      if (updateError) throw updateError;
+      // 🛡️ Save the URL via the backend (no direct DB write from the browser)
+      const saveRes = await apiFetch(`/profile/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify({ photo_url: publicUrl }),
+      });
+      if (!saveRes.ok) throw new Error("Could not save your photo. Please try again.");
 
       // Notify parent component
       if (onUploadSuccess) onUploadSuccess(publicUrl);
