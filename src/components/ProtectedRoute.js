@@ -1,75 +1,104 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import supabase from "../supabaseClient";
 
 /**
- * ProtectedRoute ensures only logged-in users (and optionally specific roles)
- * can access certain routes. If not authenticated, redirects to /login.
+ * ProtectedRoute: only logged-in users (and optionally specific roles) can
+ * open these pages. Not logged in -> /login.
+ *
+ * The session + role are cached at module level, so moving between pages does
+ * not re-fetch them. That removes the "Loading..." flash that used to collapse
+ * the page and make the footer jump up under the navbar on every navigation.
  */
+let cached = null; // { session, role }
+let inflight = null;
+const listeners = new Set();
+
+function publish(value) {
+  cached = value;
+  listeners.forEach((fn) => fn(value));
+}
+
+async function fetchRole(userId) {
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  return profile?.role || "user";
+}
+
+function loadAuth() {
+  if (!inflight) {
+    inflight = (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data?.session || null;
+        const role = session?.user ? await fetchRole(session.user.id) : null;
+        publish({ session, role });
+      } catch (e) {
+        publish({ session: null, role: null });
+      } finally {
+        inflight = null;
+      }
+      return cached;
+    })();
+  }
+  return inflight;
+}
+
+// Keep the cache fresh on login / logout
+supabase.auth.onAuthStateChange((_event, session) => {
+  if (!session?.user) {
+    publish({ session: null, role: null });
+    return;
+  }
+  if (cached?.session?.user?.id === session.user.id) {
+    publish({ ...cached, session });
+    return;
+  }
+  cached = null; // new / different user -> reload the role
+  setTimeout(loadAuth, 0);
+});
+
+const centerBox = {
+  minHeight: "55vh",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexDirection: "column",
+  padding: "40px 20px",
+  textAlign: "center",
+  color: "var(--vg-text)",
+};
+
 function ProtectedRoute({ children, allowedRoles }) {
-  const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [auth, setAuth] = useState(cached);
 
   useEffect(() => {
-    // Get current session
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session?.user) {
-        // Fetch user role from 'users' table
-        supabase
-          .from("users")
-          .select("role")
-          .eq("id", data.session.user.id)
-          .single()
-          .then(({ data: profile }) => {
-            setUserRole(profile?.role || "user");
-            setLoading(false);
-          });
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        if (session?.user) {
-          supabase
-            .from("users")
-            .select("role")
-            .eq("id", session.user.id)
-            .single()
-            .then(({ data: profile }) => {
-              setUserRole(profile?.role || "user");
-            });
-        } else {
-          setUserRole(null);
-        }
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+    listeners.add(setAuth);
+    if (cached) setAuth(cached);
+    else loadAuth();
+    return () => listeners.delete(setAuth);
   }, []);
 
-  if (loading) {
-    return <p>Loading...</p>;
+  if (!auth) {
+    return (
+      <div style={centerBox}>
+        <div className="vg-spinner" role="status" aria-label="Loading" />
+      </div>
+    );
   }
 
-  if (!session) {
+  if (!auth.session) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check role access if allowedRoles is provided
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
+  if (allowedRoles && !allowedRoles.includes(auth.role)) {
     return (
-      <div style={{ padding: "40px", textAlign: "center" }}>
-        <h2>Access Denied</h2>
-        <p>You do not have permission to view this page.</p>
+      <div style={centerBox}>
+        <h2 style={{ margin: "0 0 8px" }}>Access Denied</h2>
+        <p style={{ margin: 0 }}>You do not have permission to view this page.</p>
       </div>
     );
   }
