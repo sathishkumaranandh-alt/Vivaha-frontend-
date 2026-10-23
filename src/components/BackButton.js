@@ -6,50 +6,39 @@ function BackButton({ fallback = "/dashboard", label = "← Back" }) {
   const location = useLocation();
 
   const handleBack = () => {
-    // ============================================
-    // 1. If we have a "from" state (passed by Profile links)
-    //    → go to that exact page
-    // ============================================
-    if (location.state?.from) {
-      navigate(location.state.from);
-      return;
-    }
+    // React Router stores the position in this site's history as "idx".
+    // idx > 0 means the previous page is inside the app, so going back is safe.
+    // (document.referrer is NOT reliable in a single-page app.)
+    const idx = window.history.state && window.history.state.idx;
+    const hasAppHistory =
+      typeof idx === "number" ? idx > 0 : location.key !== "default";
 
-    // ============================================
-    // 2. Check if browser history has a previous
-    //    page from the SAME origin (same website)
-    //    → safe to go back
-    // ============================================
-    if (
-      window.history.length > 1 &&
-      document.referrer &&
-      document.referrer.startsWith(window.location.origin)
-    ) {
+    if (hasAppHistory) {
       navigate(-1);
       return;
     }
 
-    // ============================================
-    // 3. Otherwise, use fallback (safe route)
-    //    Example: direct link open panna, aprom Back click
-    // ============================================
-    navigate(fallback);
+    // Opened directly (link / refresh): go to the page it came from, or fallback
+    const from = location.state && location.state.from;
+    navigate(typeof from === "string" ? from : fallback, { replace: true });
   };
 
   return (
     <button
+      type="button"
       onClick={handleBack}
       style={{
-        background: "white",
-        color: "#8B0A2E",
-        border: "1.5px solid #8B0A2E",
-        padding: "8px 16px",
+        background: "rgba(255, 255, 255, 0.55)",
+        color: "var(--vg-accent)",
+        border: "1.5px solid var(--vg-accent)",
+        padding: "0 16px",
+        minHeight: "40px",
         borderRadius: "20px",
         fontSize: "13px",
         fontWeight: 700,
         cursor: "pointer",
         fontFamily: "inherit",
-        boxShadow: "0 2px 8px rgba(139,10,46,0.08)",
+        boxShadow: "0 2px 8px rgba(var(--vg-accent-rgb), 0.12)",
         display: "inline-flex",
         alignItems: "center",
         gap: "6px",
