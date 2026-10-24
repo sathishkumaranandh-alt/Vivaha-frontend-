@@ -1,167 +1,104 @@
-/* Reset default browser styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+// 🛡️ Exporting CONFIGURABLE_PAGES so AdminSettings can use it
+export const CONFIGURABLE_PAGES = [
+  { key: "home", label: "🏠 Home Page" },
+  { key: "search", label: "🔍 Search Page" },
+  { key: "dashboard", label: "📊 Dashboard" },
+  { key: "profile", label: "👤 Profile Page" },
+  { key: "messages", label: "💬 Messages" },
+  { key: "interests", label: "💌 Interests" },
+  { key: "subscription", label: "⭐ Subscription" },
+  { key: "boost", label: "🚀 Boost Profile" },
+  { key: "visitors", label: "👀 Visitors" },
+];
 
-/* Body styling */
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  background-color: transparent;
-  color: var(--vg-text);
-  line-height: 1.6;
-}
+const DEFAULT_THEMES = {
+  home: { bg: "transparent", heading: "var(--vg-accent)", body: "var(--vg-text)", muted: "var(--vg-muted)", link: "var(--vg-accent)", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "rgba(255,255,255,0.75)", cardRadius: 16, cardShadow: 40 },
+  search: { bg: "transparent", heading: "var(--vg-accent)", body: "var(--vg-text)", muted: "var(--vg-muted)", link: "var(--vg-accent)", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "rgba(255,255,255,0.75)", cardRadius: 16, cardShadow: 40 },
+  dashboard: { bg: "transparent", heading: "var(--vg-accent)", body: "var(--vg-text)", muted: "var(--vg-muted)", link: "var(--vg-accent)", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "rgba(255,255,255,0.75)", cardRadius: 16, cardShadow: 40 },
+  profile: { bg: "transparent", heading: "var(--vg-accent)", body: "var(--vg-text)", muted: "var(--vg-muted)", link: "var(--vg-accent)", baseSize: 14, headingSize: 26, cardBg: "#ffffff", cardBorder: "rgba(255,255,255,0.75)", cardRadius: 16, cardShadow: 40 },
+  // Add defaults for other pages as needed
+};
 
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
+// 🛡️ Helper: Convert Hex color to RGBA for transparency
+const hexToRgba = (hex, alpha) => {
+  if (!hex) return `rgba(255, 255, 255, ${alpha})`;
+  if (hex.includes('rgb')) return `rgba(255, 255, 255, ${alpha})`; 
+  
+  let c = hex.substring(1);      
+  if (c.length === 3) {
+    c = c.split('').map(char => char + char).join('');
   }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-/* Forms: only stack fields vertically (pages style their own forms) */
-form {
-  display: flex;
-  flex-direction: column;
-}
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  return `rgba(${r || 255}, ${g || 255}, ${b || 255}, ${alpha})`;
+};
 
-form input {
-  margin-bottom: 12px;
-}
+export function getPageTheme(pageKey = "home") {
+  const defaultTheme = DEFAULT_THEMES[pageKey] || DEFAULT_THEMES.home;
+  
+  try {
+    const raw = localStorage.getItem("vivaha_home_settings_v1");
+    const settings = raw ? JSON.parse(raw) : {};
 
-input, button {
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-}
+    // Read base theme settings
+    const bg = settings[`page_${pageKey}_bg`] || settings.global_page_bg || defaultTheme.bg;
+    const heading = settings[`page_${pageKey}_heading_color`] || defaultTheme.heading;
+    const body = settings[`page_${pageKey}_body_color`] || defaultTheme.body;
+    const muted = settings[`page_${pageKey}_muted_color`] || defaultTheme.muted;
+    const link = settings[`page_${pageKey}_link_color`] || defaultTheme.link;
+    
+    const baseSize = parseInt(settings[`page_${pageKey}_base_size`] || defaultTheme.baseSize);
+    const headingSize = parseInt(settings[`page_${pageKey}_heading_size`] || defaultTheme.headingSize);
 
-/* Buttons */
-button {
-  background-color: var(--vg-accent);
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
+    const cardBg = settings[`page_${pageKey}_card_bg`] || defaultTheme.cardBg;
+    const cardBorder = settings[`page_${pageKey}_card_border`] || defaultTheme.cardBorder;
+    const cardRadius = parseInt(settings[`page_${pageKey}_card_radius`] || defaultTheme.cardRadius);
+    const cardShadow = parseInt(settings[`page_${pageKey}_card_shadow`] || defaultTheme.cardShadow);
 
-button:hover {
-  background-color: var(--vg-accent-hover);
-}
+    // 🛡️ GLASS EFFECT SETTINGS (Dynamic)
+    // Glass theme: glass is ON by default (admin can still switch it off with "false")
+    const isGlassEnabled = settings[`page_${pageKey}_glass_enabled`] !== "false";
+    const glassBlur = parseInt(settings[`page_${pageKey}_glass_blur`] || "14");
+    const glassOpacity = parseInt(settings[`page_${pageKey}_glass_opacity`] || "45") / 100;
+    
+    // Convert the Admin-selected Card Background into transparent glass
+    const dynamicGlassBg = hexToRgba(cardBg, glassOpacity);
 
-/* Headings */
-h2, h3 {
-  margin-bottom: 15px;
-  color: var(--vg-accent);
-}
-
-/* Lists */
-ul {
-  list-style: none;
-  padding: 0;
-}
-
-li {
-  background: rgba(255,255,255,0.45);
-  margin-bottom: 8px;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.7);
-}
-/* ============================================================
-   MOBILE RESPONSIVENESS IMPROVEMENTS
-   ============================================================ */
-
-/* Make all images responsive */
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Tables scroll horizontally on mobile instead of breaking */
-table {
-  display: block;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Prevent text from being too small on mobile */
-@media (max-width: 768px) {
-  body {
-    font-size: 15px;
-  }
-
-  /* Reduce excessive padding on mobile */
-  .container,
-  [class*="container"],
-  [class*="page"] {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-  }
-
-  /* Make buttons easier to tap */
-  button,
-  a {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Prevent horizontal scroll */
-  html,
-  body {
-    overflow-x: hidden;
-    max-width: 100vw;
-  }
-
-  /* Responsive heading sizes */
-  h1 {
-    font-size: 24px !important;
-  }
-  h2 {
-    font-size: 20px !important;
-  }
-  h3 {
-    font-size: 17px !important;
-  }
-
-  /* Toast notifications full width on mobile */
-  [class*="toast"] {
-    font-size: 13px;
-  }
-
-  /* Modal max height */
-  [class*="modal"] {
-    max-height: 90vh !important;
-    padding: 20px !important;
-  }
-
-  /* Better form spacing */
-  input,
-  select,
-  textarea {
-    font-size: 16px !important; /* Prevents iOS zoom on focus */
+    return {
+      bg, heading, body, muted, link, baseSize, headingSize, cardBg, cardBorder, cardRadius, cardShadow,
+      isGlass: isGlassEnabled,
+      glassStyles: {
+        background: dynamicGlassBg,
+        backdropFilter: `blur(${glassBlur}px) saturate(160%)`,
+        WebkitBackdropFilter: `blur(${glassBlur}px) saturate(160%)`,
+        border: "1px solid rgba(255, 255, 255, 0.75)",
+        boxShadow: "0 8px 32px rgba(var(--vg-accent-rgb), 0.12)"
+      }
+    };
+  } catch (err) {
+    return {
+      ...defaultTheme,
+      isGlass: true,
+      glassStyles: {
+        background: "rgba(255, 255, 255, 0.45)",
+        backdropFilter: "blur(14px) saturate(160%)",
+        WebkitBackdropFilter: "blur(14px) saturate(160%)",
+        border: "1px solid rgba(255, 255, 255, 0.75)",
+        boxShadow: "0 8px 32px rgba(var(--vg-accent-rgb), 0.12)",
+      },
+    };
   }
 }
 
-/* Very small phones (iPhone SE, etc.) */
-@media (max-width: 400px) {
-  h1 {
-    font-size: 22px !important;
-  }
-  h2 {
-    font-size: 18px !important;
-  }
-}
-
-
-/* Better focus states for accessibility */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--vg-accent);
-  outline-offset: 2px;
-  }
+export function getCardStyle(theme) {
+  return {
+    background: theme.isGlass ? theme.glassStyles.background : theme.cardBg,
+    borderRadius: `${theme.cardRadius}px`,
+    border: theme.isGlass ? theme.glassStyles.border : `1px solid ${theme.cardBorder}`,
+    boxShadow: theme.isGlass ? theme.glassStyles.boxShadow : `0 ${theme.cardShadow / 8}px ${theme.cardShadow / 3}px rgba(var(--vg-accent-rgb), 0.1)`,
+    backdropFilter: theme.isGlass ? theme.glassStyles.backdropFilter : "none",
+    WebkitBackdropFilter: theme.isGlass ? theme.glassStyles.WebkitBackdropFilter : "none",
+    padding: "24px",
+  };
+    }
