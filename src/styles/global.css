@@ -1,4 +1,4 @@
-ii/* Reset default browser styles */
+/* Reset default browser styles */
 * {
   margin: 0;
   padding: 0;
@@ -8,23 +8,11 @@ ii/* Reset default browser styles */
 /* Body styling */
 body {
   font-family: Arial, Helvetica, sans-serif;
-  background-color: #f3f4f6; /* light gray background */
-  color: #111827; /* dark text */
+  background-color: transparent;
+  color: var(--vg-text);
   line-height: 1.6;
 }
 
-/* Navigation bar */
-nav {
-  background-color: #1e3a8a; /* royal blue */
-  padding: 12px;
-}
-
-nav a {
-  color: white;
-  margin: 0 12px;
-  text-decoration: none;
-  font-weight: bold;
-}
 @keyframes slideIn {
   from {
     transform: translateX(100%);
@@ -35,24 +23,17 @@ nav a {
     opacity: 1;
   }
 }
-nav a:hover {
-  text-decoration: underline;
-}
-
-/* Forms */
+/* Forms: only stack fields vertically (pages style their own forms) */
 form {
-  margin: 20px auto;
   display: flex;
   flex-direction: column;
-  max-width: 400px;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+form input {
+  margin-bottom: 12px;
 }
 
 input, button {
-  margin-bottom: 12px;
   padding: 10px;
   border-radius: 6px;
   border: 1px solid #ccc;
@@ -61,7 +42,7 @@ input, button {
 
 /* Buttons */
 button {
-  background-color: #1e3a8a;
+  background-color: var(--vg-accent);
   color: white;
   border: none;
   cursor: pointer;
@@ -69,13 +50,13 @@ button {
 }
 
 button:hover {
-  background-color: #162d6a;
+  background-color: var(--vg-accent-hover);
 }
 
 /* Headings */
 h2, h3 {
   margin-bottom: 15px;
-  color: #1e3a8a;
+  color: var(--vg-accent);
 }
 
 /* Lists */
@@ -85,11 +66,11 @@ ul {
 }
 
 li {
-  background: #fff;
+  background: rgba(255,255,255,0.45);
   margin-bottom: 8px;
   padding: 10px;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.7);
 }
 /* ============================================================
    MOBILE RESPONSIVENESS IMPROVEMENTS
@@ -175,16 +156,12 @@ table {
   }
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
 
 /* Better focus states for accessibility */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--vg-accent);
   outline-offset: 2px;
 }
