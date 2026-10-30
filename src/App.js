@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import InstallAppButton from "./components/InstallAppButton";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { apiFetch } from "./utils/api";
+import { applyVgTheme } from "./utils/vgThemes";
 
 import Home from "./pages/Home";
 import SuccessStories from "./pages/SuccessStories";
@@ -61,6 +62,24 @@ function App() {
     document.documentElement.style.padding = "0";
     document.body.style.overflowX = "hidden";
     document.documentElement.style.overflowX = "hidden";
+  }, []);
+
+  // ============================================
+  // 1b. SITE THEME — the admin chooses it (Admin Settings → Site → Site Theme)
+  // ============================================
+  useEffect(() => {
+    let alive = true;
+    const loadTheme = async () => {
+      try {
+        const res = await apiFetch("/settings");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (alive && data?.settings?.global_theme) applyVgTheme(data.settings.global_theme);
+      } catch { /* keep the cached theme */ }
+    };
+    loadTheme();
+    window.addEventListener("theme-refresh", loadTheme);
+    return () => { alive = false; window.removeEventListener("theme-refresh", loadTheme); };
   }, []);
 
   // ============================================
@@ -231,3 +250,4 @@ function App() {
 }
 
 export default App;
+  
