@@ -4,10 +4,12 @@ import './index.css';
 import "./styles/global.css";
 import "./styles/glass-theme.css";
 import { initGlassTheme } from "./utils/glassTheme";
+import { applyCachedVgTheme } from "./utils/vgThemes";
 import App from "./App";
 import ErrorBoundary from "./ErrorBoundary";
 import ToastContainer from "./components/ToastContainer";
 
+applyCachedVgTheme();
 initGlassTheme();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -19,3 +21,4 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 );
+  
