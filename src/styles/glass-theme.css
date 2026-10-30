@@ -12,15 +12,27 @@
   --vg-gold: #9a3412;
   --vg-on-brand: #ffffff;
   --vg-brand: linear-gradient(135deg, #be185d 0%, #7c3aed 100%);
-  --vg-brand-soft: rgba(190, 24, 93, 0.65);
+  --vg-brand-soft: rgba(var(--vg-accent-rgb), 0.65);
   --vg-glass: rgba(255, 255, 255, 0.45);
   --vg-glass-in: rgba(255, 255, 255, 0.35);
   --vg-soft: rgba(255, 255, 255, 0.55);
   --vg-pop: rgba(255, 255, 255, 0.92);
   --vg-border: rgba(255, 255, 255, 0.75);
-  --vg-shadow: 0 8px 32px rgba(190, 24, 93, 0.12);
+  --vg-shadow: 0 8px 32px rgba(var(--vg-accent-rgb), 0.12);
   --vg-blur: blur(14px) saturate(160%);
   --vg-nav-h: 72px;
+  /* page background + brand extras (changed by theme presets below) */
+  --vg-bg-base: #ffe4e6;
+  --vg-orb-1: rgba(251, 113, 133, 0.5);
+  --vg-orb-2: rgba(253, 186, 116, 0.5);
+  --vg-orb-3: rgba(167, 139, 250, 0.5);
+  --vg-grad-a: #ffe4e6;
+  --vg-grad-b: #e0e7ff;
+  --vg-auth-a: #fb7185;
+  --vg-auth-b: #a78bfa;
+  --vg-accent-dark: #831843;
+  --vg-accent-soft: #fce7f3;
+  --vg-placeholder: #7a4a6d;
 }
 
 html {
@@ -29,7 +41,7 @@ html {
 }
 
 body {
-  background-color: #ffe4e6 !important;
+  background-color: var(--vg-bg-base) !important;
   color: var(--vg-text);
   min-height: 100vh;
 }
@@ -42,10 +54,10 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 10% 14%, rgba(251, 113, 133, 0.5), transparent 42%),
-    radial-gradient(circle at 92% 38%, rgba(253, 186, 116, 0.5), transparent 40%),
-    radial-gradient(circle at 18% 92%, rgba(167, 139, 250, 0.5), transparent 44%),
-    linear-gradient(135deg, #ffe4e6 0%, #e0e7ff 100%);
+    radial-gradient(circle at 10% 14%, var(--vg-orb-1), transparent 42%),
+    radial-gradient(circle at 92% 38%, var(--vg-orb-2), transparent 40%),
+    radial-gradient(circle at 18% 92%, var(--vg-orb-3), transparent 44%),
+    linear-gradient(135deg, var(--vg-grad-a) 0%, var(--vg-grad-b) 100%);
 }
 
 /* ---------- page layout: navbar / main / footer ---------- */
@@ -67,20 +79,20 @@ body::before {
   min-height: calc(100vh - var(--vg-nav-h));
   background: transparent !important;
 }
-.vivaha-main .auth-body::before { background: #fb7185 !important; }
-.vivaha-main .auth-body::after  { background: #a78bfa !important; }
+.vivaha-main .auth-body::before { background: var(--vg-auth-a) !important; }
+.vivaha-main .auth-body::after  { background: var(--vg-auth-b) !important; }
 html:root {
-  --green: #be185d;
-  --green-dark: #831843;
-  --green-soft: #fce7f3;
-  --ink: #3b1d3f;
-  --muted: #6b3f6e;
+  --green: var(--vg-accent);
+  --green-dark: var(--vg-accent-dark);
+  --green-soft: var(--vg-accent-soft);
+  --ink: var(--vg-text);
+  --muted: var(--vg-muted);
 }
 
 /* loading spinner used by ProtectedRoute */
 .vg-spinner {
   width: 36px; height: 36px; border-radius: 50%;
-  border: 3px solid rgba(190, 24, 93, 0.2);
+  border: 3px solid rgba(var(--vg-accent-rgb), 0.2);
   border-top-color: var(--vg-accent);
   animation: vg-spin 0.8s linear infinite;
 }
@@ -99,7 +111,7 @@ html:root {
   background: var(--vg-pop) !important;
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  box-shadow: 0 12px 40px rgba(190, 24, 93, 0.2) !important;
+  box-shadow: 0 12px 40px rgba(var(--vg-accent-rgb), 0.2) !important;
 }
 [data-vg-bg="clear"]      { background: transparent !important; }
 [data-vg-bg="brand"]      { background: var(--vg-brand) !important; }
@@ -122,8 +134,8 @@ a[data-vg-fg="accent"]:hover { color: var(--vg-accent-hover) !important; }
 /* ---------- global defaults ---------- */
 a { color: var(--vg-accent); }
 a:hover { color: var(--vg-accent-hover); }
-::placeholder { color: #7a4a6d; opacity: 1; }
-::selection { background: rgba(190, 24, 93, 0.22); }
+::placeholder { color: var(--vg-placeholder); opacity: 1; }
+::selection { background: rgba(var(--vg-accent-rgb), 0.22); }
 input:focus, select:focus, textarea:focus {
   outline: 2px solid var(--vg-accent);
   outline-offset: 1px;
@@ -140,3 +152,74 @@ input:focus, select:focus, textarea:focus {
   }
   .vg-strip-div { display: none; }
 }
+
+/* ============================================================
+   THEME PRESETS — chosen by the admin (Admin Settings → Site → Site Theme)
+   The default look ("sunset") is the :root block above.
+   Applied by <html data-vg-theme="...">  (see utils/vgThemes.js)
+   ============================================================ */
+html[data-vg-theme="emerald"] {
+  --vg-text: #12332a; --vg-text-rgb: 18, 51, 42; --vg-muted: #3d6354;
+  --vg-accent: #15803d; --vg-accent-rgb: 21, 128, 61; --vg-accent-hover: #166534;
+  --vg-gold: #92400e;
+  --vg-brand: linear-gradient(135deg, #15803d 0%, #0d9488 100%);
+  --vg-bg-base: #dcfce7;
+  --vg-orb-1: rgba(74, 222, 128, 0.45); --vg-orb-2: rgba(190, 242, 100, 0.45); --vg-orb-3: rgba(45, 212, 191, 0.45);
+  --vg-grad-a: #ecfdf5; --vg-grad-b: #e0f2fe;
+  --vg-auth-a: #4ade80; --vg-auth-b: #2dd4bf;
+  --vg-accent-dark: #14532d; --vg-accent-soft: #dcfce7; --vg-placeholder: #4f7a68;
+}
+html[data-vg-theme="ocean"] {
+  --vg-text: #0f2a43; --vg-text-rgb: 15, 42, 67; --vg-muted: #3b5a7a;
+  --vg-accent: #0369a1; --vg-accent-rgb: 3, 105, 161; --vg-accent-hover: #075985;
+  --vg-gold: #92400e;
+  --vg-brand: linear-gradient(135deg, #0369a1 0%, #6366f1 100%);
+  --vg-bg-base: #e0f2fe;
+  --vg-orb-1: rgba(56, 189, 248, 0.45); --vg-orb-2: rgba(165, 180, 252, 0.45); --vg-orb-3: rgba(103, 232, 249, 0.45);
+  --vg-grad-a: #e0f2fe; --vg-grad-b: #ede9fe;
+  --vg-auth-a: #38bdf8; --vg-auth-b: #818cf8;
+  --vg-accent-dark: #0c4a6e; --vg-accent-soft: #e0f2fe; --vg-placeholder: #56789a;
+}
+html[data-vg-theme="royal"] {
+  --vg-text: #3a1218; --vg-text-rgb: 58, 18, 24; --vg-muted: #6b3a40;
+  --vg-accent: #8b0a2e; --vg-accent-rgb: 139, 10, 46; --vg-accent-hover: #6b0722;
+  --vg-gold: #92400e;
+  --vg-brand: linear-gradient(135deg, #8b0a2e 0%, #b8860b 100%);
+  --vg-bg-base: #fff1e6;
+  --vg-orb-1: rgba(244, 114, 182, 0.35); --vg-orb-2: rgba(251, 191, 36, 0.4); --vg-orb-3: rgba(251, 146, 60, 0.35);
+  --vg-grad-a: #fff1e6; --vg-grad-b: #fde8ee;
+  --vg-auth-a: #f472b6; --vg-auth-b: #fbbf24;
+  --vg-accent-dark: #5c0620; --vg-accent-soft: #fde8ee; --vg-placeholder: #86585e;
+}
+html[data-vg-theme="lavender"] {
+  --vg-text: #2e1f4a; --vg-text-rgb: 46, 31, 74; --vg-muted: #5b4a80;
+  --vg-accent: #7c3aed; --vg-accent-rgb: 124, 58, 237; --vg-accent-hover: #6d28d9;
+  --vg-gold: #9a3412;
+  --vg-brand: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+  --vg-bg-base: #f3e8ff;
+  --vg-orb-1: rgba(196, 181, 253, 0.55); --vg-orb-2: rgba(249, 168, 212, 0.45); --vg-orb-3: rgba(147, 197, 253, 0.45);
+  --vg-grad-a: #f3e8ff; --vg-grad-b: #e0e7ff;
+  --vg-auth-a: #c084fc; --vg-auth-b: #f472b6;
+  --vg-accent-dark: #4c1d95; --vg-accent-soft: #ede9fe; --vg-placeholder: #7a68a3;
+}
+/* "Golden Sunset" — warm peach/gold sky with forest-green accents + serif headings (from the Ennoda Vivaha mock) */
+html[data-vg-theme="golden"] {
+  --vg-text: #1f3d2f; --vg-text-rgb: 31, 61, 47; --vg-muted: #4f6b5a;
+  --vg-accent: #2f7d4f; --vg-accent-rgb: 47, 125, 79; --vg-accent-hover: #256640;
+  --vg-gold: #9a5b13;
+  --vg-brand: linear-gradient(135deg, #4a9962 0%, #2a6b45 100%);
+  --vg-glass: rgba(255, 250, 240, 0.52); --vg-glass-in: rgba(255, 250, 240, 0.4);
+  --vg-soft: rgba(255, 250, 240, 0.62); --vg-pop: rgba(255, 252, 245, 0.94);
+  --vg-border: rgba(255, 255, 255, 0.8);
+  --vg-bg-base: #ffe9c9;
+  --vg-orb-1: rgba(251, 191, 36, 0.5); --vg-orb-2: rgba(253, 164, 100, 0.5); --vg-orb-3: rgba(134, 214, 150, 0.4);
+  --vg-grad-a: #fff1d6; --vg-grad-b: #ffe0c2;
+  --vg-auth-a: #fbbf24; --vg-auth-b: #86d696;
+  --vg-accent-dark: #1b4d33; --vg-accent-soft: #e6f4e8; --vg-placeholder: #6a8575;
+}
+html[data-vg-theme="golden"] h1,
+html[data-vg-theme="golden"] h2,
+html[data-vg-theme="golden"] h3 {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif !important;
+                 }
+                                
