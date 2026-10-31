@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 
+import { useBrand } from "../utils/brand";
 function InstallCard() {
+  const brand = useBrand();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
   const [showPill, setShowPill] = useState(false);
@@ -90,7 +92,7 @@ function InstallCard() {
         <div style={tooltipStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
             <strong style={{ fontSize: "13px", color: "#8B0A2E" }}>
-              📱 Install Vivaha
+              📱 Install {brand.short}
             </strong>
             <button onClick={() => setExpanded(false)} style={tooltipCloseStyle} aria-label="Close">
               ✕
@@ -100,7 +102,7 @@ function InstallCard() {
             {isIOS
               ? "Tap the Share icon at the bottom of Safari, then choose 'Add to Home Screen'."
               : deferredPrompt
-              ? "Tap the button below to add Vivaha to your home screen."
+              ? "Tap the button below to add " + brand.short + " to your home screen."
               : "Open your browser menu → 'Install app' or 'Add to Home Screen'."}
           </p>
         </div>
