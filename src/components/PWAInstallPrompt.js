@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 
+import { useBrand } from "../utils/brand";
 const DISMISS_KEY = "vivaha_pwa_dismissed_at";
 const DISMISS_DAYS = 7;
 
 function PWAInstallPrompt() {
+  const brand = useBrand();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [show, setShow] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -58,7 +60,7 @@ function PWAInstallPrompt() {
       setDeferredPrompt(null);
     } else if (isIOS) {
       alert(
-        "To install Vivaha app:\n\n1. Tap the Share button (⬆️)\n2. Scroll down and tap 'Add to Home Screen'\n3. Tap 'Add'"
+        "To install " + brand.short + " app:\n\n1. Tap the Share button (⬆️)\n2. Scroll down and tap 'Add to Home Screen'\n3. Tap 'Add'"
       );
       setShow(false);
     }
@@ -135,7 +137,7 @@ function PWAInstallPrompt() {
             fontFamily: "'Playfair Display', serif",
           }}
         >
-          Install Vivaha App
+          Install {brand.short} App
         </div>
         <div style={{ fontSize: "11px", opacity: 0.9, lineHeight: 1.4 }}>
           {isIOS
@@ -192,3 +194,4 @@ function PWAInstallPrompt() {
 }
 
 export default PWAInstallPrompt;
+            
