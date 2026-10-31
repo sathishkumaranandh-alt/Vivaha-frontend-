@@ -1,84 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useBrand } from "../utils/brand";
 import { Link } from "react-router-dom";
 import { toast } from "../utils/toast";
-
-const STORIES = [
-  {
-    id: 1,
-    initials: "PK",
-    name: "Priya & Karthik",
-    location: "Chennai",
-    weddingDate: "Married in March 2025",
-    quote:
-      "We matched on Vivaha within the first week of joining. The algorithm understood exactly what we were looking for. Six months later, we were married. Thank you, Vivaha!",
-    badge: "⭐ Most Loved",
-    color: "#8B0A2E",
-  },
-  {
-    id: 2,
-    initials: "DA",
-    name: "Divya & Ashwin",
-    location: "Bangalore",
-    weddingDate: "Married in July 2024",
-    quote:
-      "I loved how easy it was to filter profiles by community and location. Ashwin and I clicked instantly during our first chat. Our families are so happy!",
-    badge: "💒 2 Years Together",
-    color: "#D4A017",
-  },
-  {
-    id: 3,
-    initials: "MR",
-    name: "Meena & Raj",
-    location: "Coimbatore",
-    weddingDate: "Married in December 2024",
-    quote:
-      "The verified badges gave me confidence in the profiles. Raj was the 3rd person I sent an interest to, and now we're happily married. Worth every minute!",
-    badge: "🌟 Verified Match",
-    color: "#16a34a",
-  },
-  {
-    id: 4,
-    initials: "SK",
-    name: "Sneha & Karthik",
-    location: "Madurai",
-    weddingDate: "Married in May 2025",
-    quote:
-      "We were both hesitant about matrimony sites. But Vivaha felt safe, and the interest-first approach made it respectful. Our engagement was at a temple 4 months later.",
-    badge: "🕉️ Traditional Match",
-    color: "#7c3aed",
-  },
-  {
-    id: 5,
-    initials: "AV",
-    name: "Anjali & Vikram",
-    location: "Trichy",
-    weddingDate: "Married in February 2025",
-    quote:
-      "My mother found Karthik on Vivaha and showed me his profile. I sent an interest, he accepted, and the rest is history. So grateful to this platform!",
-    badge: "👨‍👩‍👧 Family-Approved",
-    color: "#ea580c",
-  },
-  {
-    id: 6,
-    initials: "LM",
-    name: "Lakshmi & Manoj",
-    location: "Salem",
-    weddingDate: "Married in September 2024",
-    quote:
-      "Long distance was a concern until we matched. Vivaha's chat made it easy to stay connected during our 8-month courtship. Now we're inseparable!",
-    badge: "💌 8-Month Courtship",
-    color: "#0891b2",
-  },
-];
-
-const STATS = [
-  { num: "2,500+", label: "Successful Matches" },
-  { num: "500+", label: "Weddings in 2025" },
-  { num: "4.8★", label: "Average Rating" },
-  { num: "98%", label: "Would Recommend" },
-];
+import { apiFetch } from "../utils/api";
 
 function SuccessStories() {
+  const brand = useBrand();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
@@ -88,6 +15,18 @@ function SuccessStories() {
     story: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [stories, setStories] = useState([]);
+  const [loadingStories, setLoadingStories] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    apiFetch("/success-stories")
+      .then((r) => (r.ok ? r.json() : { stories: [] }))
+      .then((d) => { if (alive) setStories(d.stories || []); })
+      .catch(() => {})
+      .finally(() => { if (alive) setLoadingStories(false); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 900);
@@ -102,13 +41,29 @@ function SuccessStories() {
       return;
     }
     setSubmitting(true);
-    // Simulate submission (replace with backend later)
-    setTimeout(() => {
-      toast.success("Thank you! We'll review and publish your story soon 💕");
+    try {
+      const res = await apiFetch("/success-stories/submit", {
+        method: "POST",
+        body: JSON.stringify({
+          couple_names: `${form.brideName.trim()} & ${form.groomName.trim()}`,
+          location: form.location.trim(),
+          story: form.story.trim(),
+        }),
+      });
+      if (res.status === 401) {
+        toast.error("Please login to share your story");
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not submit");
+      toast.success("Thank you! We'll review your story before publishing 💕");
       setShowForm(false);
       setForm({ brideName: "", groomName: "", location: "", story: "" });
+    } catch (err) {
+      toast.error(err.message || "Could not submit. Please try again.");
+    } finally {
       setSubmitting(false);
-    }, 1000);
+    }
   };
 
   const S = {
@@ -432,8 +387,7 @@ function SuccessStories() {
             <span style={S.heroItalic}>With a Single Hello</span>
           </h1>
           <p style={S.heroSubtitle}>
-            Thousands of couples have found their perfect life partner on
-            Vivaha Matrimony. Here are some of our favourite love stories.
+            Real couples who met through {brand.name}. Found your match here too? We would love to hear your story.
           </p>
           <button
             style={S.heroCTA}
@@ -449,18 +403,6 @@ function SuccessStories() {
         </div>
       </section>
 
-      {/* STATS BAR */}
-      <div style={S.statsBar}>
-        <div style={S.statsCard}>
-          {STATS.map((s) => (
-            <div key={s.label}>
-              <div style={S.statNum}>{s.num}</div>
-              <div style={S.statLabel}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* STORIES GRID */}
       <section style={S.section}>
         <div style={S.sectionHead}>
@@ -470,46 +412,47 @@ function SuccessStories() {
             <span style={S.sectionItalic}> Forever</span>
           </h2>
           <p style={S.sectionSub}>
-            Every story here is a family that started right here on Vivaha.
+            Every story here is a family that started right here on {brand.short}.
           </p>
         </div>
 
-        <div style={S.grid}>
-          {STORIES.map((story) => (
-            <div
-              key={story.id}
-              style={S.card}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-6px)";
-                e.currentTarget.style.boxShadow = "0 16px 40px rgba(139,10,46,0.12)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 20px rgba(139,10,46,0.06)";
-              }}
-            >
-              <div style={S.cardBadge}>{story.badge}</div>
-              <div style={S.cardQuote}>"</div>
-              <p style={S.cardText}>{story.quote}</p>
-              <div style={S.cardAuthor}>
-                <div
-                  style={{
-                    ...S.avatar,
-                    background: `linear-gradient(135deg, ${story.color}, ${story.color}dd)`,
-                  }}
-                >
-                  {story.initials}
-                </div>
-                <div>
-                  <div style={S.authorName}>{story.name}</div>
-                  <div style={S.authorMeta}>
-                    📍 {story.location} · {story.weddingDate}
+        {loadingStories ? (
+          <p style={{ textAlign: "center", opacity: 0.7 }}>Loading...</p>
+        ) : stories.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "30px 10px", opacity: 0.85 }}>
+            <div style={{ fontSize: 40 }}>💞</div>
+            <p style={{ maxWidth: 440, margin: "10px auto 0", lineHeight: 1.7 }}>
+              Our first success stories will appear here soon. If you found your life partner through {brand.short}, please share your story below.
+            </p>
+          </div>
+        ) : (
+          <div style={S.grid}>
+            {stories.map((story) => {
+              const names = story.couple_names || "Happy Couple";
+              const initials = names.split(/[&,]/).map((n) => n.trim().charAt(0).toUpperCase()).join("").slice(0, 2) || "💞";
+              return (
+                <div key={story.id} style={S.card}>
+                  {story.photo_url && (
+                    <img src={story.photo_url} alt={names} loading="lazy" style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 12, marginBottom: 10 }} />
+                  )}
+                  <div style={S.cardQuote}>"</div>
+                  <p style={S.cardText}>{story.story}</p>
+                  <div style={S.cardAuthor}>
+                    <div style={{ ...S.avatar, background: "linear-gradient(135deg, #8B0A2E, #a01438)" }}>{initials}</div>
+                    <div>
+                      <div style={S.authorName}>{names}</div>
+                      <div style={S.authorMeta}>
+                        {story.location ? `📍 ${story.location}` : ""}
+                        {story.location && story.wedding_date ? " · " : ""}
+                        {story.wedding_date ? `💍 ${story.wedding_date}` : ""}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* SHARE YOUR STORY FORM */}
@@ -520,10 +463,10 @@ function SuccessStories() {
         {!showForm ? (
           <>
             <h2 style={{ ...S.ctaTitle, color: "#8B0A2E" }}>
-              Found Your Match on Vivaha?
+              Found Your Match on {brand.short}?
             </h2>
             <p style={{ ...S.ctaSub, color: "#8a6b6b" }}>
-              Share your love story with us and inspire thousands of families
+              Share your love story with us and inspire other families
               looking for their perfect partner.
             </p>
             <button
@@ -545,7 +488,7 @@ function SuccessStories() {
           >
             <h3 style={S.formTitle}>Share Your Love Story 💑</h3>
             <p style={S.formSub}>
-              We'll review and publish it on this page within 3-5 days.
+              We'll review your story before publishing it on this page. (Login required)
             </p>
 
             <label style={S.label}>Bride's Name *</label>
@@ -609,7 +552,7 @@ function SuccessStories() {
           Ready to Write Your Own Story?
         </h2>
         <p style={S.ctaSub}>
-          Join thousands of families who found their perfect match on Vivaha.
+          Create your free profile on {brand.short} and take the first step.
           Your story could be next.
         </p>
         <Link
