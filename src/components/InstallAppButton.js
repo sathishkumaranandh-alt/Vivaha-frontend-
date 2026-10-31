@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 
+import { useBrand } from "../utils/brand";
 function InstallAppButton({ variant = "card" }) {
+  const brand = useBrand();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -54,7 +56,7 @@ function InstallAppButton({ variant = "card" }) {
 
     // Fallback
     alert(
-      "To install Vivaha:\n\n1. Open in Chrome (Android) or Safari (iOS)\n2. Tap browser menu (⋮ or Share ⬆️)\n3. Select 'Install app' or 'Add to Home Screen'"
+      "To install " + brand.short + ":\n\n1. Open in Chrome (Android) or Safari (iOS)\n2. Tap browser menu (⋮ or Share ⬆️)\n3. Select 'Install app' or 'Add to Home Screen'"
     );
   };
 
@@ -119,7 +121,7 @@ function InstallAppButton({ variant = "card" }) {
                 fontFamily: "'Playfair Display', serif",
               }}
             >
-              📱 Install Vivaha App
+              📱 Install {brand.short} App
             </div>
             <div style={{ fontSize: "12px", opacity: 0.9, lineHeight: 1.5 }}>
               {isIOS ? "Tap Share → Add to Home Screen" : "Fast · Free · Works offline"}
@@ -245,7 +247,7 @@ function InstallAppButton({ variant = "card" }) {
                 fontWeight: 800,
               }}
             >
-              Install Vivaha on iPhone
+              Install {brand.short} on iPhone
             </h3>
             <p
               style={{
@@ -438,3 +440,4 @@ function InstallAppButton({ variant = "card" }) {
 }
 
 export default InstallAppButton;
+              
