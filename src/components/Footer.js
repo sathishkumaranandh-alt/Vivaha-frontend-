@@ -99,10 +99,10 @@ function Footer() {
             {/* LEGAL */}
             <div>
               <h4 style={colTitleStyle}>Legal</h4>
-              <button type="button" onClick={handleComingSoon} style={colButtonStyle}>Terms of Service</button>
-              <button type="button" onClick={handleComingSoon} style={colButtonStyle}>Privacy Policy</button>
-              <button type="button" onClick={handleComingSoon} style={colButtonStyle}>Cookie Policy</button>
-              <button type="button" onClick={handleComingSoon} style={colButtonStyle}>Refund Policy</button>
+              <Link to="/terms" style={{ ...colButtonStyle, textDecoration: "none" }}>Terms of Service</Link>
+              <Link to="/privacy" style={{ ...colButtonStyle, textDecoration: "none" }}>Privacy Policy</Link>
+              <Link to="/privacy" style={{ ...colButtonStyle, textDecoration: "none" }}>Cookie Policy</Link>
+              <Link to="/refund" style={{ ...colButtonStyle, textDecoration: "none" }}>Refund Policy</Link>
               <button type="button" onClick={handleComingSoon} style={colButtonStyle}>Report Abuse</button>
             </div>
 
@@ -135,9 +135,9 @@ function Footer() {
               <span style={{ color: "var(--vg-accent)" }}>❤</span> for finding lifelong partners.
             </p>
             <div style={bottomLinksStyle}>
-              <button type="button" onClick={handleComingSoon} style={bottomLinkBtnStyle}>Terms</button>
+              <Link to="/terms" style={{ ...bottomLinkBtnStyle, textDecoration: "none" }}>Terms</Link>
               <span style={bottomDividerStyle}>•</span>
-              <button type="button" onClick={handleComingSoon} style={bottomLinkBtnStyle}>Privacy</button>
+              <Link to="/privacy" style={{ ...bottomLinkBtnStyle, textDecoration: "none" }}>Privacy</Link>
               <span style={bottomDividerStyle}>•</span>
               <button type="button" onClick={handleComingSoon} style={bottomLinkBtnStyle}>Sitemap</button>
             </div>
@@ -176,3 +176,4 @@ const bottomLinkBtnStyle = { background: "transparent", border: "none", color: "
 const bottomDividerStyle = { color: "rgba(var(--vg-text-rgb), 0.35)", fontSize: "10px" };
 
 export default Footer;
+        
