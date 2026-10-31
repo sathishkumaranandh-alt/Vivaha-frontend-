@@ -1,5 +1,6 @@
 import React from "react";
 
+import { reportError } from "./utils/monitoring";
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -7,6 +8,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    reportError(error, { componentStack: errorInfo && errorInfo.componentStack });
     this.setState({ hasError: true, error, errorInfo });
   }
 
