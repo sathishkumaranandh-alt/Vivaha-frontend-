@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
+import { useBrand } from "../utils/brand";
 import { useCommunities } from "../utils/communities";
 import { apiFetch } from "../utils/api";
 
@@ -12,6 +13,7 @@ function getAge(dobString) {
 }
 
 function Register() {
+  const brand = useBrand();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { communities } = useCommunities();
@@ -36,6 +38,7 @@ function Register() {
       if (cancelled || !captchaBoxRef.current || !window.turnstile || captchaWidgetId.current !== null) return;
       captchaWidgetId.current = window.turnstile.render(captchaBoxRef.current, {
         sitekey: TURNSTILE_SITE_KEY,
+        size: window.innerWidth < 420 ? "compact" : "normal", // 300px normal widget overflows small phones
         callback: (t) => setCaptchaToken(t),
         "expired-callback": () => setCaptchaToken(""),
         "error-callback": () => setCaptchaToken(""),
@@ -117,6 +120,20 @@ function Register() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
+
+      if (data.needsVerification) {
+        // Email verification is ON: send the confirmation mail, then wait on the verify page
+        try {
+          await supabase.auth.resend({
+            type: "signup",
+            email: form.email.trim(),
+            options: { emailRedirectTo: `${window.location.origin}/login?verified=1` },
+          });
+        } catch (e) { /* the verify page has a Resend button */ }
+        toast.success("📧 Account created! Please verify your email.");
+        navigate(`/verify-email?email=${encodeURIComponent(form.email.trim())}`);
+        return;
+      }
 
       toast.success("🎉 Account Created! Let's complete your profile.");
       
@@ -245,7 +262,7 @@ function Register() {
       <div className="auth-body">
         <section className="panel">
           <header className="brand">
-            <h1>Vivaha</h1>
+            <h1>{brand.short}</h1>
             <p>Find Your Life Partner</p>
           </header>
 
@@ -325,7 +342,7 @@ function Register() {
                 <span>I agree to the Terms of Use and Privacy Policy. I confirm that the details provided are accurate.</span>
               </label>
 
-              {TURNSTILE_SITE_KEY && <div ref={captchaBoxRef} style={{ margin: "12px 0", minHeight: 65 }} />}
+              {TURNSTILE_SITE_KEY && <div ref={captchaBoxRef} style={{ margin: "12px 0", minHeight: 65, display: "flex", justifyContent: "center", overflow: "hidden" }} />}
 
               <button className="primary-btn" type="submit" disabled={loading}>
                 {loading ? "Creating Account..." : "Create Profile 💍"}
@@ -341,4 +358,3 @@ function Register() {
 }
 
 export default Register;
-    
