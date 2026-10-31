@@ -42,10 +42,10 @@ function ProfileCompletionCard({ profile, isMobile }) {
     return (
       <div
         style={{
-          background: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
+          background: "linear-gradient(135deg, var(--vg-accent-soft), rgba(255,255,255,0.7))",
           borderRadius: `${pageTheme.cardRadius}px`,
           padding: `${pageTheme.cardPadding}px`,
-          border: "2px solid #86efac",
+          border: "2px solid var(--vg-accent)",
           textAlign: "center",
           marginBottom: "20px",
         }}
@@ -53,7 +53,7 @@ function ProfileCompletionCard({ profile, isMobile }) {
         <div style={{ fontSize: "42px", marginBottom: "8px" }}>🎉</div>
         <h3
           style={{
-            color: "#16a34a",
+            color: "var(--vg-accent)",
             fontSize: "18px",
             fontWeight: "800",
             margin: "0 0 6px 0",
@@ -64,7 +64,7 @@ function ProfileCompletionCard({ profile, isMobile }) {
         </h3>
         <p
           style={{
-            color: "#166534",
+            color: "var(--vg-accent-dark)",
             fontSize: "13px",
             margin: 0,
             lineHeight: 1.6,
@@ -80,7 +80,7 @@ function ProfileCompletionCard({ profile, isMobile }) {
     <div
       style={{
         ...cardStyle,
-        background: "linear-gradient(135deg, #fff9f5 0%, #fdf2f6 100%)",
+        background: "linear-gradient(135deg, rgba(255,255,255,0.75), var(--vg-accent-soft))",
         border: `2px dashed ${pageTheme.cardBorder}`,
         marginBottom: "20px",
       }}
@@ -146,7 +146,7 @@ function ProfileCompletionCard({ profile, isMobile }) {
                   ? "linear-gradient(90deg, #dc2626, #f59e0b)"
                   : percent < 80
                   ? "linear-gradient(90deg, #f59e0b, #eab308)"
-                  : "linear-gradient(90deg, #16a34a, #22c55e)",
+                  : "linear-gradient(90deg, var(--vg-accent), var(--vg-accent-dark))",
             }}
           />
         </div>
@@ -212,7 +212,7 @@ function ProfileCompletionCard({ profile, isMobile }) {
           fontSize: "14px",
           cursor: "pointer",
           fontFamily: "inherit",
-          boxShadow: "0 6px 16px rgba(139,10,46,0.25)",
+          boxShadow: "0 6px 16px rgba(0,0,0,0.18)",
           padding: isMobile ? "12px" : "14px",
         }}
       >
@@ -235,3 +235,4 @@ function ProfileCompletionCard({ profile, isMobile }) {
 }
 
 export default ProfileCompletionCard;
+      
