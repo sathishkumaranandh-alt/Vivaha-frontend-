@@ -7,8 +7,10 @@ import { initGlassTheme } from "./utils/glassTheme";
 import { applyCachedVgTheme } from "./utils/vgThemes";
 import App from "./App";
 import ErrorBoundary from "./ErrorBoundary";
+import { initMonitoring } from "./utils/monitoring";
 import ToastContainer from "./components/ToastContainer";
 
+initMonitoring();
 applyCachedVgTheme();
 initGlassTheme();
 
@@ -21,4 +23,3 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 );
-  
