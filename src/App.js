@@ -14,6 +14,9 @@ import SuccessStories from "./pages/SuccessStories";
 import AdminSuccessStories from "./pages/AdminSuccessStories";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import VerifyEmail from "./pages/VerifyEmail";
+import Legal from "./pages/Legal";
+import { useBrand } from "./utils/brand";
 import Profile from "./pages/Profile";
 import ProfileSearch from "./pages/ProfileSearch";
 import Matches from "./pages/Matches";
@@ -48,6 +51,11 @@ const BACKEND_URL =
 const HEARTBEAT_INTERVAL = 60000; // 60 seconds
 
 function App() {
+  const brand = useBrand();
+  useEffect(() => {
+    document.title = `${brand.name} — Find Your Life Partner`;
+  }, [brand.name]);
+
   const [currentUserId, setCurrentUserId] = useState(null);
   const [sessionReady, setSessionReady] = useState(false);
   const currentUserIdRef = useRef(null);
@@ -211,6 +219,10 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/success-stories" element={<SuccessStories />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/terms" element={<Legal doc="terms" />} />
+            <Route path="/privacy" element={<Legal doc="privacy" />} />
+            <Route path="/refund" element={<Legal doc="refund" />} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/search" element={<ProtectedRoute><ProfileSearch /></ProtectedRoute>} />
@@ -250,4 +262,4 @@ function App() {
 }
 
 export default App;
-  
+      
