@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useBrand } from "../utils/brand";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { apiFetch } from "../utils/api"; // 🛡️ Added for JWT Security
 
 function SubscriptionDashboard() {
+  const brand = useBrand();
   const navigate = useNavigate();
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -115,7 +117,7 @@ function SubscriptionDashboard() {
     <div style={pageStyle}>
       <div style={headerStyle}>
         <h1 style={titleStyle}>⭐ My Subscription</h1>
-        <p style={subtitleStyle}>Manage your Vivaha premium plan</p>
+        <p style={subtitleStyle}>Manage your {brand.short} premium plan</p>
       </div>
 
       {/* MAIN CARD */}
@@ -411,3 +413,4 @@ const dangerBtnStyle = {
 };
 
 export default SubscriptionDashboard;
+  
