@@ -2,13 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
+import { useBrand } from "../utils/brand";
 
 function Login() {
+  const brand = useBrand();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [needsVerify, setNeedsVerify] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -30,7 +33,12 @@ function Login() {
       toast.success("Welcome back! 💕");
       navigate("/dashboard");
     } catch (err) {
-      toast.error(err.message || "Invalid login credentials");
+      if (/not confirmed/i.test(err.message || "")) {
+        setNeedsVerify(true);
+        toast.error("Please verify your email first. Check your inbox.");
+      } else {
+        toast.error(err.message || "Invalid login credentials");
+      }
     } finally {
       setLoading(false);
     }
@@ -117,7 +125,7 @@ function Login() {
       <div className="auth-body">
         <section className="panel">
           <header className="brand">
-            <h1>Vivaha</h1>
+            <h1>{brand.short}</h1>
             <p>Find Your Life Partner</p>
           </header>
 
@@ -130,6 +138,15 @@ function Login() {
             <h2>Welcome Back</h2>
             <p className="intro">Login to continue your journey.</p>
             
+            {new URLSearchParams(window.location.search).get("verified") === "1" && (
+              <p style={{ color: "#166534", fontWeight: 700, fontSize: 14 }}>✅ Email verified! Please login.</p>
+            )}
+            {needsVerify && (
+              <p style={{ fontSize: 13 }}>
+                Email not verified yet.{" "}
+                <Link to={`/verify-email?email=${encodeURIComponent(email.trim())}`}>Resend verification email</Link>
+              </p>
+            )}
             <form onSubmit={handleLogin}>
               <div className="field">
                 <label>Email Address</label>
@@ -167,3 +184,4 @@ function Login() {
 }
 
 export default Login;
+    
