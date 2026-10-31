@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
@@ -17,9 +17,46 @@ function Register() {
   const { communities } = useCommunities();
   
   const [loading, setLoading] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const [registrationAllowed, setRegistrationAllowed] = useState(true);
+
   const [checkingSettings, setCheckingSettings] = useState(true);
+
+  // 🤖 Cloudflare Turnstile (bot protection). Active only when REACT_APP_TURNSTILE_SITE_KEY is set.
+  const TURNSTILE_SITE_KEY = process.env.REACT_APP_TURNSTILE_SITE_KEY || "";
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaBoxRef = useRef(null);
+  const captchaWidgetId = useRef(null);
+
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return;
+    let cancelled = false;
+    const mount = () => {
+      if (cancelled || !captchaBoxRef.current || !window.turnstile || captchaWidgetId.current !== null) return;
+      captchaWidgetId.current = window.turnstile.render(captchaBoxRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: (t) => setCaptchaToken(t),
+        "expired-callback": () => setCaptchaToken(""),
+        "error-callback": () => setCaptchaToken(""),
+      });
+    };
+    if (window.turnstile) {
+      mount();
+    } else {
+      let script = document.getElementById("cf-turnstile-script");
+      if (!script) {
+        script = document.createElement("script");
+        script.id = "cf-turnstile-script";
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        script.async = true;
+        document.head.appendChild(script);
+      }
+      script.addEventListener("load", mount);
+    }
+    const poll = setInterval(() => { if (window.turnstile) { mount(); clearInterval(poll); } }, 500);
+    return () => { cancelled = true; clearInterval(poll); };
+  }, [TURNSTILE_SITE_KEY, checkingSettings]);
 
   const [form, setForm] = useState({
     name: "", gender: "", dob: "", community: "", mobile: "", email: "",
@@ -63,16 +100,18 @@ function Register() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) return toast.error("Please enter a valid email address.");
     
-    if (form.password.length < 6) return toast.error("Password must be at least 6 characters");
+    if (form.password.length < 8) return toast.error("Password must be at least 8 characters");
+    if (!/[A-Za-z]/.test(form.password) || !/[0-9]/.test(form.password)) return toast.error("Password needs at least one letter and one number");
     if (form.password !== form.confirmPassword) return toast.error("Passwords don't match");
     if (!form.terms) return toast.error("You must agree to the Terms & Privacy Policy");
+    if (TURNSTILE_SITE_KEY && !captchaToken) return toast.error("Please complete the security check");
 
     setLoading(true);
     try {
       const res = await apiFetch(`/auth/signup`, {
         method: "POST",
         body: JSON.stringify({
-          email: form.email.trim(), password: form.password, community: form.community, caste: form.community, name: form.name.trim(), gender: form.gender.toLowerCase(), dob: form.dob, mobile: form.mobile, profile_for: form.profile_for, marital_status: form.marital_status, religion: form.religion, mother_tongue: form.mother_tongue, custom_fields: {}
+          email: form.email.trim(), captchaToken, password: form.password, community: form.community, caste: form.community, name: form.name.trim(), gender: form.gender.toLowerCase(), dob: form.dob, mobile: form.mobile, profile_for: form.profile_for, marital_status: form.marital_status, religion: form.religion, mother_tongue: form.mother_tongue, custom_fields: {}
         })
       });
 
@@ -88,6 +127,10 @@ function Register() {
       if (loginError) { navigate("/login"); } else { navigate("/onboarding"); }
     } catch (err) {
       toast.error(err.message || "Network error. Please try again.");
+      try {
+        if (window.turnstile && captchaWidgetId.current !== null) window.turnstile.reset(captchaWidgetId.current);
+        setCaptchaToken("");
+      } catch (e2) { /* ignore */ }
     } finally {
       setLoading(false);
     }
@@ -260,7 +303,7 @@ function Register() {
                   <label>Password <span className="required">*</span></label>
                   <div className="input-wrap">
                     <span className="symbol">♙</span>
-                    <input className="password-input" type={showPassword ? "text" : "password"} placeholder="Min 6 chars" value={form.password} onChange={(e) => update("password", e.target.value)} required minLength="6" />
+                    <input className="password-input" type={showPassword ? "text" : "password"} placeholder="Min 8 chars (letter + number)" value={form.password} onChange={(e) => update("password", e.target.value)} required minLength="6" />
                   </div>
                 </div>
                 <div className="field">
@@ -282,6 +325,8 @@ function Register() {
                 <span>I agree to the Terms of Use and Privacy Policy. I confirm that the details provided are accurate.</span>
               </label>
 
+              {TURNSTILE_SITE_KEY && <div ref={captchaBoxRef} style={{ margin: "12px 0", minHeight: 65 }} />}
+
               <button className="primary-btn" type="submit" disabled={loading}>
                 {loading ? "Creating Account..." : "Create Profile 💍"}
               </button>
@@ -296,3 +341,4 @@ function Register() {
 }
 
 export default Register;
+    
