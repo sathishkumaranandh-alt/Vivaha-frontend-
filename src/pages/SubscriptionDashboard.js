@@ -212,7 +212,9 @@ function SubscriptionDashboard() {
           <div style={featuresSectionStyle}>
             <h3 style={featuresTitleStyle}>✨ Your Premium Features</h3>
             <ul style={featuresListStyle}>
-              {subscription.plan === "gold" && (
+              {Array.isArray(subscription.features) && subscription.features.length > 0 &&
+                subscription.features.map((f, i) => <FeatureItem key={i}>{f}</FeatureItem>)}
+              {!(Array.isArray(subscription.features) && subscription.features.length > 0) && subscription.plan === "gold" && (
                 <>
                   <FeatureItem>Unlimited profile views</FeatureItem>
                   <FeatureItem>Unlimited messages</FeatureItem>
@@ -221,7 +223,7 @@ function SubscriptionDashboard() {
                   <FeatureItem>Priority customer support</FeatureItem>
                 </>
               )}
-              {subscription.plan === "platinum" && (
+              {!(Array.isArray(subscription.features) && subscription.features.length > 0) && subscription.plan === "platinum" && (
                 <>
                   <FeatureItem>Everything in Gold</FeatureItem>
                   <FeatureItem>Featured profile (top of search)</FeatureItem>
@@ -413,4 +415,3 @@ const dangerBtnStyle = {
 };
 
 export default SubscriptionDashboard;
-  
