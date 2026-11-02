@@ -5,6 +5,7 @@ import "./styles/global.css";
 import "./styles/glass-theme.css";
 import { initGlassTheme } from "./utils/glassTheme";
 import { applyCachedVgTheme } from "./utils/vgThemes";
+import { startTranslator } from "./utils/i18n";
 import App from "./App";
 import ErrorBoundary from "./ErrorBoundary";
 import { initMonitoring } from "./utils/monitoring";
@@ -13,6 +14,7 @@ import ToastContainer from "./components/ToastContainer";
 initMonitoring();
 applyCachedVgTheme();
 initGlassTheme();
+startTranslator();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
@@ -23,3 +25,4 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 );
+  
