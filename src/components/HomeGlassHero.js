@@ -14,8 +14,8 @@ const BRAND = "var(--vg-brand, linear-gradient(135deg, #15803d 0%, #0d9488 100%)
 
 // Glass surface: text-friendly frosted white. Uses background-IMAGE (not colour) so it stays
 // untouched by the site's auto-glass script, and keeps real blur so the photo shows through.
-const GLASS = "background-color: transparent; background-image: linear-gradient(rgba(255,255,255,0.58), rgba(255,255,255,0.4)); border: 1px solid rgba(255,255,255,0.75); backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);";
-const GLASS_STRONG = "background-color: transparent; background-image: linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.66)); border: 1px solid rgba(255,255,255,0.85); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);";
+const GLASS = "background-color: transparent; background-image: linear-gradient(rgba(255,255,255,var(--hg-g1, 0.58)), rgba(255,255,255,var(--hg-g2, 0.4))); border: 1px solid rgba(255,255,255,0.75); backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);";
+const GLASS_STRONG = "background-color: transparent; background-image: linear-gradient(rgba(255,255,255,var(--hg-s1, 0.78)), rgba(255,255,255,var(--hg-s2, 0.66))); border: 1px solid rgba(255,255,255,0.85); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);";
 
 const CSS = `
 .hg-hero { position: relative; width: 100%; box-sizing: border-box; overflow: hidden; isolation: isolate; }
