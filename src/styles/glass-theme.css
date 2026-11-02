@@ -202,6 +202,19 @@ html[data-vg-theme="lavender"] {
   --vg-auth-a: #c084fc; --vg-auth-b: #f472b6;
   --vg-accent-dark: #4c1d95; --vg-accent-soft: #ede9fe; --vg-placeholder: #7a68a3;
 }
+/* "Cement White" — white + cement-grey glass, slate accents (neutral / modern) */
+html[data-vg-theme="cement"] {
+  --vg-text: #262d36; --vg-text-rgb: 38, 45, 54; --vg-muted: #5a636e;
+  --vg-accent: #5b6470; --vg-accent-rgb: 91, 100, 112; --vg-accent-hover: #454d58;
+  --vg-gold: #7c4a1e;
+  --vg-brand: linear-gradient(135deg, #7b838e 0%, #4a525d 100%);
+  --vg-bg-base: #d6d9dd;
+  --vg-orb-1: rgba(170, 176, 184, 0.45); --vg-orb-2: rgba(230, 232, 235, 0.55); --vg-orb-3: rgba(140, 148, 158, 0.35);
+  --vg-grad-a: #e6e8eb; --vg-grad-b: #c9cdd2;
+  --vg-auth-a: #b4bac2; --vg-auth-b: #8a929c;
+  --vg-accent-dark: #262d36; --vg-accent-soft: #e1e4e8; --vg-placeholder: #737d88;
+  --hg-g1: 0.30; --hg-g2: 0.16; --hg-s1: 0.48; --hg-s2: 0.34;
+}
 /* "Golden Sunset" — warm peach/gold sky with forest-green accents + serif headings (from the Ennoda Vivaha mock) */
 html[data-vg-theme="golden"] {
   --vg-text: #1f3d2f; --vg-text-rgb: 31, 61, 47; --vg-muted: #4f6b5a;
@@ -221,5 +234,4 @@ html[data-vg-theme="golden"] h1,
 html[data-vg-theme="golden"] h2,
 html[data-vg-theme="golden"] h3 {
   font-family: "Playfair Display", Georgia, "Times New Roman", serif !important;
-                 }
-                                
+}
