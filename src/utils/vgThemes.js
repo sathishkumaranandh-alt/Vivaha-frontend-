@@ -9,6 +9,7 @@ export const VG_THEMES = [
   { id: "emerald",  label: "Emerald",       hint: "Fresh green + teal",       swatch: ["#15803d", "#0d9488", "#dcfce7"] },
   { id: "ocean",    label: "Ocean",         hint: "Blue + indigo",            swatch: ["#0369a1", "#6366f1", "#e0f2fe"] },
   { id: "lavender", label: "Lavender",      hint: "Violet + rose",            swatch: ["#7c3aed", "#db2777", "#f3e8ff"] },
+  { id: "cement",   label: "Cement White",  hint: "White + cement grey, neutral glass", swatch: ["#5b6470", "#9aa1ab", "#d6d9dd"] },
 ];
 
 const KEY = "vg_theme_v1";
@@ -27,3 +28,4 @@ export function applyCachedVgTheme() {
   try { id = localStorage.getItem(KEY) || "sunset"; } catch {}
   return applyVgTheme(id);
 }
+  
