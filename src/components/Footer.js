@@ -148,11 +148,11 @@ function Footer() {
   );
 }
 
-const stripStyle = { background: "var(--vg-brand)", padding: "16px 24px", textAlign: "center", borderTop: "1px solid rgba(255, 255, 255, 0.5)", width: "100%", boxSizing: "border-box" };
+const stripStyle = { background: "var(--vg-brand)", padding: "14px 24px", textAlign: "center", border: "1px solid rgba(255, 255, 255, 0.5)", borderRadius: "22px", margin: "28px auto 0", width: "calc(100% - 20px)", maxWidth: "1340px", boxSizing: "border-box" };
 const stripInnerStyle = { maxWidth: "1000px", margin: "0 auto", display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", flexWrap: "wrap" };
 const stripItemStyle = { fontFamily: "'Playfair Display', serif", fontSize: "14px", color: "var(--vg-on-brand)", fontWeight: 700, letterSpacing: "0.5px", fontStyle: "italic" };
 const stripDividerStyle = { color: "rgba(255, 255, 255, 0.6)", fontSize: "14px" };
-const footerStyle = { background: "rgba(255, 255, 255, 0.4)", WebkitBackdropFilter: "blur(16px) saturate(160%)", backdropFilter: "blur(16px) saturate(160%)", borderTop: "1px solid rgba(255, 255, 255, 0.75)", boxShadow: "0 -8px 32px rgba(var(--vg-accent-rgb), 0.12)", color: "var(--vg-text)", padding: "60px 24px 24px", width: "100%", boxSizing: "border-box" };
+const footerStyle = { background: "rgba(255, 255, 255, 0.42)", WebkitBackdropFilter: "blur(18px) saturate(160%)", backdropFilter: "blur(18px) saturate(160%)", border: "1px solid rgba(255, 255, 255, 0.8)", borderRadius: "28px", boxShadow: "0 10px 32px rgba(var(--vg-accent-rgb), 0.12), inset 0 1px 0 rgba(255,255,255,0.8)", color: "var(--vg-text)", padding: "44px 24px 22px", margin: "14px auto 12px", width: "calc(100% - 20px)", maxWidth: "1340px", boxSizing: "border-box" };
 const footerInnerStyle = { maxWidth: "1200px", margin: "0 auto", width: "100%" };
 const columnsStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "40px", marginBottom: "48px" };
 const brandRowStyle = { display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" };
