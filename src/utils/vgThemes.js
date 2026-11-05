@@ -9,6 +9,8 @@ export const VG_THEMES = [
   { id: "emerald",  label: "Emerald",       hint: "Fresh green + teal",       swatch: ["#15803d", "#0d9488", "#dcfce7"] },
   { id: "ocean",    label: "Ocean",         hint: "Blue + indigo",            swatch: ["#0369a1", "#6366f1", "#e0f2fe"] },
   { id: "lavender", label: "Lavender",      hint: "Violet + rose",            swatch: ["#7c3aed", "#db2777", "#f3e8ff"] },
+  { id: "limelav",  label: "Lime Lavender", hint: "Fresh lime green on soft lavender glass", swatch: ["#4d7c0f", "#a3e635", "#d8cdf5"] },
+  { id: "mint",     label: "Mint Glass",    hint: "Light green, airy glass", swatch: ["#1f8f5f", "#86efac", "#e6f6ec"] },
   { id: "cement",   label: "Cement White",  hint: "White + cement grey, neutral glass", swatch: ["#5b6470", "#9aa1ab", "#d6d9dd"] },
 ];
 
@@ -27,5 +29,4 @@ export function applyCachedVgTheme() {
   let id = "sunset";
   try { id = localStorage.getItem(KEY) || "sunset"; } catch {}
   return applyVgTheme(id);
-}
-  
+  }
