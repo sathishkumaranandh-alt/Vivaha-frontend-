@@ -202,6 +202,32 @@ html[data-vg-theme="lavender"] {
   --vg-auth-a: #c084fc; --vg-auth-b: #f472b6;
   --vg-accent-dark: #4c1d95; --vg-accent-soft: #ede9fe; --vg-placeholder: #7a68a3;
 }
+/* "Lime Lavender" — fresh lime-green accents on soft lavender glass */
+html[data-vg-theme="limelav"] {
+  --vg-text: #243311; --vg-text-rgb: 36, 51, 17; --vg-muted: #566b33;
+  --vg-accent: #4d7c0f; --vg-accent-rgb: 77, 124, 15; --vg-accent-hover: #3f6212;
+  --vg-gold: #854d0e;
+  --vg-brand: linear-gradient(135deg, #a3e635 0%, #4d7c0f 100%);
+  --vg-bg-base: #ece7fa;
+  --vg-orb-1: rgba(190, 242, 100, 0.5); --vg-orb-2: rgba(196, 181, 253, 0.55); --vg-orb-3: rgba(147, 197, 253, 0.45);
+  --vg-grad-a: #f5f2fd; --vg-grad-b: #d8cdf5;
+  --vg-auth-a: #d8cdf5; --vg-auth-b: #a9d96c;
+  --vg-accent-dark: #365314; --vg-accent-soft: #eef5df; --vg-placeholder: #7b8a63;
+  --hg-g1: 0.48; --hg-g2: 0.3; --hg-s1: 0.66; --hg-s2: 0.5; --hg-tint: 0.62;
+}
+/* "Mint Glass" — light, airy green glass (softer than Emerald) */
+html[data-vg-theme="mint"] {
+  --vg-text: #17382b; --vg-text-rgb: 23, 56, 43; --vg-muted: #4a6b5c;
+  --vg-accent: #1f8f5f; --vg-accent-rgb: 31, 143, 95; --vg-accent-hover: #187a50;
+  --vg-gold: #a16207;
+  --vg-brand: linear-gradient(135deg, #3fbf86 0%, #1f8f5f 100%);
+  --vg-bg-base: #e6f6ec;
+  --vg-orb-1: rgba(134, 239, 172, 0.5); --vg-orb-2: rgba(217, 249, 157, 0.45); --vg-orb-3: rgba(153, 246, 228, 0.45);
+  --vg-grad-a: #f0fbf4; --vg-grad-b: #d6f1e2;
+  --vg-auth-a: #a7e3c4; --vg-auth-b: #6fcf9f;
+  --vg-accent-dark: #14532d; --vg-accent-soft: #e3f6ea; --vg-placeholder: #6b8b7c;
+  --hg-g1: 0.5; --hg-g2: 0.3; --hg-s1: 0.66; --hg-s2: 0.5;
+}
 /* "Cement White" — white + cement-grey glass, slate accents (neutral / modern) */
 html[data-vg-theme="cement"] {
   --vg-text: #262d36; --vg-text-rgb: 38, 45, 54; --vg-muted: #5a636e;
