@@ -26,7 +26,7 @@ const CSS = `
     radial-gradient(circle at 46% 86%, var(--vg-orb-2, rgba(190,242,100,.45)) 0 5%, transparent 5.5%),
     radial-gradient(circle at 90% 18%, var(--vg-orb-3, rgba(45,212,191,.45)) 0 6%, transparent 6.5%),
     linear-gradient(135deg, var(--vg-grad-a, #ecfdf5), var(--vg-grad-b, #e0f2fe));
-  opacity: .30; mix-blend-mode: normal; }
+  opacity: var(--hg-tint, .30); mix-blend-mode: normal; }
 .hg-hero-fade { position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: linear-gradient(180deg, rgba(255,255,255,0) 72%, var(--vg-bg-base, #dcfce7) 100%); }
 .hg-wrap { position: relative; z-index: 2; max-width: 1180px; margin: 0 auto; padding: 46px 20px 64px; box-sizing: border-box;
@@ -353,4 +353,5 @@ export function HomeGlassCta({ isLoggedIn, brandName }) {
       </div>
     </section>
   );
-}
+        }
+  
