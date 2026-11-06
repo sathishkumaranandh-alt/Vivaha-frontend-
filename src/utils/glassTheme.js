@@ -85,11 +85,21 @@ function readStyle(el, vw, vh) {
   return out;
 }
 
+// Payment provider overlays (Cashfree checkout) must stay untouched: no glass / blur on top of the payment screen
+function isPaymentOverlay(el) {
+  try {
+    if (el.closest('[id*="cashfree" i],[class*="cashfree" i]')) return true;
+    return !!el.querySelector('iframe[src*="cashfree" i]');
+  } catch (e) {
+    return false;
+  }
+}
+
 function processBatch(nodes) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const list = nodes.filter(
-    (el) => el.nodeType === 1 && el.isConnected && !SKIP_TAGS.has(el.tagName) && !(el instanceof SVGElement)
+    (el) => el.nodeType === 1 && el.isConnected && !SKIP_TAGS.has(el.tagName) && !(el instanceof SVGElement) && !isPaymentOverlay(el)
   );
   if (!list.length) return;
 
@@ -204,4 +214,5 @@ export function initGlassTheme() {
       schedule();
     }, 300);
   });
-}
+                      }
+                                                                       
