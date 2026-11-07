@@ -1,32 +1,35 @@
-import React, { useState, useEffect } from "react";
-import { useBrand } from "../utils/brand";
-import { Link } from "react-router-dom";
+import { initialsAvatar } from "../utils/avatar";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
-import { apiFetch } from "../utils/api";
+import { adminApiFetch as adminFetch } from "../utils/api"; // 🛡️ sends the real Bearer token (the old adminApi.js only sent a spoofable admin_id)
 
-function SuccessStories() {
-  const brand = useBrand();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    brideName: "",
-    groomName: "",
-    location: "",
-    story: "",
-  });
-  const [submitting, setSubmitting] = useState(false);
+
+function getAvatarFor(name, photoUrl) {
+  if (photoUrl) return photoUrl;
+  return initialsAvatar(name || "Couple");
+}
+
+function AdminSuccessStories() {
+  const navigate = useNavigate();
   const [stories, setStories] = useState([]);
-  const [loadingStories, setLoadingStories] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+  const [editing, setEditing] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    let alive = true;
-    apiFetch("/success-stories")
-      .then((r) => (r.ok ? r.json() : { stories: [] }))
-      .then((d) => { if (alive) setStories(d.stories || []); })
-      .catch(() => {})
-      .finally(() => { if (alive) setLoadingStories(false); });
-    return () => { alive = false; };
-  }, []);
+  const [form, setForm] = useState({
+    couple_names: "",
+    story: "",
+    photo_url: "",
+    wedding_date: "",
+    location: "",
+    is_approved: true,
+    display_order: 0,
+  });
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 900);
@@ -34,540 +37,605 @@ function SuccessStories() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.brideName || !form.groomName || !form.story) {
-      toast.error("Please fill in all fields");
-      return;
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate("/login"); return; }
+      const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      if (!profile || profile.role !== "admin") { navigate("/dashboard"); return; }
+      await reload();
+      setLoading(false);
     }
-    setSubmitting(true);
+    load();
+  }, [navigate]);
+
+  const reload = async () => {
     try {
-      const res = await apiFetch("/success-stories/submit", {
-        method: "POST",
-        body: JSON.stringify({
-          couple_names: `${form.brideName.trim()} & ${form.groomName.trim()}`,
-          location: form.location.trim(),
-          story: form.story.trim(),
-        }),
-      });
-      if (res.status === 401) {
-        toast.error("Please login to share your story");
-        return;
+      const res = await adminFetch("/success-stories/admin/all").catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json();
+        setStories(data.stories || []);
       }
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Could not submit");
-      toast.success("Thank you! We'll review your story before publishing 💕");
-      setShowForm(false);
-      setForm({ brideName: "", groomName: "", location: "", story: "" });
     } catch (err) {
-      toast.error(err.message || "Could not submit. Please try again.");
-    } finally {
-      setSubmitting(false);
+      console.error(err);
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `story-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}.${fileExt}`;
+      const { error } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { cacheControl: "3600", upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
+      setForm((f) => ({ ...f, photo_url: data.publicUrl }));
+      toast.success("Photo uploaded!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const resetForm = () => {
+    setForm({
+      couple_names: "",
+      story: "",
+      photo_url: "",
+      wedding_date: "",
+      location: "",
+      is_approved: true,
+      display_order: 0,
+    });
+    setEditing(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.couple_names.trim()) return toast.error("Couple names required");
+    if (!form.story.trim()) return toast.error("Story required");
+
+    setSaving(true);
+    try {
+      const path = editing
+        ? `/success-stories/${editing.id}`
+        : `/success-stories`;
+      const method = editing ? "PUT" : "POST";
+      const res = await adminFetch(path, {
+        method,
+        body: JSON.stringify({
+          couple_names: form.couple_names.trim(),
+          story: form.story.trim(),
+          photo_url: form.photo_url || null,
+          wedding_date: form.wedding_date || null,
+          location: form.location.trim() || null,
+          is_approved: form.is_approved,
+          display_order: parseInt(form.display_order, 10) || 0,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed");
+      toast.success(editing ? "Story updated!" : "Story added!");
+      resetForm();
+      await reload();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEdit = (story) => {
+    setEditing(story);
+    setForm({
+      couple_names: story.couple_names || "",
+      story: story.story || "",
+      photo_url: story.photo_url || "",
+      wedding_date: story.wedding_date || "",
+      location: story.location || "",
+      is_approved: story.is_approved !== false,
+      display_order: story.display_order || 0,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this story?")) return;
+    try {
+      const res = await adminFetch(`/success-stories/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toast.success("Story deleted");
+        setStories(stories.filter((s) => s.id !== id));
+      } else {
+        toast.error("Delete failed");
+      }
+    } catch {
+      toast.error("Delete failed");
+    }
+  };
+
+  const handleToggleApproved = async (story) => {
+    try {
+      const newVal = story.is_approved === false;
+      const res = await adminFetch(`/success-stories/${story.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ is_approved: newVal }),
+      });
+      if (res.ok) {
+        setStories(
+          stories.map((s) =>
+            s.id === story.id ? { ...s, is_approved: newVal } : s
+          )
+        );
+        toast.success(newVal ? "Story approved" : "Story hidden");
+      } else {
+        toast.error("Failed to update");
+      }
+    } catch {
+      toast.error("Failed to update");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: 60, textAlign: "center", color: "#8a6b6b" }}>
+        Loading...
+      </div>
+    );
+  }
+
   const S = {
-    page: { background: "#FFF9F5", minHeight: "100vh" },
-
-    // HERO
-    hero: {
-      background:
-        "linear-gradient(135deg, rgba(139,10,46,0.95) 0%, rgba(45,10,30,0.9) 100%), url('https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=80')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      padding: isMobile ? "60px 20px" : "100px 32px",
-      textAlign: "center",
-      color: "white",
-      position: "relative",
-      overflow: "hidden",
-    },
-    heroInner: { maxWidth: "800px", margin: "0 auto", position: "relative", zIndex: 2 },
-    heroEyebrow: {
-      color: "#D4A017",
-      fontSize: "12px",
-      fontWeight: 800,
-      letterSpacing: "4px",
-      textTransform: "uppercase",
-      marginBottom: "16px",
-    },
-    heroTitle: {
-      fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "32px" : "52px",
-      fontWeight: 900,
-      letterSpacing: "-1.5px",
-      lineHeight: 1.15,
-      marginBottom: "20px",
-    },
-    heroItalic: {
-      color: "#D4A017",
-      fontStyle: "italic",
-      display: "block",
-    },
-    heroSubtitle: {
-      fontSize: isMobile ? "15px" : "18px",
-      lineHeight: 1.7,
-      opacity: 0.9,
-      maxWidth: "600px",
-      margin: "0 auto 32px",
-      fontWeight: 300,
-    },
-    heroCTA: {
-      background: "linear-gradient(135deg, #D4A017, #b8860b)",
-      color: "#8B0A2E",
-      padding: "14px 36px",
-      borderRadius: "40px",
-      textDecoration: "none",
-      fontWeight: 800,
-      fontSize: "15px",
-      display: "inline-block",
-      boxShadow: "0 10px 30px rgba(212,160,23,0.4)",
-      letterSpacing: "0.5px",
-      border: "none",
-      cursor: "pointer",
-      fontFamily: "inherit",
-    },
-
-    // STATS BAR
-    statsBar: {
+    page: {
       maxWidth: "1000px",
-      margin: "-40px auto 0",
-      padding: "0 20px",
-      position: "relative",
-      zIndex: 5,
-    },
-    statsCard: {
-      background: "white",
-      borderRadius: "20px",
-      padding: isMobile ? "24px 16px" : "32px",
-      boxShadow: "0 20px 60px rgba(139,10,46,0.12)",
-      display: "grid",
-      gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
-      gap: "20px",
-      border: "1px solid #f0e0e0",
-      position: "relative",
-      overflow: "hidden",
-    },
-    statNum: {
-      fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "24px" : "32px",
-      fontWeight: 900,
-      color: "#8B0A2E",
-      letterSpacing: "-0.5px",
-      lineHeight: 1,
-      marginBottom: "6px",
-      textAlign: "center",
-    },
-    statLabel: {
-      fontSize: "11px",
-      color: "#8a6b6b",
-      textTransform: "uppercase",
-      letterSpacing: "1.5px",
-      fontWeight: 600,
-      textAlign: "center",
-    },
-
-    // SECTION
-    section: {
-      maxWidth: "1200px",
       margin: "0 auto",
-      padding: isMobile ? "50px 16px" : "80px 32px",
+      padding: isMobile ? "16px" : "32px",
+      fontFamily: "'Inter', sans-serif",
     },
-    sectionHead: {
-      textAlign: "center",
-      marginBottom: isMobile ? "36px" : "56px",
+    header: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "20px",
+      flexWrap: "wrap",
+      gap: 12,
     },
-    sectionEyebrow: {
-      color: "#D4A017",
-      fontSize: "11px",
-      fontWeight: 800,
-      letterSpacing: "4px",
-      textTransform: "uppercase",
-      marginBottom: "12px",
-    },
-    sectionTitle: {
+    h1: {
       fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "26px" : "38px",
-      fontWeight: 900,
+      fontSize: isMobile ? "22px" : "28px",
       color: "#8B0A2E",
-      letterSpacing: "-1px",
-      marginBottom: "12px",
-      lineHeight: 1.2,
+      marginBottom: "4px",
+      marginTop: 0,
     },
-    sectionItalic: { color: "#D4A017", fontStyle: "italic" },
-    sectionSub: {
-      color: "#8a6b6b",
-      fontSize: isMobile ? "14px" : "16px",
-      maxWidth: "560px",
-      margin: "0 auto",
-      lineHeight: 1.7,
+    sub: { color: "#8a6b6b", fontSize: "13px", margin: 0 },
+    backBtn: {
+      background: "#e5e7eb",
+      color: "#8B0A2E",
+      padding: "10px 18px",
+      borderRadius: 8,
+      textDecoration: "none",
+      fontWeight: "bold",
+      fontSize: 14,
     },
-
-    // GRID
-    grid: {
-      display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))",
-      gap: "24px",
-    },
-
-    // CARD
     card: {
       background: "white",
-      borderRadius: "20px",
-      padding: "28px 24px",
+      borderRadius: "16px",
+      padding: isMobile ? "18px" : "24px",
       border: "1px solid #f0e0e0",
-      boxShadow: "0 4px 20px rgba(139,10,46,0.06)",
-      position: "relative",
-      transition: "transform 0.3s, box-shadow 0.3s",
-    },
-    cardBadge: {
-      position: "absolute",
-      top: "16px",
-      right: "16px",
-      background: "#FDF2F6",
-      color: "#8B0A2E",
-      fontSize: "10px",
-      fontWeight: 700,
-      padding: "4px 10px",
-      borderRadius: "12px",
-      border: "1px solid #f0e0e0",
-    },
-    cardQuote: {
-      fontFamily: "'Playfair Display', serif",
-      fontSize: "60px",
-      color: "#D4A017",
-      opacity: 0.3,
-      lineHeight: 1,
-      marginBottom: "8px",
-    },
-    cardText: {
-      fontSize: "14px",
-      color: "#2D1B1B",
-      lineHeight: 1.75,
-      fontStyle: "italic",
       marginBottom: "20px",
-      minHeight: "100px",
+      boxShadow: "0 4px 20px rgba(139,10,46,0.04)",
     },
-    cardAuthor: {
-      display: "flex",
-      alignItems: "center",
-      gap: "14px",
-      paddingTop: "18px",
-      borderTop: "1px solid #f0e0e0",
-    },
-    avatar: {
-      width: "52px",
-      height: "52px",
-      borderRadius: "50%",
-      background: "linear-gradient(135deg, #8B0A2E, #a01438)",
-      color: "#D4A017",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontFamily: "'Playfair Display', serif",
-      fontWeight: 900,
-      fontSize: "18px",
-      flexShrink: 0,
-    },
-    authorName: {
-      fontWeight: 700,
+    cardTitle: {
       color: "#8B0A2E",
-      fontFamily: "'Playfair Display', serif",
-      fontSize: "15px",
-      marginBottom: "2px",
-    },
-    authorMeta: {
-      fontSize: "11px",
-      color: "#8a6b6b",
-    },
-
-    // FINAL CTA
-    finalCTA: {
-      background: "linear-gradient(135deg, #8B0A2E 0%, #4a0620 100%)",
-      padding: isMobile ? "60px 20px" : "80px 32px",
-      textAlign: "center",
-      color: "white",
-    },
-    ctaTitle: {
-      fontFamily: "'Playfair Display', serif",
-      fontSize: isMobile ? "26px" : "38px",
-      fontWeight: 900,
-      letterSpacing: "-1px",
-      marginBottom: "14px",
-    },
-    ctaSub: {
-      fontSize: isMobile ? "14px" : "16px",
-      opacity: 0.85,
-      maxWidth: "520px",
-      margin: "0 auto 32px",
-      lineHeight: 1.7,
-    },
-
-    // FORM
-    formCard: {
-      background: "white",
-      borderRadius: "20px",
-      padding: isMobile ? "24px 20px" : "40px 36px",
-      maxWidth: "640px",
-      margin: "0 auto",
-      boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-    },
-    formTitle: {
-      fontFamily: "'Playfair Display', serif",
-      color: "#8B0A2E",
-      fontSize: "22px",
+      marginTop: 0,
+      marginBottom: "16px",
+      fontSize: "17px",
       fontWeight: 700,
-      marginBottom: "6px",
-      textAlign: "center",
-    },
-    formSub: {
-      color: "#8a6b6b",
-      fontSize: "13px",
-      textAlign: "center",
-      marginBottom: "24px",
     },
     label: {
       display: "block",
       fontSize: "11px",
       fontWeight: 700,
       color: "#555",
+      marginBottom: "6px",
       textTransform: "uppercase",
       letterSpacing: "0.5px",
-      marginBottom: "6px",
-      marginTop: "14px",
     },
     input: {
       width: "100%",
-      padding: "12px 14px",
-      border: "1px solid #d1d5db",
+      padding: "11px 14px",
       borderRadius: "10px",
+      border: "1.5px solid #e5e7eb",
       fontSize: "14px",
       fontFamily: "inherit",
       outline: "none",
-      background: "#FFF9F5",
+      background: "#FAFAFA",
       boxSizing: "border-box",
     },
-    formBtns: {
-      display: "flex",
-      gap: "10px",
-      marginTop: "24px",
+    grid: {
+      display: "grid",
+      gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+      gap: "14px",
     },
-    submitBtn: {
-      flex: 1,
-      background: "#8B0A2E",
+    btnPrimary: {
+      background: "linear-gradient(135deg, #8B0A2E, #a01438)",
       color: "white",
       border: "none",
-      padding: "14px",
+      padding: "14px 28px",
       borderRadius: "10px",
       fontWeight: 700,
+      cursor: "pointer",
       fontSize: "14px",
+      fontFamily: "inherit",
+      boxShadow: "0 4px 14px rgba(139,10,46,0.25)",
+    },
+    btnSmall: {
+      border: "none",
+      padding: "8px 14px",
+      borderRadius: "8px",
+      fontSize: "11px",
+      fontWeight: 700,
       cursor: "pointer",
       fontFamily: "inherit",
     },
-    cancelBtn: {
-      background: "#f3f4f6",
-      color: "#374151",
-      border: "none",
-      padding: "14px 22px",
+    storyRow: {
+      display: "flex",
+      gap: "12px",
+      padding: "14px",
+      background: "#FFF9F5",
+      borderRadius: "12px",
+      border: "1px solid #f0e0e0",
+      marginBottom: "10px",
+      alignItems: "flex-start",
+      flexWrap: isMobile ? "wrap" : "nowrap",
+    },
+    thumb: {
+      width: isMobile ? "70px" : "80px",
+      height: isMobile ? "88px" : "100px",
       borderRadius: "10px",
-      fontWeight: 700,
-      fontSize: "14px",
-      cursor: "pointer",
-      fontFamily: "inherit",
+      objectFit: "cover",
+      flexShrink: 0,
+      background: "linear-gradient(135deg, #FDF2F6, #f8d0dd)",
     },
   };
 
   return (
     <div style={S.page}>
-      {/* HERO */}
-      <section style={S.hero}>
-        <div style={S.heroInner}>
-          <div style={S.heroEyebrow}>Real Couples · Real Love</div>
-          <h1 style={S.heroTitle}>
-            Stories That Started
-            <span style={S.heroItalic}>With a Single Hello</span>
-          </h1>
-          <p style={S.heroSubtitle}>
-            Real couples who met through {brand.name}. Found your match here too? We would love to hear your story.
-          </p>
-          <button
-            style={S.heroCTA}
-            onClick={() => {
-              setShowForm(true);
-              setTimeout(() => {
-                document.getElementById("share-form")?.scrollIntoView({ behavior: "smooth" });
-              }, 100);
-            }}
-          >
-            💕 Share Your Story
-          </button>
+      <div style={S.header}>
+        <div>
+          <h1 style={S.h1}>💕 Success Stories</h1>
+          <p style={S.sub}>Add, edit, delete success stories</p>
         </div>
-      </section>
+        <Link to="/admin" style={S.backBtn}>
+          ← Dashboard
+        </Link>
+      </div>
 
-      {/* STORIES GRID */}
-      <section style={S.section}>
-        <div style={S.sectionHead}>
-          <div style={S.sectionEyebrow}>Success Stories</div>
-          <h2 style={S.sectionTitle}>
-            Couples Who Found Their
-            <span style={S.sectionItalic}> Forever</span>
-          </h2>
-          <p style={S.sectionSub}>
-            Every story here is a family that started right here on {brand.short}.
-          </p>
-        </div>
-
-        {loadingStories ? (
-          <p style={{ textAlign: "center", opacity: 0.7 }}>Loading...</p>
-        ) : stories.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "30px 10px", opacity: 0.85 }}>
-            <div style={{ fontSize: 40 }}>💞</div>
-            <p style={{ maxWidth: 440, margin: "10px auto 0", lineHeight: 1.7 }}>
-              Our first success stories will appear here soon. If you found your life partner through {brand.short}, please share your story below.
-            </p>
-          </div>
-        ) : (
+      <div style={S.card}>
+        <h3 style={S.cardTitle}>
+          {editing ? "✏️ Edit Story" : "➕ Add New Story"}
+        </h3>
+        <form onSubmit={handleSubmit}>
           <div style={S.grid}>
-            {stories.map((story) => {
-              const names = story.couple_names || "Happy Couple";
-              const initials = names.split(/[&,]/).map((n) => n.trim().charAt(0).toUpperCase()).join("").slice(0, 2) || "💞";
-              return (
-                <div key={story.id} style={S.card}>
-                  {story.photo_url && (
-                    <img src={story.photo_url} alt={names} loading="lazy" style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 12, marginBottom: 10 }} />
-                  )}
-                  <div style={S.cardQuote}>"</div>
-                  <p style={S.cardText}>{story.story}</p>
-                  <div style={S.cardAuthor}>
-                    <div style={{ ...S.avatar, background: "linear-gradient(135deg, #8B0A2E, #a01438)" }}>{initials}</div>
-                    <div>
-                      <div style={S.authorName}>{names}</div>
-                      <div style={S.authorMeta}>
-                        {story.location ? `📍 ${story.location}` : ""}
-                        {story.location && story.wedding_date ? " · " : ""}
-                        {story.wedding_date ? `💍 ${story.wedding_date}` : ""}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            <div>
+              <label style={S.label}>Couple Names *</label>
+              <input
+                style={S.input}
+                placeholder="e.g. Sathish & Priya"
+                value={form.couple_names}
+                onChange={(e) =>
+                  setForm({ ...form, couple_names: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label style={S.label}>Wedding Date</label>
+              <input
+                type="date"
+                style={S.input}
+                value={form.wedding_date}
+                onChange={(e) =>
+                  setForm({ ...form, wedding_date: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label style={S.label}>Location</label>
+              <input
+                style={S.input}
+                placeholder="e.g. Chennai"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+              />
+            </div>
+            <div>
+              <label style={S.label}>Display Order</label>
+              <input
+                type="number"
+                style={S.input}
+                value={form.display_order}
+                onChange={(e) =>
+                  setForm({ ...form, display_order: e.target.value })
+                }
+                placeholder="0 = first"
+              />
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "#8a6b6b",
+                  marginTop: 4,
+                  fontStyle: "italic",
+                }}
+              >
+                சிறிய எண் முதல்ல (0, 1, 2...)
+              </p>
+            </div>
           </div>
-        )}
-      </section>
 
-      {/* SHARE YOUR STORY FORM */}
-      <section
-        id="share-form"
-        style={{ ...S.finalCTA, background: "linear-gradient(135deg, #FFF9F5, #FDF2F6)" }}
-      >
-        {!showForm ? (
-          <>
-            <h2 style={{ ...S.ctaTitle, color: "#8B0A2E" }}>
-              Found Your Match on {brand.short}?
-            </h2>
-            <p style={{ ...S.ctaSub, color: "#8a6b6b" }}>
-              Share your love story with us and inspire other families
-              looking for their perfect partner.
-            </p>
-            <button
-              onClick={() => setShowForm(true)}
-              style={{
-                ...S.heroCTA,
-                background: "linear-gradient(135deg, #8B0A2E, #a01438)",
-                color: "#D4A017",
-                boxShadow: "0 10px 30px rgba(139,10,46,0.4)",
-              }}
-            >
-              💌 Share Your Story
-            </button>
-          </>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            style={S.formCard}
-          >
-            <h3 style={S.formTitle}>Share Your Love Story 💑</h3>
-            <p style={S.formSub}>
-              We'll review your story before publishing it on this page. (Login required)
-            </p>
-
-            <label style={S.label}>Bride's Name *</label>
-            <input
-              style={S.input}
-              type="text"
-              placeholder="e.g. Priya"
-              value={form.brideName}
-              onChange={(e) => setForm({ ...form, brideName: e.target.value })}
-              required
-            />
-
-            <label style={S.label}>Groom's Name *</label>
-            <input
-              style={S.input}
-              type="text"
-              placeholder="e.g. Karthik"
-              value={form.groomName}
-              onChange={(e) => setForm({ ...form, groomName: e.target.value })}
-              required
-            />
-
-            <label style={S.label}>Location</label>
-            <input
-              style={S.input}
-              type="text"
-              placeholder="e.g. Chennai, Tamil Nadu"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-            />
-
-            <label style={S.label}>Your Story *</label>
+          <div style={{ marginTop: "14px" }}>
+            <label style={S.label}>Story *</label>
             <textarea
-              style={{ ...S.input, resize: "vertical", minHeight: "120px" }}
-              placeholder="How did you meet? What do you love most about each other? Share your journey..."
+              style={{ ...S.input, minHeight: "100px", resize: "vertical" }}
+              placeholder="How did they meet and marry?"
               value={form.story}
               onChange={(e) => setForm({ ...form, story: e.target.value })}
-              rows={5}
-              maxLength={800}
-              required
             />
-            <p style={{ fontSize: "11px", color: "#888", textAlign: "right", margin: "4px 0 0 0" }}>
-              {form.story.length}/800
-            </p>
+          </div>
 
-            <div style={S.formBtns}>
-              <button type="submit" disabled={submitting} style={{ ...S.submitBtn, opacity: submitting ? 0.6 : 1 }}>
-                {submitting ? "Sending..." : "💌 Submit Story"}
-              </button>
-              <button type="button" onClick={() => setShowForm(false)} style={S.cancelBtn}>
+          <div style={{ marginTop: "14px" }}>
+            <label style={S.label}>Couple Photo</label>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <img
+                src={getAvatarFor(form.couple_names, form.photo_url)}
+                alt="Preview"
+                style={{
+                  width: 90,
+                  height: 110,
+                  borderRadius: 10,
+                  objectFit: "cover",
+                  border: "2px solid #f0e0e0",
+                }}
+              />
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+              >
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  style={{
+                    ...S.btnSmall,
+                    background: "#8B0A2E",
+                    color: "white",
+                    padding: "10px 16px",
+                    opacity: uploading ? 0.6 : 1,
+                  }}
+                >
+                  {uploading ? "Uploading..." : "📤 Upload Photo"}
+                </button>
+                {form.photo_url && (
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, photo_url: "" })}
+                    style={{
+                      ...S.btnSmall,
+                      background: "#fee2e2",
+                      color: "#991b1b",
+                      padding: "8px 16px",
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+                <p
+                  style={{
+                    fontSize: 10,
+                    color: "#8a6b6b",
+                    margin: 0,
+                    fontStyle: "italic",
+                    maxWidth: 200,
+                  }}
+                >
+                  Photo illama na, name-based avatar use aagum.
+                </p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: "none" }}
+              />
+            </div>
+          </div>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginTop: "16px",
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: 600,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={form.is_approved}
+              onChange={(e) =>
+                setForm({ ...form, is_approved: e.target.checked })
+              }
+              style={{ width: 18, height: 18, accentColor: "#8B0A2E" }}
+            />
+            Approve & Show on Home Page
+          </label>
+
+          <div
+            style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}
+          >
+            <button
+              type="submit"
+              disabled={saving}
+              style={{ ...S.btnPrimary, opacity: saving ? 0.6 : 1 }}
+            >
+              {saving
+                ? "Saving..."
+                : editing
+                ? "💾 Update Story"
+                : "➕ Add Story"}
+            </button>
+            {editing && (
+              <button
+                type="button"
+                onClick={resetForm}
+                style={{
+                  ...S.btnSmall,
+                  background: "#f3f4f6",
+                  color: "#374151",
+                  padding: "14px 22px",
+                }}
+              >
                 Cancel
               </button>
-            </div>
-          </form>
-        )}
-      </section>
+            )}
+          </div>
+        </form>
+      </div>
 
-      {/* FINAL CTA */}
-      <section style={S.finalCTA}>
-        <h2 style={S.ctaTitle}>
-          Ready to Write Your Own Story?
-        </h2>
-        <p style={S.ctaSub}>
-          Create your free profile on {brand.short} and take the first step.
-          Your story could be next.
-        </p>
-        <Link
-          to="/register"
-          style={{
-            ...S.heroCTA,
-            display: "inline-block",
-            textDecoration: "none",
-          }}
-        >
-          💑 Create Free Account
-        </Link>
-      </section>
+      <div style={S.card}>
+        <h3 style={S.cardTitle}>📋 All Stories ({stories.length})</h3>
+        {stories.length === 0 ? (
+          <p style={{ color: "#8a6b6b", textAlign: "center", padding: 20 }}>
+            No stories yet. Add your first!
+          </p>
+        ) : (
+          stories
+            .slice()
+            .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+            .map((s) => (
+              <div key={s.id} style={S.storyRow}>
+                <img
+                  src={getAvatarFor(s.couple_names, s.photo_url)}
+                  alt={s.couple_names}
+                  style={S.thumb}
+                />
+                <div style={{ flex: 1, minWidth: isMobile ? "100%" : "auto" }}>
+                  <div
+                    style={{
+                      fontWeight: 800,
+                      color: "#8B0A2E",
+                      fontSize: 15,
+                      marginBottom: 4,
+                    }}
+                  >
+                    {s.couple_names}
+                    {s.is_approved === false && (
+                      <span
+                        style={{
+                          marginLeft: 8,
+                          background: "#fee2e2",
+                          color: "#991b1b",
+                          padding: "2px 8px",
+                          borderRadius: 8,
+                          fontSize: 10,
+                          fontWeight: 700,
+                        }}
+                      >
+                        HIDDEN
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "#555",
+                      marginBottom: 6,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {s.story?.substring(0, 100)}
+                    {s.story?.length > 100 ? "..." : ""}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#8a6b6b" }}>
+                    {s.location && `📍 ${s.location}`}
+                    {s.wedding_date &&
+                      ` · 💍 ${new Date(s.wedding_date).toLocaleDateString(
+                        "en-IN"
+                      )}`}
+                    {` · Order #${s.display_order || 0}`}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 6,
+                      marginTop: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <button
+                      onClick={() => handleEdit(s)}
+                      style={{
+                        ...S.btnSmall,
+                        background: "#8B0A2E",
+                        color: "white",
+                      }}
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      onClick={() => handleToggleApproved(s)}
+                      style={{
+                        ...S.btnSmall,
+                        background:
+                          s.is_approved === false ? "#dcfce7" : "#fef3c7",
+                        color: s.is_approved === false ? "#166534" : "#92400e",
+                      }}
+                    >
+                      {s.is_approved === false ? "✓ Approve" : "👁️ Hide"}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(s.id)}
+                      style={{
+                        ...S.btnSmall,
+                        background: "#fee2e2",
+                        color: "#991b1b",
+                      }}
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+        )}
+      </div>
     </div>
   );
 }
 
-export default SuccessStories;
+export default AdminSuccessStories;
+            
