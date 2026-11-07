@@ -1,3 +1,4 @@
+import { initialsAvatar } from "../utils/avatar";
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getPageTheme, getCardStyle } from "../utils/pageTheme";
@@ -199,7 +200,7 @@ function ProfileAnalytics({ userId, isMobile }) {
                         }}
                         onError={(e) => {
                           // 🛡️ SECURITY FIX: Replaced innerHTML with standard fallback URL
-                          e.target.src = `https://ui-avatars.com/api/?name=${initial}&background=FDF2F6&color=8B0A2E&bold=true`;
+                          e.target.src = initialsAvatar(initial, "#FDF2F6", "#8B0A2E");
                         }}
                       />
                     ) : (
@@ -269,3 +270,4 @@ function ProfileAnalytics({ userId, isMobile }) {
 }
 
 export default ProfileAnalytics;
+    
