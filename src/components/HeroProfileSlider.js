@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 
+import { initialsAvatar } from "../utils/avatar";
+
 const AUTO_SLIDE_INTERVAL = 7000;
 
 function getAvatarFor(name, photoUrl) {
   if (photoUrl) return photoUrl;
-  const encoded = encodeURIComponent(name || "Member");
-  return `https://ui-avatars.com/api/?background=8B0A2E&color=fff&size=512&bold=true&name=${encoded}`;
+  return initialsAvatar(name || "Member");
 }
 
 function HeroProfileSlider({ profiles, isMobile = false }) {
@@ -273,3 +274,4 @@ function HeroProfileSlider({ profiles, isMobile = false }) {
 }
 
 export default HeroProfileSlider;
+        
