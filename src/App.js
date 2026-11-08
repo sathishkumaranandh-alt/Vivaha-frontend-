@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import supabase from "./supabaseClient";
 import Navbar from "./components/Navigation";
@@ -10,40 +10,42 @@ import { apiFetch } from "./utils/api";
 import { applyVgTheme } from "./utils/vgThemes";
 
 import Home from "./pages/Home";
-import SuccessStories from "./pages/SuccessStories";
-import AdminSuccessStories from "./pages/AdminSuccessStories";
-import Register from "./pages/Register";
 import Login from "./pages/Login";
-import VerifyEmail from "./pages/VerifyEmail";
-import Legal from "./pages/Legal";
 import { useBrand } from "./utils/brand";
-import Profile from "./pages/Profile";
-import ProfileSearch from "./pages/ProfileSearch";
-import Matches from "./pages/Matches";
-import Recommendations from "./pages/Recommendations";
-import UserSettings from "./pages/UserSettings";
-import Subscription from "./pages/Subscription";
-import SubscriptionDashboard from "./pages/SubscriptionDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminAnalytics from "./pages/AdminAnalytics";
-import AdminSettings from "./pages/AdminSettings";
-import AdminCommunities from "./pages/AdminCommunities";
-import AdminUserPermissions from "./pages/AdminUserPermissions";
-import AdminFormBuilder from "./pages/AdminFormBuilder";
-import Messages from "./pages/Messages";
-import Interests from "./pages/Interests";
-import PhotoRequests from "./pages/PhotoRequests";
-import ContactRequests from "./pages/ContactRequests";
-import Dashboard from "./pages/Dashboard";
-import Visitors from "./pages/Visitors";
-import Boost from "./pages/Boost";
-import AdminPlans from "./pages/AdminPlans";
-import AdvancedSearch from "./pages/AdvancedSearch";
 import ScrollToTop from "./components/ScrollToTop";
-import NotFound from "./pages/NotFound";
-import Onboarding from "./pages/Onboarding";
-import Discover from "./pages/Discover";
-import ProfileDetail from "./pages/ProfileDetail";
+
+// ⚡ Speed: each page is downloaded only when it is opened (smaller first load)
+const SuccessStories = lazy(() => import("./pages/SuccessStories"));
+const AdminSuccessStories = lazy(() => import("./pages/AdminSuccessStories"));
+const Register = lazy(() => import("./pages/Register"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const Legal = lazy(() => import("./pages/Legal"));
+const Profile = lazy(() => import("./pages/Profile"));
+const ProfileSearch = lazy(() => import("./pages/ProfileSearch"));
+const Matches = lazy(() => import("./pages/Matches"));
+const Recommendations = lazy(() => import("./pages/Recommendations"));
+const UserSettings = lazy(() => import("./pages/UserSettings"));
+const Subscription = lazy(() => import("./pages/Subscription"));
+const SubscriptionDashboard = lazy(() => import("./pages/SubscriptionDashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
+const AdminSettings = lazy(() => import("./pages/AdminSettings"));
+const AdminCommunities = lazy(() => import("./pages/AdminCommunities"));
+const AdminUserPermissions = lazy(() => import("./pages/AdminUserPermissions"));
+const AdminFormBuilder = lazy(() => import("./pages/AdminFormBuilder"));
+const Messages = lazy(() => import("./pages/Messages"));
+const Interests = lazy(() => import("./pages/Interests"));
+const PhotoRequests = lazy(() => import("./pages/PhotoRequests"));
+const ContactRequests = lazy(() => import("./pages/ContactRequests"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Visitors = lazy(() => import("./pages/Visitors"));
+const Boost = lazy(() => import("./pages/Boost"));
+const AdminPlans = lazy(() => import("./pages/AdminPlans"));
+const AdvancedSearch = lazy(() => import("./pages/AdvancedSearch"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Discover = lazy(() => import("./pages/Discover"));
+const ProfileDetail = lazy(() => import("./pages/ProfileDetail"));
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || "https://vivah-2rc8.onrender.com";
@@ -214,6 +216,7 @@ function App() {
       <div className="vivaha-app" style={{ margin: 0, padding: 0 }}>
         <Navbar />
         <div className="vivaha-main">
+          <Suspense fallback={<div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--vg-muted, #777)", fontSize: 15 }}>Loading…</div>}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/register" element={<Register />} />
@@ -252,6 +255,7 @@ function App() {
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </div>
         <Footer />
         <InstallAppButton />
@@ -262,4 +266,4 @@ function App() {
 }
 
 export default App;
-      
+  
