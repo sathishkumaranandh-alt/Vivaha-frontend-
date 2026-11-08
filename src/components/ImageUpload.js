@@ -1,3 +1,4 @@
+import compressImage from "../utils/compressImage";
 import React, { useState } from "react";
 import supabase from "../supabaseClient";
 import { apiFetch } from "../utils/api"; // 🛡️ Profile writes go through the backend (JWT + whitelist)
@@ -40,9 +41,10 @@ function ImageUpload({ userId, currentPhotoUrl, onUploadSuccess }) {
   // ============================================================
   // UPLOAD TO SUPABASE STORAGE
   // ============================================================
-  const uploadImage = async (file) => {
+  const uploadImage = async (origFile) => {
     try {
       setUploading(true);
+      const file = await compressImage(origFile); // ⚡ smaller + faster
 
       // Generate unique filename
       const fileExt = file.name.split(".").pop();
@@ -53,7 +55,7 @@ function ImageUpload({ userId, currentPhotoUrl, onUploadSuccess }) {
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, {
-          cacheControl: "3600",
+          cacheControl: "31536000",
           upsert: true,
         });
 
@@ -195,3 +197,4 @@ const uploadingOverlayStyle = {
 };
 
 export default ImageUpload;
+          
