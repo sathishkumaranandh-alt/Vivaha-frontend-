@@ -20,7 +20,26 @@ async function getAccessToken() {
   }
 }
 
+// ⚡ Speed: /settings is the same for everyone and is asked for by many components on every page.
+// Share one request for 60 seconds instead of calling the (slow) server again and again.
+let settingsCache = { at: 0, promise: null };
+
 export async function apiFetch(path, options = {}) {
+  const method = String(options.method || "GET").toUpperCase();
+  if (path === "/settings" && method === "GET") {
+    if (!settingsCache.promise || Date.now() - settingsCache.at > 60000) {
+      settingsCache = { at: Date.now(), promise: apiFetchRaw(path, options) };
+      settingsCache.promise.then((r) => { if (!r.ok) settingsCache = { at: 0, promise: null }; })
+        .catch(() => { settingsCache = { at: 0, promise: null }; });
+    }
+    const r = await settingsCache.promise;
+    return r.clone();
+  }
+  if (path === "/settings") settingsCache = { at: 0, promise: null }; // admin saved new settings
+  return apiFetchRaw(path, options);
+}
+
+async function apiFetchRaw(path, options = {}) {
   const token = await getAccessToken();
 
   const headers = {
@@ -57,6 +76,7 @@ export async function apiFetch(path, options = {}) {
 }
 
 export async function adminApiFetch(path, options = {}) {
+  if (path === "/settings") settingsCache = { at: 0, promise: null }; // settings are being changed: forget the saved copy
   const token = await getAccessToken();
   const { data: { session } } = await supabase.auth.getSession();
   const userId = session?.user?.id;
@@ -78,3 +98,4 @@ export async function adminApiFetch(path, options = {}) {
 }
 
 export default apiFetch;
+        
