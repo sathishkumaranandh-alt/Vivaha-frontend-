@@ -12,6 +12,7 @@ import { applyVgTheme } from "./utils/vgThemes";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import { useBrand } from "./utils/brand";
+import MaintenanceGate from "./components/MaintenanceGate";
 import ScrollToTop from "./components/ScrollToTop";
 
 // ⚡ Speed: each page is downloaded only when it is opened (smaller first load)
@@ -217,6 +218,7 @@ function App() {
         <Navbar />
         <div className="vivaha-main">
           <Suspense fallback={<div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--vg-muted, #777)", fontSize: 15 }}>Loading…</div>}>
+          <MaintenanceGate>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/register" element={<Register />} />
@@ -255,6 +257,7 @@ function App() {
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </MaintenanceGate>
           </Suspense>
         </div>
         <Footer />
