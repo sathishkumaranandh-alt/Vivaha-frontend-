@@ -1,16 +1,14 @@
+import { initialsAvatar } from "../utils/avatar";
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { toast } from "../utils/toast";
 import { adminApiFetch as adminFetch } from "../utils/api"; // 🛡️ sends the real Bearer token (the old adminApi.js only sent a spoofable admin_id)
 
-const DEFAULT_AVATAR =
-  "https://ui-avatars.com/api/?background=8B0A2E&color=fff&size=256&bold=true&name=";
 
 function getAvatarFor(name, photoUrl) {
   if (photoUrl) return photoUrl;
-  const encoded = encodeURIComponent(name || "Couple");
-  return `${DEFAULT_AVATAR}${encoded}`;
+  return initialsAvatar(name || "Couple");
 }
 
 function AdminSuccessStories() {
@@ -640,4 +638,4 @@ function AdminSuccessStories() {
 }
 
 export default AdminSuccessStories;
-                                   
+        
