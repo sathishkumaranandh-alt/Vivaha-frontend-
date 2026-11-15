@@ -23,10 +23,10 @@ export default function PoruthamCard({ profileId }) {
     (async () => {
       try {
         const res = await apiFetch(`/profile/porutham/${profileId}`);
-        if (!res.ok) return;
+        if (!res.ok) { if (alive) setData({ available: false, reason: "error" }); return; }
         const json = await res.json();
         if (alive) setData(json);
-      } catch (e) { /* card simply stays hidden */ }
+      } catch (e) { if (alive) setData({ available: false, reason: "error" }); }
     })();
     return () => { alive = false; };
   }, [profileId]);
@@ -57,7 +57,19 @@ export default function PoruthamCard({ profileId }) {
         </div>
       );
     }
-    return null;
+    const MSG = {
+      their_missing: "This member has not added Rasi / Nakshatra yet, so Porutham cannot be calculated.",
+      same_gender: "Porutham is calculated only between a bride and a groom profile.",
+      hidden: "Porutham is not available for this profile.",
+      error: "Porutham could not be loaded right now. Please try again later.",
+    };
+    if (!MSG[data.reason]) return null;
+    return (
+      <div style={card}>
+        <div style={{ fontWeight: 700, color: "var(--vg-text, #2D1B1B)" }}>🔯 Porutham (Jathagam match)</div>
+        <div style={{ fontSize: 14, color: "var(--vg-muted, #666)", marginTop: 4 }}>{MSG[data.reason]}</div>
+      </div>
+    );
   }
 
   const v = VERDICT[data.verdict] || VERDICT.average;
@@ -94,4 +106,4 @@ export default function PoruthamCard({ profileId }) {
     </div>
   );
         }
-                      
+  
